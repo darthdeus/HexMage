@@ -8,50 +8,173 @@
 #include <fstream>
 #include <chrono>
 #include <vector>
+#include <random>
+#include <stdlib.h>
+
+#include "gl_utils.hpp"
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-class ShaderSource
+
+float rnd(float max)
 {
-	std::string filename_;
-	std::string contents_;
-	const char* c_str_;
-	const GLchar** source_;
+	return (static_cast<float>(rand()) / RAND_MAX) * max;
+}
 
-public:
-	ShaderSource(std::string filename): filename_(filename)
+float rnd() { return rnd(1.0f); }
+
+float clamp(float x)
+{
+	if (x < 0) return 0;
+	if (x > 1) return 1;
+	return x;
+}
+
+#define RZ(x, m) (clamp((x) + rnd(m) - (m) / 2))
+
+struct color
+{
+	float r, g, b, a;
+	color(float r, float g, float b) : r(r), g(g), b(r), a(1) {}
+	color(float r, float g, float b, float a): r(r), g(g), b(r), a(a) {}
+};
+
+struct seed
+{
+	float x, y, r, g, b, a;
+	seed(float x, float y, float r, float g, float b, float a) : x{ x }, y{ y }, r{ r }, g{ g }, b{ b }, a{ a } {}
+
+	void mutate(bool pos)
 	{
-		std::ifstream is{ filename };
+		float m = 0.05f / 60.0f;		
 
-		contents_ = {
-			std::istreambuf_iterator<char>(is),
-			std::istreambuf_iterator<char>() };
-
-		c_str_ = contents_.c_str();
-		source_ = &c_str_;
-	}
-
-
-	const GLchar** source()
-	{
-		return source_;
-	}
-
-	GLuint compile(GLenum type)
-	{
-		GLuint shaderID = glCreateShader(type);
-		glShaderSource(shaderID, 1, source(), nullptr);
-		glCompileShader(shaderID);
-
-		GLint status;
-		glGetShaderiv(shaderID, GL_COMPILE_STATUS, &status);
-		if (status != GL_TRUE)
-			std::cerr << "Shader from " << filename_ << " failed to compile" << std::endl;
-
-		return shaderID;
+		//std::cout << rnd(0.3f) << "\t" << x << "\t";
+		float r = rnd(m) - m / 2;
+		if (pos) {
+			x = RZ(x, m * 10);
+			y = RZ(y, m * 10);
+		} else {
+			x = RZ(x, m);
+			y = RZ(y, m);
+		}
+		r = RZ(r, m);
+		g = RZ(g, m);
+		b = RZ(b, m);
+		a = RZ(a, m);
+		//std::cout << "\t" << r << "\t" << x << std::endl;
+		//y = clamp(y + rnd(m) - m / 2);
 	}
 };
+
+void push_color(std::vector<float>& v, float r, float g, float b, float a)
+{
+	v.push_back(r);
+	v.push_back(g);
+	v.push_back(b);
+	v.push_back(a);
+}
+
+void triangle_at(std::vector<float>& v, seed& s)
+{
+	float off = 0.07;
+	v.push_back(s.x);
+	v.push_back(s.y + off);
+	push_color(v, s.r, s.g, s.b, s.a);
+
+	v.push_back(s.x + off);
+	v.push_back(s.y - off);
+	push_color(v, s.r, s.g, s.b, s.a);
+
+	v.push_back(s.x - off);
+	v.push_back(s.y - off);
+	push_color(v, s.r, s.g, s.b, s.a);
+}
+
+seed s(0.2, 0.2, 0.3, 0.4, 0.2, 0.5);
+
+void updateGeometry(std::vector<float>& v)
+{
+	v.clear();
+
+	for (int i = 0; i < 200; i++)
+	{
+		triangle_at(v, s);
+		s.mutate(true);
+	}
+}
+
+void game_loop(SDL_Window* window)
+{
+	//float vertices[] = {
+	//	-0.5f, 0.5f, 1.0f, 0.0f, 0.0f, // Top-left
+	//	0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
+	//	0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+
+	//	-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
+	//	0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+	//	-0.5f, -0.5f, 1.0f, 1.0f, 1.0f  // Bottom-left
+	//};	
+
+	std::vector<float> vertices;
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
+	GLuint shaderProgram = program.shaderProgram;
+
+	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+	glEnableVertexAttribArray(posAttrib);
+	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+
+	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
+	glEnableVertexAttribArray(colAttrib);
+	glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
+	glUniform3f(uniColor, 1.0f, 0.0f, 0.0f);
+	
+	glBindFragDataLocation(shaderProgram, 0, "outColor");
+
+
+	auto t_start = std::chrono::high_resolution_clock::now();
+
+	SDL_Event windowEvent;
+	while (true)
+	{
+		//std::cerr << glGetError() << std::endl;
+
+		if (SDL_PollEvent(&windowEvent))
+		{
+			if (windowEvent.type == SDL_QUIT || (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE)) break;
+		}
+
+		updateGeometry(vertices);
+
+		glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * vertices.size(),
+			vertices.data(), GL_STATIC_DRAW);
+
+		glClearColor(0.3f, 0.2f, 0.3f, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		auto t_now = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+
+		//glUniform3f(uniColor, (sin(time * 4.0f) + 1.0f) / 2.0f, 0.0f, 0.0f);
+
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+		SDL_GL_SwapWindow(window);
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -72,86 +195,9 @@ int main(int argc, char** argv)
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
-	printf("Vendor:   %s\n", glGetString(GL_VENDOR));
-	printf("Renderer: %s\n", glGetString(GL_RENDERER));
-	printf("Version:  %s\n", glGetString(GL_VERSION));
-
-	float vertices[] = {
-		-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
-		0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
-		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
-		-0.5f, -0.5f, 1.0f, 1.0f, 1.0f  // Bottom-left
-	};
-
-	GLuint elements[] = {
-		0,1,2,
-		2,3,0
-	};
-
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	GLuint ebo;
-	glGenBuffers(1, &ebo);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
-
-	ShaderSource vertexShaderSource{ "vertex.glsl" };
-	ShaderSource fragmentShaderSource{ "fragment.glsl" };
-
-	GLuint vertexShader = vertexShaderSource.compile(GL_VERTEX_SHADER);
-	GLuint fragmentShader = fragmentShaderSource.compile(GL_FRAGMENT_SHADER);
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glBindFragDataLocation(shaderProgram, 0, "outColor");
-
-	glLinkProgram(shaderProgram);
-	glUseProgram(shaderProgram);
-
-	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
-
-	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-
-	GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
-	glUniform3f(uniColor, 1.0f, 0.0f, 0.0f);
-
-	std::cerr << glGetError() << std::endl;
-
-	auto t_start = std::chrono::high_resolution_clock::now();
-
-	SDL_Event windowEvent;
-	while (true)
-	{
-		if (SDL_PollEvent(&windowEvent))
-		{
-			if (windowEvent.type == SDL_QUIT || (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE)) break;
-		}
-
-		auto t_now = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
-
-		glUniform3f(uniColor, (sin(time * 4.0f) + 1.0f) / 2.0f, 0.0f, 0.0f);
-
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		SDL_GL_SwapWindow(window);
-	}
-
+	
+	game_loop(window);
+	
 	SDL_GL_DeleteContext(context);
 	//SDL_Delay(1000);
 	SDL_Quit();
@@ -159,4 +205,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-

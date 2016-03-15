@@ -1,8 +1,8 @@
 #version 150 core
 
 in vec2 position;
-in vec3 color;
-out vec3 Color;
+in vec4 color;
+out vec4 Color;
 
 void main()
 {
