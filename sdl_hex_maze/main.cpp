@@ -9,6 +9,7 @@
 #include <vector>
 #include <random>
 #include <stdlib.h>
+#include <unordered_map>
 
 #include "gl_utils.hpp"
 
@@ -17,38 +18,63 @@ const int SCREEN_HEIGHT = 480;
 
 enum class HexType { Empty = 0, Player, Wall };
 
+namespace std {
+template <>
+struct hash<std::tuple<int, int, int>> {
+  std::size_t operator()(const std::tuple<int, int, int>& tup) const {
+    using namespace std;
+
+    return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
+           (hash<int>()(get<2>(tup)) << 1);
+  }
+};
+
+template <>
+struct hash<std::pair<int, int>> {
+  std::size_t operator()(const std::pair<int, int>& tup) const {
+    using namespace std;
+
+    return hash<int>()(tup.first) ^ (hash<int>()(tup.second) << 1);
+  }
+};
+}
+
 class mat {
-  std::vector<HexType> data;
+  std::unordered_map<std::tuple<int, int, int>, HexType> data;
 
  public:
-  int m, n;
-  int player_i, player_j;
+  int m;
+  int player_x, player_y, player_z;
   bool player_set = false;
 
-  mat(int m, int n) : m(m), n(n), data(m * n) {}
+  mat(int m) : m(m) {}
   mat(const mat&) = delete;
 
-  HexType& operator()(int i, int j) { return data[i * n + j]; }
+  HexType& operator()(int x, int y, int z) {
+    return data[std::make_tuple(x, y, z)];
+  }
 
-  // TODO - fuj, michame tu i/j a x/y
-  bool move_player(int i, int j) {
-    if (i < 0 || j < 0 || i >= m || j >= n) return false;
-    if ((*this)(i, j) == HexType::Wall) return false;
+  bool move_player(int x, int y, int z) {
+    if (std::max(x, std::max(y, z)) >= m) return false;
+    if ((*this)(x, y, z) == HexType::Wall) return false;
 
     if (player_set) {
-      (*this)(player_i, player_j) = HexType::Empty;
+      (*this)(player_x, player_y, player_z) = HexType::Empty;
     }
-    player_i = i;
-    player_j = j;
-    (*this)(i, j) = HexType::Player;
+
+    player_x = x;
+    player_y = y;
+    player_z = z;
+
+    (*this)(x, y, z) = HexType::Player;
 
     player_set = true;
     return true;
   }
 
-  bool step_player(int dx, int dy) {
+  bool step_player(int dx, int dy, int dz) {
     if (player_set) {
-      return move_player(player_i + dy, player_j + dx);
+      return move_player(player_x + dx, player_y + dy, player_z + dz);
     }
     return false;
   }
@@ -147,13 +173,14 @@ void game_loop(SDL_Window* window) {
 
   std::cerr << glGetError() << std::endl;
 
-  mat grid{10, 10};
+  mat grid{5};
 
-  for (int i = 2; i < 8; i++) {
-    grid(3, i) = HexType::Wall;
+  for (int i = 1; i < 5; i++) {
+    grid(1, i, -1 - i) = HexType::Wall;
   }
 
-  grid.move_player(5, 4);
+  grid.move_player(0, 0, 0);
+  grid(1, 0, 0) = HexType::Wall;
 
   SDL_Event windowEvent;
   while (true) {
@@ -164,71 +191,124 @@ void game_loop(SDL_Window* window) {
           (windowEvent.type == SDL_KEYUP &&
            windowEvent.key.keysym.sym == SDLK_ESCAPE))
         break;
+
+      if (windowEvent.type == SDL_KEYDOWN) {
+        switch (windowEvent.key.keysym.sym) {
+          case 'a':
+            grid.step_player(-1, 1, 0);
+            break;
+
+          case 'd':
+            grid.step_player(1, -1, 0);
+            break;
+
+          case 'z':
+            grid.step_player(0, 1, -1);
+            break;
+
+          case 'e':
+            grid.step_player(0, -1, 1);
+            break;
+
+          case 'c':
+            grid.step_player(1, 0, -1);
+            break;
+
+          case 'q':
+            grid.step_player(-1, 0, 1);
+            break;
+        }
+      }
     }
 
     glClearColor(0.3f, 0.2f, 0.3f, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    int count = 3;
-    int player_dx, player_dy;
-    do {
-      float p_dx = (rand() / (float)RAND_MAX);
-      float p_dy = (rand() / (float)RAND_MAX);
+    color c_wall = {0.1f, 0.03f, 0.1f};
+    color c_empty = {0.4f, 0.2f, 0.4f};
+    color c_player = {0.7f, 0.4f, 0.7f};
 
-      if (p_dx > 0.7)
-        player_dx = 1;
-      else if (p_dx > 0.35)
-        player_dx = -1;
-      else
-        player_dx = 0;
+    // float start_x = -0.8;
+    // float start_y = 0.8;
 
-      if (p_dy > 0.7)
-        player_dy = 1;
-      else if (p_dy > 0.35)
-        player_dy = -1;
-      else
-        player_dy = 0;
-
-    } while (!grid.step_player(player_dx, player_dy) && count--);
+    float start_x = 0;
+    float start_y = 0;
 
     float r = 0.1;
     float height = 2 * r;
     float width = cos(30 * M_PI / 180) * r * 2;
     float height_offset = r + sin(30 * M_PI / 180) * r;
 
-    color c_wall = {0.1f, 0.03f, 0.1f};
-    color c_empty = {0.4f, 0.2f, 0.4f};
-    color c_player = {0.7f, 0.4f, 0.7f};
+    std::unordered_map<std::pair<int, int>, std::tuple<int, int, int>> taken;
+    // for (int x = -0; x < 1; x++) {
+    for (int x = -grid.m; x < grid.m; x++) {
+      // for (int y = -0; y < 1; y++) {
+      for (int y = -grid.m; y < grid.m; y++) {
+        for (int z = -grid.m; z < grid.m; z++) {
+          if (x + y + z != 0) continue;
+          int q = x;
+          int rr = z;
 
-    float start_x = -0.8;
-    float start_y = 0.8;
+          float draw_x = start_x;
+          float draw_y = start_y;
 
-    for (int i = 0; i < grid.m; i++) {
-      for (int j = 0; j < grid.n; j++) {
-        float x = start_x + j * width;
-        float y = start_y - i * height_offset;
+          // // axial q-change
+          // draw_x += q * width;
+          // // axial r-change
+          // draw_y += r * height_offset;
 
-        if (i % 2 == 0) {
-          x += width / 2;
+          // axial q-change
+          draw_x += q * width;
+          // axial r-change
+          draw_x += rr * (width / 2);
+          draw_y += rr * height_offset;
+
+          // // cube x-change
+          // draw_x += x * width;
+          // // cube y-change
+          // draw_x -= y * width / 2;
+          // draw_y += y * height_offset;
+          // // cube z-change
+          // draw_x -= z * width / 2;
+          // draw_y -= z * height_offset;
+
+          // if (row % 2 == 0) { draw_x += width / 2; }
+
+          int dkey1 = round(draw_x * 10000);
+          int dkey2 = round(draw_y * 10000);
+
+          auto key = std::make_tuple(dkey1, dkey2);
+          if (taken.count(key) > 0) {
+            auto by = taken[key];
+            std::cout << "ALREADY TAKEN " << dkey1 << " " << dkey2 << "\t" << x
+                      << " " << y << " " << z << "\t" << std::get<0>(by) << " "
+                      << std::get<1>(by) << " " << std::get<2>(by) << std::endl;
+            throw "he";
+          } else {
+            taken[key] = {x, y, z};
+          }
+
+          color c;
+
+          switch (grid(x, y, z)) {
+            case HexType::Empty:
+              c = c_empty;
+              break;
+            case HexType::Wall:
+              c = c_wall;
+              break;
+            case HexType::Player:
+              c = c_player;
+              break;
+          }
+
+          hex_at(program, draw_x, draw_y, r, c);
+          // std::cout << draw_x << "," << draw_y << " ";
+          c = c.mut(0.004);
         }
-
-        color c;
-
-        switch (grid(i, j)) {
-          case HexType::Empty:
-            c = c_empty;
-            break;
-          case HexType::Wall:
-            c = c_wall;
-            break;
-          case HexType::Player:
-            c = c_player;
-            break;
-        }
-        hex_at(program, x, y, r, c);
-        c = c.mut(0.004);
       }
     }
+    // std::cout << std::endl << std::endl;
 
     SDL_GL_SwapWindow(window);
   }
