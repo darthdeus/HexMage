@@ -132,36 +132,31 @@ void game_loop(SDL_Window* window)
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//updateGeometry(program);
-
-		//triangle_at(program, s);
-
-		//VBO buf{ program };
-		//color c = { 1,1,1 };
-		//buf.push_vertex(0, 0.5, c);
-		//buf.push_vertex(0.5, 0.5, c);
-		//buf.push_vertex(-0.5, -0.5, c);
-		//buf.draw(GL_TRIANGLES);
-
 		float r = 0.1;
 		float height = 2 * r;
 		float width = cos(30 * M_PI / 180) * r * 2;
+    float height_offset = r + sin(30 * M_PI / 180) * r;
 
-		color c = { 0.7f,0,0.4f };
-		hex_at(program, 0, 0, r, c);
-		c = c.mut(0.1);
-		hex_at(program, width, 0, r, c);
-		c = c.mut(0.1);
-		hex_at(program, -width, 0, r, c);
-		//hex_at(program, 0, 0.2, r, { 1,1,1 });
-		//hex_at(program, -width * 2, 0, r, { 0,0,0 });
-		//hex_at(program, -width * 2, height * 2, r, { 1,1,1 });
+    color c = { 0.7f,0,0.4f };
+
+    float start_x = -0.8;
+    float start_y = 0.8;
+
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 10; j++) {
+        float x = start_x + j * width;
+        float y = start_y - i * height_offset;
+
+        if (i % 2 == 0) {
+          x += width/2;
+        }
+        hex_at(program, x, y, r, c);
+        c = c.mut(0.004);
+      }
+    }
 
 		SDL_GL_SwapWindow(window);
 	}
-
-	//glDeleteBuffers(1, &vbo);
-
 }
 
 int main(int argc, char** argv)
