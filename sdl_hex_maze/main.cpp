@@ -171,8 +171,6 @@ void game_loop(SDL_Window* window) {
   ShaderProgram program{"vertex.glsl", "fragment.glsl"};
   std::cerr << glGetError() << std::endl;
 
-  std::cerr << glGetError() << std::endl;
-
   mat grid{5};
 
   for (int i = 1; i < 5; i++) {
@@ -188,8 +186,6 @@ void game_loop(SDL_Window* window) {
 
   SDL_Event windowEvent;
   while (true) {
-    // std::cerr << glGetError() << std::endl;
-
     if (SDL_PollEvent(&windowEvent)) {
       if (windowEvent.type == SDL_QUIT ||
           (windowEvent.type == SDL_KEYUP &&
