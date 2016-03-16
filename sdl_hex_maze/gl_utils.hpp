@@ -110,6 +110,7 @@ float rnd(float max)
 struct color
 {
 	float r, g, b, a;
+  color(): r(0), g(0), b(0), a(0) {}
 	color(float r, float g, float b) : r(r), g(g), b(r), a(1) {}
 	color(float r, float g, float b, float a) : r(r), g(g), b(r), a(a) {}
 

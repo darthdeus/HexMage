@@ -1,5 +1,6 @@
 LIBS=-lsdl2
-CXXFLAGS=-O0 -g -std=c++14 -I./include -I/usr/local/include -L/usr/local/lib
+INCLUDES=-I./include -I/usr/local/include
+CXXFLAGS=-O0 -g -std=c++14 $(INCLUDES) -L/usr/local/lib
 SRC=main.cpp glad.c
 
 default:
