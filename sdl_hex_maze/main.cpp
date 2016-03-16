@@ -2,7 +2,6 @@
 #include <glad/glad.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
-#include <GL/gl.h>
 #include <string>
 #include <stdio.h>
 #include <fstream>
