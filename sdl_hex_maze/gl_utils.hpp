@@ -107,6 +107,11 @@ struct color
 	float r, g, b, a;
 	color(float r, float g, float b) : r(r), g(g), b(r), a(1) {}
 	color(float r, float g, float b, float a) : r(r), g(g), b(r), a(a) {}
+
+	color mut(float d)
+	{
+		return{ r + d, g + d, b + d, a };
+	}
 };
 
 void push_color(std::vector<float>& vbo, color c)
@@ -150,8 +155,15 @@ struct VBO
 	void push_back(float x) { vbo.push_back(x); }
 	void draw(GLenum type)
 	{
+		/*std::cout << "vbo[" << vbo.size() << "]\t";
+		for (int i = 0; i < vbo.size(); i += 6)
+		{
+			std::cout << vbo[i] << "," << vbo[i + 1] << "  ";
+		}
+		std::cout << std::endl;*/
+
 		bufferData();
-		glDrawArrays(type, 0, vbo.size());
+		glDrawArrays(type, 0, vbo.size() / 6);
 	}
 
 	void push_vertex(float x, float y, color c)

@@ -89,6 +89,7 @@ void hex_at(ShaderProgram& program, float x, float y, float r, color c)
 	for (int i = 0; i < 7; i++)
 	{
 		float ri = rad_for_hex(i);
+		c = c.mut(rnd(0.5f));
 		vbo.push_vertex(x + r * cos(ri), y + r * sin(ri), c);
 	}
 
@@ -136,9 +137,9 @@ void game_loop(SDL_Window* window)
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		updateGeometry(program);
+		//updateGeometry(program);
 
-		triangle_at(program, s);
+		//triangle_at(program, s);
 
 		//VBO buf{ program };
 		//color c = { 1,1,1 };
@@ -151,9 +152,11 @@ void game_loop(SDL_Window* window)
 		float height = 2 * r;
 		float width = 3 * height / 4;
 
-		hex_at(program, 0, 0, r, { 1,1,1 });
-		hex_at(program, width * 2, 0, r, { 0,0,0});
-		
+		hex_at(program, -0.15, 0.5, r, { 0.7f,0,0.4f });
+		//hex_at(program, 0, 0.2, r, { 1,1,1 });
+		//hex_at(program, -width * 2, 0, r, { 0,0,0 });
+		//hex_at(program, -width * 2, height * 2, r, { 1,1,1 });
+
 		SDL_GL_SwapWindow(window);
 	}
 
