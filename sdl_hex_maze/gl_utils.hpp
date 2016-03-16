@@ -26,9 +26,12 @@ public:
 		source_ = &c_str_;
 	}
 
+	ShaderSource(const ShaderSource&) = delete;
+
 	const GLchar** source() { return source_; }
 
 	GLuint compile(GLenum type) {
+		// TODO - deallocate resources
 		GLuint shaderID = glCreateShader(type);
 		glShaderSource(shaderID, 1, source(), nullptr);
 		glCompileShader(shaderID);
@@ -67,13 +70,95 @@ public:
 		glAttachShader(shaderProgram, vertexShader);
 		glAttachShader(shaderProgram, fragmentShader);	
 
-		compileAndUse();
+		glLinkProgram(shaderProgram);
+		use();		
 	}
 
-	void compileAndUse()
+	ShaderProgram(const ShaderProgram&) = delete;
+
+	~ShaderProgram()
 	{
-		glLinkProgram(shaderProgram);
+		glDeleteProgram(shaderProgram);
+		glDeleteShader(fragmentShader);
+		glDeleteShader(vertexShader);
+	}
+
+	void use()
+	{
 		glUseProgram(shaderProgram);
+	}
+
+	void setupAttributes()
+	{
+		GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+		glEnableVertexAttribArray(posAttrib);
+		glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+
+		GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
+		glEnableVertexAttribArray(colAttrib);
+		glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
+		glBindFragDataLocation(shaderProgram, 0, "outColor");
+	}
+};
+
+
+struct color
+{
+	float r, g, b, a;
+	color(float r, float g, float b) : r(r), g(g), b(r), a(1) {}
+	color(float r, float g, float b, float a) : r(r), g(g), b(r), a(a) {}
+};
+
+void push_color(std::vector<float>& vbo, color c)
+{
+	vbo.push_back(c.r);
+	vbo.push_back(c.g);
+	vbo.push_back(c.b);
+	vbo.push_back(c.a);
+}
+
+void push_color(std::vector<float>& v, float r, float g, float b, float a)
+{
+	v.push_back(r);
+	v.push_back(g);
+	v.push_back(b);
+	v.push_back(a);
+}
+
+// TODO - test this
+struct VBO
+{
+	GLuint buf;
+	std::vector<float> vbo;
+	ShaderProgram& program;
+
+	VBO(ShaderProgram& program) : program{ program } {
+		glGenBuffers(1, &buf);
+		glBindBuffer(GL_ARRAY_BUFFER, buf);
+		program.setupAttributes();
+	}
+	VBO(const VBO&) = delete;
+	~VBO() { glDeleteBuffers(1, &buf); }
+
+	void bufferData()
+	{
+		glBufferData(GL_ARRAY_BUFFER,
+			sizeof(float) * vbo.size(),
+			vbo.data(), GL_STATIC_DRAW);
+	}
+
+	void push_back(float x) { vbo.push_back(x); }
+	void draw(GLenum type)
+	{
+		bufferData();
+		glDrawArrays(type, 0, vbo.size());
+	}
+
+	void push_vertex(float x, float y, color c)
+	{
+		vbo.push_back(x);
+		vbo.push_back(y);
+		push_color(vbo, c.r, c.g, c.b, c.a);
 	}
 };
 

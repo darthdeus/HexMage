@@ -33,13 +33,6 @@ float clamp(float x)
 
 #define RZ(x, m) (clamp((x) + rnd(m) - (m) / 2))
 
-struct color
-{
-	float r, g, b, a;
-	color(float r, float g, float b) : r(r), g(g), b(r), a(1) {}
-	color(float r, float g, float b, float a): r(r), g(g), b(r), a(a) {}
-};
-
 struct seed
 {
 	float x, y, r, g, b, a;
@@ -67,113 +60,105 @@ struct seed
 	}
 };
 
-void push_color(std::vector<float>& v, float r, float g, float b, float a)
+
+void triangle_at(ShaderProgram& program, seed& s)
 {
-	v.push_back(r);
-	v.push_back(g);
-	v.push_back(b);
-	v.push_back(a);
+	VBO vbo{ program };
+
+	float off = 0.07;
+	color c{ s.r, s.g, s.b, s.a };
+	vbo.push_vertex(s.x, s.y + off, c);
+	vbo.push_vertex(s.x + off, s.y - off, c);
+	vbo.push_vertex(s.x - off, s.y - off, c);
+
+	vbo.draw(GL_TRIANGLES);
 }
 
-void triangle_at(std::vector<float>& v, seed& s)
+float rad_for_hex(int i)
 {
-	float off = 0.07;
-	v.push_back(s.x);
-	v.push_back(s.y + off);
-	push_color(v, s.r, s.g, s.b, s.a);
+	float angle_deg = 60 * i + 30;
+	return M_PI / 180 * angle_deg;
+}
 
-	v.push_back(s.x + off);
-	v.push_back(s.y - off);
-	push_color(v, s.r, s.g, s.b, s.a);
+void hex_at(ShaderProgram& program, float x, float y, float r, color c)
+{
+	VBO vbo{program};
+	
+	vbo.push_vertex(x, y, c);
 
-	v.push_back(s.x - off);
-	v.push_back(s.y - off);
-	push_color(v, s.r, s.g, s.b, s.a);
+	for (int i = 0; i < 7; i++)
+	{
+		float ri = rad_for_hex(i);
+		vbo.push_vertex(x + r * cos(ri), y + r * sin(ri), c);
+	}
+
+	vbo.draw(GL_TRIANGLE_FAN);
 }
 
 seed s(0.2, 0.2, 0.3, 0.4, 0.2, 0.5);
 
-void updateGeometry(std::vector<float>& v)
+void updateGeometry(ShaderProgram& program)
 {
-	v.clear();
+	//hex_at(0, 0, 10, { 1, 1, 1 });
 
-	for (int i = 0; i < 200; i++)
+	for (int i = 0; i < 1; i++)
 	{
-		triangle_at(v, s);
+		triangle_at(program, s);
 		s.mutate(true);
 	}
 }
 
 void game_loop(SDL_Window* window)
 {
-	//float vertices[] = {
-	//	-0.5f, 0.5f, 1.0f, 0.0f, 0.0f, // Top-left
-	//	0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
-	//	0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
-
-	//	-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
-	//	0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
-	//	-0.5f, -0.5f, 1.0f, 1.0f, 1.0f  // Bottom-left
-	//};	
-
 	std::vector<float> vertices;
+
+	// TODO - proc tohle nefunguje?
+	//glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
 	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
-	GLuint shaderProgram = program.shaderProgram;
+	std::cerr << glGetError() << std::endl;
 
-	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
-
-	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
-
-	GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
-	glUniform3f(uniColor, 1.0f, 0.0f, 0.0f);
+	std::cerr << glGetError() << std::endl;
 	
-	glBindFragDataLocation(shaderProgram, 0, "outColor");
-
-
-	auto t_start = std::chrono::high_resolution_clock::now();
-
 	SDL_Event windowEvent;
 	while (true)
 	{
-		//std::cerr << glGetError() << std::endl;
+			//std::cerr << glGetError() << std::endl;
 
 		if (SDL_PollEvent(&windowEvent))
 		{
 			if (windowEvent.type == SDL_QUIT || (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE)) break;
 		}
 
-		updateGeometry(vertices);
-
-		glBufferData(GL_ARRAY_BUFFER,
-			sizeof(float) * vertices.size(),
-			vertices.data(), GL_STATIC_DRAW);
-
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		auto t_now = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+		updateGeometry(program);
 
-		//glUniform3f(uniColor, (sin(time * 4.0f) + 1.0f) / 2.0f, 0.0f, 0.0f);
+		triangle_at(program, s);
 
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		//VBO buf{ program };
+		//color c = { 1,1,1 };
+		//buf.push_vertex(0, 0.5, c);
+		//buf.push_vertex(0.5, 0.5, c);
+		//buf.push_vertex(-0.5, -0.5, c);
+		//buf.draw(GL_TRIANGLES);
 
+		float r = 0.1;
+		float height = 2 * r;
+		float width = 3 * height / 4;
+
+		hex_at(program, 0, 0, r, { 1,1,1 });
+		hex_at(program, width * 2, 0, r, { 0,0,0});
+		
 		SDL_GL_SwapWindow(window);
 	}
+
+	//glDeleteBuffers(1, &vbo);
+
 }
 
 int main(int argc, char** argv)
@@ -195,7 +180,7 @@ int main(int argc, char** argv)
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
-	
+
 	game_loop(window);
 	
 	SDL_GL_DeleteContext(context);
