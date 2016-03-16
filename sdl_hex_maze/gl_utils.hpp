@@ -102,6 +102,11 @@ public:
 };
 
 
+float rnd(float max)
+{
+	return (static_cast<float>(rand()) / RAND_MAX) * max;
+}
+
 struct color
 {
 	float r, g, b, a;

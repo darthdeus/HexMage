@@ -17,11 +17,6 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 
-float rnd(float max)
-{
-	return (static_cast<float>(rand()) / RAND_MAX) * max;
-}
-
 float rnd() { return rnd(1.0f); }
 
 float clamp(float x)
@@ -86,10 +81,11 @@ void hex_at(ShaderProgram& program, float x, float y, float r, color c)
 	
 	vbo.push_vertex(x, y, c);
 
-	for (int i = 0; i < 7; i++)
+	int rot = 0; // 1;
+	for (int i = rot; i < 7 + rot; i++)
 	{
 		float ri = rad_for_hex(i);
-		c = c.mut(rnd(0.5f));
+		c = c.mut(0.1);
 		vbo.push_vertex(x + r * cos(ri), y + r * sin(ri), c);
 	}
 
@@ -150,9 +146,14 @@ void game_loop(SDL_Window* window)
 
 		float r = 0.1;
 		float height = 2 * r;
-		float width = 3 * height / 4;
+		float width = cos(30 * M_PI / 180) * r * 2;
 
-		hex_at(program, -0.15, 0.5, r, { 0.7f,0,0.4f });
+		color c = { 0.7f,0,0.4f };
+		hex_at(program, 0, 0, r, c);
+		c = c.mut(0.1);
+		hex_at(program, width, 0, r, c);
+		c = c.mut(0.1);
+		hex_at(program, -width, 0, r, c);
 		//hex_at(program, 0, 0.2, r, { 1,1,1 });
 		//hex_at(program, -width * 2, 0, r, { 0,0,0 });
 		//hex_at(program, -width * 2, height * 2, r, { 1,1,1 });
