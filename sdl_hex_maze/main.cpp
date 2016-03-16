@@ -179,6 +179,10 @@ void game_loop(SDL_Window* window) {
     grid(1, i, -1 - i) = HexType::Wall;
   }
 
+  grid(-1, 1, 0) = HexType::Wall;
+  grid(0, -1, 1) = HexType::Wall;
+  grid(-1, 0, 1) = HexType::Wall;
+
   grid.move_player(0, 0, 0);
   grid(1, 0, 0) = HexType::Wall;
 
