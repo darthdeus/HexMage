@@ -26,38 +26,60 @@ enum class HexType
 };
 
 
-struct hash_int_triple {
-  std::size_t operator()(const std::tuple<int, int, int>& tup) const {
-    using namespace std;
+struct hash_int_triple
+{
+	std::size_t operator()(const std::tuple<int, int, int>& tup) const {
+		using namespace std;
 
-    return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
-           (hash<int>()(get<2>(tup)) << 1);
-  }
+		return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
+				(hash<int>()(get<2>(tup)) << 1);
+	}
 };
 
-struct hash_int_pair {
-  std::size_t operator()(const std::pair<int, int>& tup) const {
-    using namespace std;
+struct hash_int_pair
+{
+	std::size_t operator()(const std::pair<int, int>& tup) const {
+		using namespace std;
 
-    return hash<int>()(tup.first) ^ (hash<int>()(tup.second) << 1);
-  }
+		return hash<int>()(tup.first) ^ (hash<int>()(tup.second) << 1);
+	}
 };
+
+template <typename T>
+struct matrix
+{
+	matrix(unsigned m, unsigned n) : m(m), n(n), vs(m * n) {}
+
+	T& operator ()(unsigned i, unsigned j) {
+		return vs[n * i + j];
+	}
+
+private:
+	unsigned m;
+	unsigned n;
+	std::vector<T> vs;
+}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
 
 class mat
 {
-	std::unordered_map<std::tuple<int, int, int>, HexType, hash_int_triple> data;
+	matrix<HexType> data_;
 
 public:
 	int m;
 	int player_x, player_y, player_z;
 	bool player_set = false;
 
-	mat(int m) : m(m) {}
+	mat(int m) : data_(2 * m + 1, 2 * m + 1), m(m) {}
 
 	mat(const mat&) = delete;
 
+	HexType& operator()(int row, int col) {
+		// TODO - nema to byt obracene?
+		return data_(row + m, col + m);
+	}
+
 	HexType& operator()(int x, int y, int z) {
-		return data[std::make_tuple(x, y, z)];
+		return data_(x + m, z + m);
 	}
 
 	bool move_player(int x, int y, int z) {
@@ -102,45 +124,6 @@ float clamp(float x) {
 
 #define RZ(x, m) (clamp((x)+rnd(m) - (m) / 2))
 
-struct seed
-{
-	float x, y, r, g, b, a;
-
-	seed(float x, float y, float r, float g, float b, float a)
-		: x{x}, y{y}, r{r}, g{g}, b{b}, a{a} {}
-
-	void mutate(bool pos) {
-		float m = 0.05f / 60.0f;
-
-		// std::cout << rnd(0.3f) << "\t" << x << "\t";
-		float r = rnd(m) - m / 2;
-		if (pos) {
-			x = RZ(x, m * 10);
-			y = RZ(y, m * 10);
-		} else {
-			x = RZ(x, m);
-			y = RZ(y, m);
-		}
-		r = RZ(r, m);
-		g = RZ(g, m);
-		b = RZ(b, m);
-		a = RZ(a, m);
-		// std::cout << "\t" << r << "\t" << x << std::endl;
-		// y = clamp(y + rnd(m) - m / 2);
-	}
-};
-
-void triangle_at(ShaderProgram& program, seed& s) {
-	VBO vbo{program};
-
-	float off = 0.07f;
-	color c{s.r, s.g, s.b, s.a};
-	vbo.push_vertex(s.x, s.y + off, c);
-	vbo.push_vertex(s.x + off, s.y - off, c);
-	vbo.push_vertex(s.x - off, s.y - off, c);
-
-	vbo.draw(GL_TRIANGLES);
-}
 
 float rad_for_hex(int i) {
 	float angle_deg = 60 * i + 30;
@@ -162,15 +145,50 @@ void hex_at(ShaderProgram& program, float x, float y, float r, color c) {
 	vbo.draw(GL_TRIANGLE_FAN);
 }
 
-seed s(0.2f, 0.2f, 0.3f, 0.4f, 0.2f, 0.5f);
+void handlePlayerStep(Sint32 sym, mat& grid) {
+	switch (sym) {
+	case 'a':
+		grid.step_player(-1, 1, 0);
+		break;
 
-void updateGeometry(ShaderProgram& program) {
-	// hex_at(0, 0, 10, { 1, 1, 1 });
+	case 'd':
+		grid.step_player(1, -1, 0);
+		break;
 
-	for (int i = 0; i < 1; i++) {
-		triangle_at(program, s);
-		s.mutate(true);
+	case 'z':
+		grid.step_player(0, 1, -1);
+		break;
+
+	case 'e':
+		grid.step_player(0, -1, 1);
+		break;
+
+	case 'c':
+		grid.step_player(1, 0, -1);
+		break;
+
+	case 'q':
+		grid.step_player(-1, 0, 1);
+		break;
 	}
+}
+
+color color_for_type(HexType type) {
+	color c_wall = { 0.1f, 0.03f, 0.1f };
+	color c_empty = { 0.4f, 0.2f, 0.4f };
+	color c_player = { 0.7f, 0.4f, 0.7f };
+
+	switch (type) {
+	case HexType::Empty:
+		return c_empty;
+	case HexType::Wall:
+		return c_wall;
+	case HexType::Player:
+		return c_player;
+	default:
+		throw "invalid hex type";
+	}
+
 }
 
 void game_loop(SDL_Window* window) {
@@ -187,33 +205,9 @@ void game_loop(SDL_Window* window) {
 
 	mat grid{5};
 
-	for (int i = 1; i < 5; i++) {
-		grid(1, i, -1 - i) = HexType::Wall;
-	}
-
-	grid(-1, 1, 0) = HexType::Wall;
-	grid(0, -1, 1) = HexType::Wall;
-	grid(-1, 0, 1) = HexType::Wall;
-
 	grid.move_player(0, 0, 0);
-	grid(1, 0, 0) = HexType::Wall;
-
-	TGAImage img;
-	int width, height;
-
-	if (!img.read_tga_file("sample.tga")) {
-		std::cerr << "Nepovedlo se" << std::endl;
-	}
-
-	width = img.get_width() * 2;
-	height = img.get_height();
-	unsigned char* image = img.buffer();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	grid(0, 1) = HexType::Wall;
+	grid(0, 2) = HexType::Wall;
 
 	SDL_Event windowEvent;
 	while (true) {
@@ -228,49 +222,18 @@ void game_loop(SDL_Window* window) {
 				break;
 
 			if (windowEvent.type == SDL_KEYDOWN) {
-				switch (windowEvent.key.keysym.sym) {
-					case 'a':
-						grid.step_player(-1, 1, 0);
-						break;
-
-					case 'd':
-						grid.step_player(1, -1, 0);
-						break;
-
-					case 'z':
-						grid.step_player(0, 1, -1);
-						break;
-
-					case 'e':
-						grid.step_player(0, -1, 1);
-						break;
-
-					case 'c':
-						grid.step_player(1, 0, -1);
-						break;
-
-					case 'q':
-						grid.step_player(-1, 0, 1);
-						break;
-				}
+				handlePlayerStep(windowEvent.key.keysym.sym, grid);
+				
 			}
 		}
 
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		color c_wall = {0.1f, 0.03f, 0.1f};
-		color c_empty = {0.4f, 0.2f, 0.4f};
-		color c_player = {0.7f, 0.4f, 0.7f};
-
-		// float start_x = -0.8;
-		// float start_y = 0.8;
-
 		float start_x = 0;
 		float start_y = 0;
 
 		float r = 0.1f;
-		float height = 2 * r;
 		float width = cos(30 * M_PI / 180) * r * 2;
 		float height_offset = r + sin(30 * M_PI / 180) * r;
 
@@ -310,26 +273,13 @@ void game_loop(SDL_Window* window) {
 						taken[key] = std::make_tuple(x, y, z);
 					}
 
-					color c;
-
-					switch (grid(x, y, z)) {
-						case HexType::Empty:
-							c = c_empty;
-							break;
-						case HexType::Wall:
-							c = c_wall;
-							break;
-						case HexType::Player:
-							c = c_player;
-							break;
-					}
+					color c = color_for_type(grid(x, y, z));
 
 					hex_at(program, draw_x, draw_y, r, c);
 					c = c.mut(0.004f);
 				}
 			}
 		}
-		// std::cout << std::endl << std::endl;
 
 		SDL_GL_SwapWindow(window);
 	}
