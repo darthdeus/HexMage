@@ -208,6 +208,7 @@ void game_loop(SDL_Window* window) {
 	grid.move_player(0, 0, 0);
 	grid(0, 1) = HexType::Wall;
 	grid(0, 2) = HexType::Wall;
+	grid(0, 0) = HexType::Wall;
 
 	SDL_Event windowEvent;
 	while (true) {
@@ -233,53 +234,56 @@ void game_loop(SDL_Window* window) {
 		float start_x = 0;
 		float start_y = 0;
 
-		float r = 0.1f;
-		float width = cos(30 * M_PI / 180) * r * 2;
-		float height_offset = r + sin(30 * M_PI / 180) * r;
+		float radius = 0.1f;
+		float width = cos(30 * M_PI / 180) * radius * 2;
+		float height_offset = radius + sin(30 * M_PI / 180) * radius;
 
-		std::unordered_map<std::pair<int, int>, std::tuple<int, int, int>, hash_int_pair> taken;
+		for (int row = -grid.m; row < grid.m; ++row) {
+			for (int col = -grid.m; col < grid.m; ++col) {
 
-		// for (int x = -0; x < 1; x++) {
-		for (int x = -grid.m; x < grid.m; x++) {
-			// for (int y = -0; y < 1; y++) {
-			for (int y = -grid.m; y < grid.m; y++) {
-				for (int z = -grid.m; z < grid.m; z++) {
-					if (x + y + z != 0)
-						continue;
+				float draw_x = start_x;
+				float draw_y = start_y;
 
-					int q = x;
-					int rr = z;
+				// axial q-change
+				draw_x += col * width;
+				// axial r-change
+				draw_x += row * (width / 2);
+				draw_y += row * height_offset;
 
-					float draw_x = start_x;
-					float draw_y = start_y;
+				color c = color_for_type(grid(col, row));
 
-					// axial q-change
-					draw_x += q * width;
-					// axial r-change
-					draw_x += rr * (width / 2);
-					draw_y += rr * height_offset;
-
-					int dkey1 = (int)round(draw_x * 10000);
-					int dkey2 = (int)round(draw_y * 10000);
-
-					auto key = std::make_pair(dkey1, dkey2);
-					if (taken.count(key) > 0) {
-						auto by = taken[key];
-						std::cout << "ALREADY TAKEN " << dkey1 << " " << dkey2 << "\t" << x
-								<< " " << y << " " << z << "\t" << std::get<0>(by) << " "
-								<< std::get<1>(by) << " " << std::get<2>(by) << std::endl;
-						throw "he";
-					} else {
-						taken[key] = std::make_tuple(x, y, z);
-					}
-
-					color c = color_for_type(grid(x, y, z));
-
-					hex_at(program, draw_x, draw_y, r, c);
-					c = c.mut(0.004f);
-				}
+				hex_at(program, draw_x, draw_y, radius, c);
+				c = c.mut(0.004f);
 			}
 		}
+
+		//// for (int x = -0; x < 1; x++) {
+		//for (int x = -grid.m; x < grid.m; x++) {
+		//	// for (int y = -0; y < 1; y++) {
+		//	for (int y = -grid.m; y < grid.m; y++) {
+		//		for (int z = -grid.m; z < grid.m; z++) {
+		//			if (x + y + z != 0)
+		//				continue;
+
+		//			int q = x;
+		//			int rr = z;
+
+		//			float draw_x = start_x;
+		//			float draw_y = start_y;
+
+		//			// axial q-change
+		//			draw_x += q * width;
+		//			// axial r-change
+		//			draw_x += rr * (width / 2);
+		//			draw_y += rr * height_offset;
+
+		//			color c = color_for_type(grid(x, y, z));
+
+		//			hex_at(program, draw_x, draw_y, r, c);
+		//			c = c.mut(0.004f);
+		//		}
+		//	}
+		//}
 
 		SDL_GL_SwapWindow(window);
 	}
