@@ -28,7 +28,7 @@ public:
 
 	ShaderSource(const ShaderSource&) = delete;
 
-	const GLchar** source() { return source_; }
+	const GLchar** source() { return source_; }    
 
 	GLuint compile(GLenum type) {
 		// TODO - deallocate resources

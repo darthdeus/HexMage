@@ -2,7 +2,10 @@
 
 in vec2 position;
 in vec4 color;
+in vec2 texcoord;
+
 out vec4 Color;
+out vec2 Texcoord;
 
 void main()
 {
