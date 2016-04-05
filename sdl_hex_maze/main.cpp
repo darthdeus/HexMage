@@ -60,56 +60,6 @@ private:
 	std::vector<T> vs;
 }; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
 
-class mat
-{
-	matrix<HexType> data_;
-
-public:
-	int m;
-	int player_x, player_y, player_z;
-	bool player_set = false;
-
-	mat(int m) : data_(2 * m + 1, 2 * m + 1), m(m) {}
-
-	mat(const mat&) = delete;
-
-	HexType& operator()(int row, int col) {
-		// TODO - nema to byt obracene?
-		return data_(row + m, col + m);
-	}
-
-	HexType& operator()(int x, int y, int z) {
-		return data_(x + m, z + m);
-	}
-
-	bool move_player(int x, int y, int z) {
-		if (max(x, max(y, z)) >= m)
-			return false;
-		if ((*this)(x, y, z) == HexType::Wall)
-			return false;
-
-		if (player_set) {
-			(*this)(player_x, player_y, player_z) = HexType::Empty;
-		}
-
-		player_x = x;
-		player_y = y;
-		player_z = z;
-
-		(*this)(x, y, z) = HexType::Player;
-
-		player_set = true;
-		return true;
-	}
-
-	bool step_player(int dx, int dy, int dz) {
-		if (player_set) {
-			return move_player(player_x + dx, player_y + dy, player_z + dz);
-		}
-		return false;
-	}
-};
-
 float rnd() {
 	return rnd(1.0f);
 }
@@ -131,7 +81,7 @@ float rad_for_hex(int i) {
 }
 
 void hex_at(ShaderProgram& program, float x, float y, float r, color c) {
-	VBO vbo{program};
+	VBO vbo{ program };
 
 	vbo.push_vertex(x, y, c);
 
@@ -144,33 +94,85 @@ void hex_at(ShaderProgram& program, float x, float y, float r, color c) {
 
 	vbo.draw(GL_TRIANGLE_FAN);
 }
+class mat
+{
+	matrix<HexType> data_;
+
+public:
+	int m;
+	int player_row = 0, player_col = 0;
+	bool player_set = false;
+
+	mat(int m) : data_(2 * m + 1, 2 * m + 1), m(m) {}
+
+	mat(const mat&) = delete;
+
+	HexType& operator()(int col, int row) {
+		// TODO - nema to byt obracene?
+		return data_(col + m, row + m);
+	}
+
+	HexType& operator()(int x, int y, int z) {
+		// TODO - check this
+		return data_(x + m, z + m);
+	}
+
+	bool move_player(int col, int row) {
+		if (max(std::abs(row), std::abs(col)) >= m)
+			return false;
+		if ((*this)(col, row) == HexType::Wall)
+			return false;
+
+		if (player_set) {
+			(*this)(player_col, player_row) = HexType::Empty;
+		}
+
+		player_row = row;
+		player_col = col;
+
+		(*this)(col, row) = HexType::Player;
+
+		player_set = true;
+		return true;
+	}
+
+	bool step_player(int dcol, int drow) {
+		if (player_set) {
+			return move_player(player_col + dcol, player_row + drow);
+		}
+		return false;
+	}
+};
+
 
 void handlePlayerStep(Sint32 sym, mat& grid) {
 	switch (sym) {
 	case 'a':
-		grid.step_player(-1, 1, 0);
+		grid.step_player(-1, 0);
 		break;
 
 	case 'd':
-		grid.step_player(1, -1, 0);
+		grid.step_player(1, 0);
 		break;
 
 	case 'z':
-		grid.step_player(0, 1, -1);
+		grid.step_player(0, -1);
 		break;
 
 	case 'e':
-		grid.step_player(0, -1, 1);
+		grid.step_player(0, 1);
 		break;
 
 	case 'c':
-		grid.step_player(1, 0, -1);
+		grid.step_player(1, -1);
 		break;
 
 	case 'q':
-		grid.step_player(-1, 0, 1);
+		grid.step_player(-1, 1);
 		break;
 	}
+	std::cout << "col " << grid.player_col << "\trow " << grid.player_row << std::endl;
+
 }
 
 color color_for_type(HexType type) {
@@ -205,10 +207,9 @@ void game_loop(SDL_Window* window) {
 
 	mat grid{5};
 
-	grid.move_player(0, 0, 0);
+	grid.move_player(0, 0);
 	grid(0, 1) = HexType::Wall;
 	grid(0, 2) = HexType::Wall;
-	grid(0, 0) = HexType::Wall;
 
 	SDL_Event windowEvent;
 	while (true) {
