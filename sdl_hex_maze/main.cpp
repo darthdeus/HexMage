@@ -7,6 +7,7 @@
 #include <vector>
 #include <random>
 #include <unordered_map>
+#include <math.h>
 
 #include <glad/glad.h>
 #include <SDL/SDL.h>
@@ -69,16 +70,15 @@ public:
 	mat(const mat&) = delete;
 
 	HexType& operator()(int col, int row) {
-		// TODO - +m nebo +m+1?
-		return data_(col + m, row + m);
+		return data_(col, row);
 	}
 
 	std::pair<float, float>& pos(int col, int row) {
-		return positions_(col + m, row + m);
+		return positions_(col, row);
 	}
 
 	bool move_player(int col, int row) {
-		if (max(std::abs(row), std::abs(col)) >= m)
+		if (fmax(std::abs(row), std::abs(col)) >= m || fmin(row, col) < 0)
 			return false;
 		if ((*this)(col, row) == HexType::Wall)
 			return false;
@@ -154,17 +154,13 @@ void handlePlayerStep(Sint32 sym, mat& grid) {
 }
 
 color color_for_type(HexType type) {
-	color c_wall = {0.1f, 0.03f, 0.1f};
-	color c_empty = {0.4f, 0.2f, 0.4f};
-	color c_player = {0.7f, 0.4f, 0.7f};
-
 	switch (type) {
 		case HexType::Empty:
-			return c_empty;
+			return {0.4f, 0.2f, 0.4f};
 		case HexType::Wall:
-			return c_wall;
+			return {0.1f, 0.03f, 0.1f};
 		case HexType::Player:
-			return c_player;
+			return {0.7f, 0.4f, 0.7f};
 		default:
 			throw "invalid hex type";
 	}
@@ -183,7 +179,7 @@ void game_loop(SDL_Window* window) {
 	ShaderProgram program{"vertex.glsl", "fragment.glsl"};
 	std::cerr << glGetError() << std::endl;
 
-	mat grid{5};
+	mat grid{10};
 
 	grid.move_player(0, 0);
 	grid(0, 1) = HexType::Wall;
@@ -213,15 +209,15 @@ void game_loop(SDL_Window* window) {
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		float start_x = 0;
-		float start_y = 0;
+		float start_x = -0.5f;
+		float start_y = -0.5f;
 
 		float radius = 0.1f;
 		float width = cos(30 * M_PI / 180) * radius * 2;
 		float height_offset = radius + sin(30 * M_PI / 180) * radius;
 
-		for (int row = -grid.m; row < grid.m; ++row) {
-			for (int col = -grid.m; col < grid.m; ++col) {
+		for (int row = 0; row < grid.m; ++row) {
+			for (int col = 0; col < grid.m; ++col) {
 
 				float draw_x = start_x;
 				float draw_y = start_y;
