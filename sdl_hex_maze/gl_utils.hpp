@@ -184,53 +184,5 @@ void push_color(std::vector<float>& v, float r, float g, float b, float a) {
 	v.push_back(a);
 }
 
-// TODO - test this
-struct VBO
-{
-	GLuint buf;
-	std::vector<float> vbo;
-	ShaderProgram& program;
-
-	VBO(ShaderProgram& program) : program{program} {
-		glGenBuffers(1, &buf);
-		glBindBuffer(GL_ARRAY_BUFFER, buf);
-		program.setupAttributes();
-	}
-
-	VBO(const VBO&) = delete;
-
-	~VBO() {
-		glDeleteBuffers(1, &buf);
-	}
-
-	void bufferData() {
-		glBufferData(GL_ARRAY_BUFFER,
-		                            sizeof(float) * vbo.size(),
-		                            vbo.data(), GL_STATIC_DRAW);
-	}
-
-	void push_back(float x) {
-		vbo.push_back(x);
-	}
-
-	void draw(GLenum type) {
-		/*std::cout << "vbo[" << vbo.size() << "]\t";
-		for (int i = 0; i < vbo.size(); i += 6)
-		{
-			std::cout << vbo[i] << "," << vbo[i + 1] << "  ";
-		}
-		std::cout << std::endl;*/
-
-		bufferData();
-		glDrawArrays(type, 0, vbo.size() / 6);
-	}
-
-	void push_vertex(float x, float y, color c) {
-		vbo.push_back(x);
-		vbo.push_back(y);
-		push_color(vbo, c.r, c.g, c.b, c.a);
-	}
-};
-
 #endif
 
