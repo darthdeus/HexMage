@@ -14,150 +14,16 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 
+#include "stopwatch.hpp"
 #include "gl_utils.hpp"
+#include "hex_grid.hpp"
 #include <tgaimage.h>
-
-struct stopwatch
-{
-	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
-
-	stopwatch() {
-		start();
-	}
-
-	void start() {
-		start_ = std::chrono::high_resolution_clock::now();
-	}
-
-	int ms() {
-		auto end = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<std::chrono::milliseconds>(end - start_).count();
-	}
-};
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-enum class HexType
-{
-	Empty = 0,
-	Player,
-	Wall
-};
 
-float rad_for_hex(int i) {
-	float angle_deg = 60 * i + 30;
-	return M_PI / 180 * angle_deg;
-}
-
-void push_vertex(std::vector<float>& vbo, float x, float y, color c) {
-	vbo.push_back(x);
-	vbo.push_back(y);
-	push_color(vbo, c.r, c.g, c.b, c.a);
-}
-
-void hex_at(std::vector<float>& vertices, float x, float y, float r, color c) {
-	float ri;
-	int rot = 0; // 1;
-	for (int i = rot; i < 7 + rot; i++) {
-		push_vertex(vertices, x, y, c);
-
-		ri = rad_for_hex(i - 1);
-		c = c.mut(0.015f);
-		push_vertex(vertices, x + r * cos(ri), y + r * sin(ri), c);
-
-		ri = rad_for_hex(i);
-		c = c.mut(0.015f);
-		push_vertex(vertices, x + r * cos(ri), y + r * sin(ri), c);
-	}
-}
-
-class mat
-{
-	std::size_t mat_dim_;
-	matrix<HexType> data_;
-	matrix<std::pair<float, float>> positions_;
-
-public:
-	int m;
-	int player_row = 0, player_col = 0;
-	bool player_set = false;
-
-	mat(int m)
-		: mat_dim_(m),
-		  data_(mat_dim_, mat_dim_),
-		  positions_(mat_dim_, mat_dim_),
-		  m(m) {
-		// TODO - ugly
-		std::fill(positions_.vs.begin(), positions_.vs.end(),
-		          std::make_pair<float, float>(INFINITY, INFINITY));
-	}
-
-	mat(const mat&) = delete;
-
-	HexType& operator()(int col, int row) {
-		return data_(col, row);
-	}
-
-	std::pair<float, float>& pos(int col, int row) {
-		return positions_(col, row);
-	}
-
-	bool move_player(int col, int row) {
-		if (fmax(std::abs(row), std::abs(col)) >= m || fmin(row, col) < 0)
-			return false;
-		if ((*this)(col, row) == HexType::Wall)
-			return false;
-
-		//if (player_set) {
-		//	(*this)(player_col, player_row) = HexType::Empty;
-		//}
-
-		player_row = row;
-		player_col = col;
-
-		//(*this)(col, row) = HexType::Player;
-
-		player_set = true;
-		return true;
-	}
-
-	bool step_player(int dcol, int drow) {
-		if (player_set) {
-			return move_player(player_col + dcol, player_row + drow);
-		}
-		return false;
-	}
-
-	std::pair<int, int> highlight_near(float rel_x, float rel_y) {
-		int closest_x = 2;
-		int closest_y = 2;
-		float min = INFINITY;
-
-		for (size_t i = 0; i < positions_.m; i++) {
-			for (size_t j = 0; j < positions_.n; j++) {
-				//if ((*this)(i, j) == HexType::Player)
-				//	(*this)(i, j) = HexType::Empty;
-
-				auto pos = positions_(i, j);
-				float d1 = pos.first - rel_x;
-				float d2 = pos.second - rel_y;
-
-				float distance = d1 * d1 + d2 * d2;
-				if (distance < min) {
-					closest_x = j;
-					closest_y = i;
-					min = distance;
-				}
-			}
-		}
-
-		return{ closest_y, closest_x };
-		//(*this)(closest_y, closest_x) = HexType::Player;
-	}
-};
-
-void handlePlayerStep(Sint32 sym, mat& grid) {
+void handlePlayerStep(Sint32 sym, HexGrid& grid) {
 	switch (sym) {
 		case 'a':
 			grid.step_player(-1, 0);
@@ -185,25 +51,22 @@ void handlePlayerStep(Sint32 sym, mat& grid) {
 	}
 }
 
-color color_for_type(HexType type) {
-	switch (type) {
-		case HexType::Empty:
-			return {0.4f, 0.2f, 0.4f};
-		case HexType::Wall:
-			return {0.1f, 0.03f, 0.1f};
-		case HexType::Player:
-			return {0.7f, 0.4f, 0.7f};
-		default:
-			throw "invalid hex type";
-	}
-}
-
 void paint_at(float x, float y, float radius, color color) {
 	std::vector<float> player_vertices;
 	hex_at(player_vertices, x, y, radius, color_for_type(HexType::Player));
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
 	glDrawArrays(GL_TRIANGLES, 0, player_vertices.size() / 3);
 
+}
+
+Coord mouse2gl(Sint32 x, Sint32 y) {
+	float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
+	float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
+
+	rel_y = 2 * (1 - rel_y) - 1;
+	rel_x = 2 * rel_x - 1;
+
+	return{ rel_x, rel_y };
 }
 
 void game_loop(SDL_Window* window) {
@@ -216,42 +79,15 @@ void game_loop(SDL_Window* window) {
 	ShaderProgram program{"vertex.glsl", "fragment.glsl"};
 	std::cerr << glGetError() << std::endl;
 
-	mat grid{30};
+	float radius = 0.1f;
+	
+	HexGrid grid{30};
 
 	grid.move_player(0, 0);
 	grid(0, 1) = HexType::Wall;
 	grid(0, 2) = HexType::Wall;
 
-	float start_x = -0.5f;
-	float start_y = -0.5f;
-
-	float radius = 0.1f;
-	float width = cos(30 * M_PI / 180) * radius * 2;
-	float height_offset = radius + sin(30 * M_PI / 180) * radius;
-
-	std::vector<float> vertices;
-	vertices.reserve(1000);
-
-	for (int row = 0; row < grid.m; ++row) {
-		for (int col = 0; col < grid.m; ++col) {
-			float draw_x = start_x;
-			float draw_y = start_y;
-
-			// axial q-change
-			draw_x += col * width;
-			// axial r-change
-			draw_x += row * (width / 2);
-			draw_y += row * height_offset;
-
-			grid.pos(col, row) = {draw_x, draw_y};
-
-			color c = color_for_type(grid(col, row));
-
-			auto pos = grid.pos(col, row);
-			hex_at(vertices, pos.first, pos.second, radius, c);
-			c = c.mut(0.004f);
-		}
-	}
+	grid.prebuild_VBO(radius);
 
 	stopwatch st;
 	stopwatch st_frame;
@@ -268,16 +104,11 @@ void game_loop(SDL_Window* window) {
 		st_frame.start();
 		st.start();
 
-
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-				float rel_x = static_cast<float>(windowEvent.motion.x) / SCREEN_WIDTH;
-				float rel_y = static_cast<float>(windowEvent.motion.y) / SCREEN_HEIGHT;
-
-				rel_y = 2 * (1 - rel_y) - 1;
-				rel_x = 2 * rel_x - 1;
-
-				highlight_hex = grid.highlight_near(rel_x, rel_y);
+				Coord c = mouse2gl(windowEvent.button.x, windowEvent.button.y);
+				
+				highlight_hex = grid.highlight_near(c);
 			}
 
 			if (windowEvent.type == SDL_QUIT ||
@@ -294,8 +125,8 @@ void game_loop(SDL_Window* window) {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * grid.vertices.size(), grid.vertices.data(), GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, grid.vertices.size() / 3);
 
 		auto player_pos = grid.pos(grid.player_col, grid.player_row);
 		paint_at(player_pos.first, player_pos.second, radius, color_for_type(HexType::Player));
@@ -330,7 +161,6 @@ int main(int argc, char** argv) {
 	game_loop(window);
 
 	SDL_GL_DeleteContext(context);
-	// SDL_Delay(1000);
 	SDL_Quit();
 
 	return 0;

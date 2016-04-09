@@ -108,6 +108,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\dev\game\sdl_hex_maze\sdl_hex_maze\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,6 +162,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
+    <ClCompile Include="gl_utils.cpp" />
+    <ClCompile Include="hex_grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="tgaimage.cpp" />
@@ -171,8 +174,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_utils.hpp" />
+    <ClInclude Include="hex_grid.hpp" />
     <ClInclude Include="include\tgaimage.h" />
     <ClInclude Include="PerlinNoise.hpp" />
+    <ClInclude Include="stopwatch.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
