@@ -305,7 +305,7 @@ void game_loop(SDL_Window* window) {
 
 		SDL_GL_SwapWindow(window);
 
-		std::cout << "Frame: " << st_frame.ms() << "ms" << std::endl;
+		// std::cout << "Frame: " << st_frame.ms() << "ms" << std::endl;
 	}
 }
 
