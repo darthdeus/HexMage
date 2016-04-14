@@ -1,6 +1,11 @@
 #ifndef MOB_HPP
 #define MOB_HPP
 
+// For some reason this will cause the include of windef.h, which in turn
+// defines min/max macros in the global namespace, which will clash
+// with the std::min/max functions.
+#define NOMINMAX
+
 #include <algorithm>
 #include <assert.h>
 #include <vector>
@@ -31,10 +36,6 @@ struct stopwatch
 
 namespace model
 {
-	// TODO - fuj, ale co s tim jinyho udelat?
-#undef min
-#undef max
-
 	enum class HexType
 	{
 		Empty = 0,
