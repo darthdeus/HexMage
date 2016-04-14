@@ -53,91 +53,6 @@ void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c)
 	}
 }
 
-class mat
-{
-	std::size_t mat_dim_;
-	matrix<model::HexType> data_;
-	matrix<std::pair<float, float>> positions_;
-
-public:
-	int m;
-	int player_row = 0, player_col = 0;
-	bool player_set = false;
-
-	mat(int m)
-		: mat_dim_(m),
-		  data_(mat_dim_, mat_dim_),
-		  positions_(mat_dim_, mat_dim_),
-		  m(m) {
-		// TODO - ugly
-		std::fill(positions_.vs.begin(), positions_.vs.end(),
-		          std::make_pair<float, float>(INFINITY, INFINITY));
-	}
-
-	mat(const mat&) = delete;
-
-	model::HexType& operator()(int col, int row) {
-		return data_(col, row);
-	}
-
-	std::pair<float, float>& pos(int col, int row) {
-		return positions_(col, row);
-	}
-
-	bool move_player(int col, int row) {
-		if (fmax(std::abs(row), std::abs(col)) >= m || fmin(row, col) < 0)
-			return false;
-		if ((*this)(col, row) == model::HexType::Wall)
-			return false;
-
-		//if (player_set) {
-		//	(*this)(player_col, player_row) = HexType::Empty;
-		//}
-
-		player_row = row;
-		player_col = col;
-
-		//(*this)(col, row) = HexType::Player;
-
-		player_set = true;
-		return true;
-	}
-
-	bool step_player(int dcol, int drow) {
-		if (player_set) {
-			return move_player(player_col + dcol, player_row + drow);
-		}
-		return false;
-	}
-
-	std::pair<int, int> highlight_near(float rel_x, float rel_y) {
-		int closest_x = 2;
-		int closest_y = 2;
-		float min = INFINITY;
-
-		for (size_t i = 0; i < positions_.m; i++) {
-			for (size_t j = 0; j < positions_.n; j++) {
-				//if ((*this)(i, j) == HexType::Player)
-				//	(*this)(i, j) = HexType::Empty;
-
-				auto pos = positions_(i, j);
-				float d1 = pos.first - rel_x;
-				float d2 = pos.second - rel_y;
-
-				float distance = d1 * d1 + d2 * d2;
-				if (distance < min) {
-					closest_x = static_cast<int>(j);
-					closest_y = static_cast<int>(i);
-					min = distance;
-				}
-			}
-		}
-
-		return {closest_y, closest_x};
-		//(*this)(closest_y, closest_x) = HexType::Player;
-	}
-};
-
 void handlePlayerStep(Sint32 sym, model::GameInstance& game, model::Mob& player) {
 	switch (sym) {
 		case 'a':
@@ -301,20 +216,26 @@ int main(int argc, char** argv) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
-	// TODO - error handling
 	SDL_Window* window = SDL_CreateWindow(
 		"OpenGL", 300, 300, // TODO - better default screen position
 		SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
-	// TODO - error handling
+	if (window == nullptr) {
+		std::cerr << "Unable to initialize SDL_Window, exiting." << std::endl;
+		return 1;
+	}
+
 	SDL_GLContext context = SDL_GL_CreateContext(window);
+	if (context == nullptr) {
+		std::cerr << "Unable to initialize OpenGL context, exiting." << std::endl;
+		return 1;
+	}
 
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
 
 	game_loop(window);
 
 	SDL_GL_DeleteContext(context);
-	// SDL_Delay(1000);
 	SDL_Quit();
 
 	return 0;
