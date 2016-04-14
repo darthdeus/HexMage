@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <math.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <glad/glad.h>
 #include <SDL/SDL.h>
@@ -146,8 +148,9 @@ void game_loop(SDL_Window* window) {
 	std::vector<float> vertices;
 	vertices.reserve(1000);
 
-	for (int row = 0; row < game.size; ++row) {
-		for (int col = 0; col < game.size; ++col) {
+  int isize = static_cast<int>(game.size);
+	for (int row = 0; row < isize; ++row) {
+		for (int col = 0; col < isize; ++col) {
 			float draw_x = start_x;
 			float draw_y = start_y;
 
@@ -177,6 +180,12 @@ void game_loop(SDL_Window* window) {
 
 	model::Coord highlight_hex;
 
+  float tx = 0;
+  float ty = 0;
+
+  float rel_x = 0;
+  float rel_y = 0;
+
 	SDL_Event windowEvent;
 	while (true) {
 		st_frame.start();
@@ -184,13 +193,16 @@ void game_loop(SDL_Window* window) {
 
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-				float rel_x = static_cast<float>(windowEvent.motion.x) / SCREEN_WIDTH;
-				float rel_y = static_cast<float>(windowEvent.motion.y) / SCREEN_HEIGHT;
+				rel_x = static_cast<float>(windowEvent.motion.x) / SCREEN_WIDTH;
+				rel_y = static_cast<float>(windowEvent.motion.y) / SCREEN_HEIGHT;
 
 				rel_y = 2 * (1 - rel_y) - 1;
 				rel_x = 2 * rel_x - 1;
 
-				highlight_hex = arena.highlight_near({rel_x, rel_y});
+        tx = -rel_x;
+        ty = -rel_y;
+
+				highlight_hex = arena.highlight_near({rel_x - tx, rel_y - ty});
 			}
 
 			if (windowEvent.type == SDL_QUIT ||
@@ -202,6 +214,11 @@ void game_loop(SDL_Window* window) {
 				handlePlayerStep(windowEvent.key.keysym.sym, game, player);
 			}
 		}
+
+    glm::mat4 mov = glm::translate(glm::mat4(1.0f), glm::vec3(tx, ty, 0));
+
+    GLint uniTrans = glGetUniformLocation(program.shaderProgram, "trans");
+    glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(mov));
 
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
