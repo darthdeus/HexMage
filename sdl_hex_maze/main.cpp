@@ -16,24 +16,7 @@
 
 #include "gl_utils.hpp"
 #include <tgaimage.h>
-
-struct stopwatch
-{
-	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
-
-	stopwatch() {
-		start();
-	}
-
-	void start() {
-		start_ = std::chrono::high_resolution_clock::now();
-	}
-
-	int ms() {
-		auto end = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<std::chrono::milliseconds>(end - start_).count();
-	}
-};
+#include "mob.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -207,6 +190,11 @@ void paint_at(float x, float y, float radius, color color) {
 }
 
 void game_loop(SDL_Window* window) {
+	DummySimulation sim;
+	sim.run();
+
+	return;
+
 	// TODO - proc tohle nefunguje?
 	// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
 

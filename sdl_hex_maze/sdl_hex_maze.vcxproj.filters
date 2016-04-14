@@ -49,5 +49,8 @@
     <ClInclude Include="include\tgaimage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mob.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
