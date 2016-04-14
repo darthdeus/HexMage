@@ -9,6 +9,8 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+#include <glm/glm.hpp>
+
 #include "stopwatch.hpp"
 
 namespace model
@@ -30,9 +32,7 @@ namespace model
 		int z;
 
 		Cube(): x(0), y(0), z(0) {}
-
 		Cube(const Coord& axial);
-
 		Cube(int x, int y, int z): x(x), y(y), z(z) {}
 
 		operator Coord() const;
@@ -47,9 +47,7 @@ namespace model
 		int y;
 
 		Coord(): x(0), y(0) {}
-
 		Coord(const Cube& cube);
-
 		Coord(int x, int y): x(x), y(y) {}
 
 		operator Cube() const;
@@ -73,7 +71,7 @@ namespace model
 		float y;
 
 		Position() : x(INFINITY), y(INFINITY) {}
-
+    Position(const glm::vec2& v): x(v.x), y(v.y) {}
 		Position(float x, float y): x(x), y(y) {}
 
 		float distance() const;

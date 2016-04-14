@@ -180,11 +180,10 @@ void game_loop(SDL_Window* window) {
 
 	model::Coord highlight_hex;
 
-  float tx = 0;
-  float ty = 0;
+  using namespace glm;
 
-  float rel_x = 0;
-  float rel_y = 0;
+  vec2 translate;
+  vec2 rel_mouse;
 
 	SDL_Event windowEvent;
 	while (true) {
@@ -193,16 +192,15 @@ void game_loop(SDL_Window* window) {
 
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-				rel_x = static_cast<float>(windowEvent.motion.x) / SCREEN_WIDTH;
-				rel_y = static_cast<float>(windowEvent.motion.y) / SCREEN_HEIGHT;
+				rel_mouse.x = static_cast<float>(windowEvent.motion.x) / SCREEN_WIDTH;
+				rel_mouse.y = static_cast<float>(windowEvent.motion.y) / SCREEN_HEIGHT;
 
-				rel_y = 2 * (1 - rel_y) - 1;
-				rel_x = 2 * rel_x - 1;
+				rel_mouse.y = 2 * (1 - rel_mouse.y) - 1;
+				rel_mouse.x = 2 * rel_mouse.x - 1;
 
-        tx = -rel_x;
-        ty = -rel_y;
+        translate = -rel_mouse;
 
-				highlight_hex = arena.highlight_near({rel_x - tx, rel_y - ty});
+				highlight_hex = arena.highlight_near(rel_mouse - translate);
 			}
 
 			if (windowEvent.type == SDL_QUIT ||
@@ -215,7 +213,7 @@ void game_loop(SDL_Window* window) {
 			}
 		}
 
-    glm::mat4 mov = glm::translate(glm::mat4(1.0f), glm::vec3(tx, ty, 0));
+    glm::mat4 mov = glm::translate(mat4(1.0f), vec3(translate, 0));
 
     GLint uniTrans = glGetUniformLocation(program.shaderProgram, "trans");
     glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(mov));
