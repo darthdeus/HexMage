@@ -1,8 +1,11 @@
-sdl_hex_maze/Debug/
-sdl_hex_maze.opensdf
-sdl_hex_maze.sdf
-sdl_hex_maze/x64/
+s*.opensdf
+*.sdf
 *.db
 .vscode/
-sdl_hex_maze/My Amplifier XE Results - sdl_hex_maze/
 *.opendb
+*.ipdb
+x64/
+
+sdl_hex_maze/Debug/
+sdl_hex_maze/x64/
+sdl_hex_maze/My Amplifier XE Results - sdl_hex_maze/

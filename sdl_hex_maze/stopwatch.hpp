@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STOPWATCH_HPP
+#define STOPWATCH_HPP
 
 #include <chrono>
 
@@ -14,8 +15,10 @@ struct stopwatch
 		start_ = std::chrono::high_resolution_clock::now();
 	}
 
-	int ms() {
+	int ms() const {
 		auto end = std::chrono::high_resolution_clock::now();
 		return std::chrono::duration_cast<std::chrono::milliseconds>(end - start_).count();
 	}
 };
+
+#endif
