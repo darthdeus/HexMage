@@ -175,6 +175,7 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="mob.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
     <ClCompile Include="tgaimage.cpp" />
   </ItemGroup>

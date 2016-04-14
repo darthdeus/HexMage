@@ -1,3 +1,8 @@
+// Some of the includes include windef.h, which in turn
+// defines min/max macros in the global namespace, which will clash
+// with the std::min/max functions.
+#define NOMINMAX
+
 #include <algorithm>
 #include <string>
 #include <cmath>
@@ -21,15 +26,8 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-enum class HexType
-{
-	Empty = 0,
-	Player,
-	Wall
-};
-
 float rad_for_hex(int i) {
-	float angle_deg = 60 * i + 30;
+	float angle_deg = static_cast<float>(60 * i + 30);
 	return M_PI / 180 * angle_deg;
 }
 
@@ -39,26 +37,26 @@ void push_vertex(std::vector<float>& vbo, float x, float y, color c) {
 	push_color(vbo, c.r, c.g, c.b, c.a);
 }
 
-void hex_at(std::vector<float>& vertices, float x, float y, float r, color c) {
+void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c) {
 	float ri;
 	int rot = 0; // 1;
 	for (int i = rot; i < 7 + rot; i++) {
-		push_vertex(vertices, x, y, c);
+		push_vertex(vertices, pos.x, pos.y, c);
 
 		ri = rad_for_hex(i - 1);
 		c = c.mut(0.015f);
-		push_vertex(vertices, x + r * cos(ri), y + r * sin(ri), c);
+		push_vertex(vertices, pos.x + r * cos(ri), pos.y + r * sin(ri), c);
 
 		ri = rad_for_hex(i);
 		c = c.mut(0.015f);
-		push_vertex(vertices, x + r * cos(ri), y + r * sin(ri), c);
+		push_vertex(vertices, pos.x + r * cos(ri), pos.y + r * sin(ri), c);
 	}
 }
 
 class mat
 {
 	std::size_t mat_dim_;
-	matrix<HexType> data_;
+	matrix<model::HexType> data_;
 	matrix<std::pair<float, float>> positions_;
 
 public:
@@ -78,7 +76,7 @@ public:
 
 	mat(const mat&) = delete;
 
-	HexType& operator()(int col, int row) {
+	model::HexType& operator()(int col, int row) {
 		return data_(col, row);
 	}
 
@@ -89,7 +87,7 @@ public:
 	bool move_player(int col, int row) {
 		if (fmax(std::abs(row), std::abs(col)) >= m || fmin(row, col) < 0)
 			return false;
-		if ((*this)(col, row) == HexType::Wall)
+		if ((*this)(col, row) == model::HexType::Wall)
 			return false;
 
 		//if (player_set) {
@@ -128,47 +126,48 @@ public:
 
 				float distance = d1 * d1 + d2 * d2;
 				if (distance < min) {
-					closest_x = j;
-					closest_y = i;
+					closest_x = static_cast<int>(j);
+					closest_y = static_cast<int>(i);
 					min = distance;
 				}
 			}
 		}
 
-		return{ closest_y, closest_x };
+		return {closest_y, closest_x};
 		//(*this)(closest_y, closest_x) = HexType::Player;
 	}
 };
 
-void handlePlayerStep(Sint32 sym, mat& grid) {
+void handlePlayerStep(Sint32 sym, model::GameInstance& game, model::Mob& player) {
 	switch (sym) {
 		case 'a':
-			grid.step_player(-1, 0);
+			player.move(game.arena, { -1, 0 });
 			break;
 
 		case 'd':
-			grid.step_player(1, 0);
+			player.move(game.arena, { 1, 0 });
 			break;
 
 		case 'z':
-			grid.step_player(0, -1);
+			player.move(game.arena, { 0, -1 });
 			break;
 
 		case 'e':
-			grid.step_player(0, 1);
+			player.move(game.arena, { 0, 1 });
 			break;
 
 		case 'c':
-			grid.step_player(1, -1);
+			player.move(game.arena, { 1, -1 });
 			break;
 
 		case 'q':
-			grid.step_player(-1, 1);
+			player.move(game.arena, { -1, 1 });
 			break;
 	}
 }
 
-color color_for_type(HexType type) {
+color color_for_type(model::HexType type) {
+	using namespace model;
 	switch (type) {
 		case HexType::Empty:
 			return {0.4f, 0.2f, 0.4f};
@@ -181,34 +180,31 @@ color color_for_type(HexType type) {
 	}
 }
 
-void paint_at(float x, float y, float radius, color color) {
+void paint_at(model::Position pos, float radius, color color) {
 	std::vector<float> player_vertices;
-	hex_at(player_vertices, x, y, radius, color_for_type(HexType::Player));
+	hex_at(player_vertices, pos, radius, color_for_type(model::HexType::Player));
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
 	glDrawArrays(GL_TRIANGLES, 0, player_vertices.size() / 3);
 
 }
 
 void game_loop(SDL_Window* window) {
-	DummySimulation sim;
-	sim.run();
-
-	return;
-
 	// TODO - proc tohle nefunguje?
 	// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
+	using namespace model;
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
 	ShaderProgram program{"vertex.glsl", "fragment.glsl"};
 	std::cerr << glGetError() << std::endl;
 
-	mat grid{30};
+	GameInstance game(30);
+	Arena& arena = game.arena;
+	PlayerInfo& info = game.info;
 
-	grid.move_player(0, 0);
-	grid(0, 1) = HexType::Wall;
-	grid(0, 2) = HexType::Wall;
+	Mob& player = game.info.add_mob(generator::random_mob());	
 
 	float start_x = -0.5f;
 	float start_y = -0.5f;
@@ -220,8 +216,8 @@ void game_loop(SDL_Window* window) {
 	std::vector<float> vertices;
 	vertices.reserve(1000);
 
-	for (int row = 0; row < grid.m; ++row) {
-		for (int col = 0; col < grid.m; ++col) {
+	for (int row = 0; row < game.size; ++row) {
+		for (int col = 0; col < game.size; ++col) {
 			float draw_x = start_x;
 			float draw_y = start_y;
 
@@ -231,12 +227,12 @@ void game_loop(SDL_Window* window) {
 			draw_x += row * (width / 2);
 			draw_y += row * height_offset;
 
-			grid.pos(col, row) = {draw_x, draw_y};
+			arena.pos({ col, row }) = { draw_x, draw_y };
 
-			color c = color_for_type(grid(col, row));
+			color c = color_for_type(arena({ col, row }));
 
-			auto pos = grid.pos(col, row);
-			hex_at(vertices, pos.first, pos.second, radius, c);
+			auto pos = arena.pos({ col, row });
+			hex_at(vertices, pos, radius, c);
 			c = c.mut(0.004f);
 		}
 	}
@@ -249,8 +245,8 @@ void game_loop(SDL_Window* window) {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	program.setupAttributes();
 
-	std::pair<int, int> highlight_hex;
-	
+	Coord highlight_hex;
+
 	SDL_Event windowEvent;
 	while (true) {
 		st_frame.start();
@@ -265,7 +261,7 @@ void game_loop(SDL_Window* window) {
 				rel_y = 2 * (1 - rel_y) - 1;
 				rel_x = 2 * rel_x - 1;
 
-				highlight_hex = grid.highlight_near(rel_x, rel_y);
+				highlight_hex = arena.highlight_near({ rel_x, rel_y });
 			}
 
 			if (windowEvent.type == SDL_QUIT ||
@@ -274,22 +270,22 @@ void game_loop(SDL_Window* window) {
 				return;
 
 			if (windowEvent.type == SDL_KEYDOWN) {
-				handlePlayerStep(windowEvent.key.keysym.sym, grid);
+				handlePlayerStep(windowEvent.key.keysym.sym, game, player);
 			}
 		}
 
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		
+
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
 
-		auto player_pos = grid.pos(grid.player_col, grid.player_row);
-		paint_at(player_pos.first, player_pos.second, radius, color_for_type(HexType::Player));
-		
-		auto highlight_pos = grid.pos(highlight_hex.first, highlight_hex.second);
-		paint_at(highlight_pos.first, highlight_pos.second, radius, color_for_type(HexType::Wall));
+		auto player_pos = arena.pos(player.c);
+		paint_at(player_pos, radius, color_for_type(HexType::Player));
+
+		auto highlight_pos = arena.pos(highlight_hex);
+		paint_at(highlight_pos, radius, color_for_type(HexType::Wall));
 
 		SDL_GL_SwapWindow(window);
 

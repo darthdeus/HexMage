@@ -1,11 +1,6 @@
 #ifndef MOB_HPP
 #define MOB_HPP
 
-// For some reason this will cause the include of windef.h, which in turn
-// defines min/max macros in the global namespace, which will clash
-// with the std::min/max functions.
-#define NOMINMAX
-
 #include <algorithm>
 #include <assert.h>
 #include <vector>
@@ -39,63 +34,72 @@ namespace model
 	enum class HexType
 	{
 		Empty = 0,
-		Wall
+		Wall,
+		Player
 	};
 
-  struct Coord;
-  struct Cube;
+	struct Coord;
+	struct Cube;
 
-  struct Cube {
-    int x;
-    int y;
-    int z;
+	struct Cube
+	{
+		int x;
+		int y;
+		int z;
 
-    Cube(): x(0), y(0), z(0) {}
-    Cube(const Coord& axial);
-    Cube(int x, int y, int z): x(x), y(y), z(z) {}
+		Cube(): x(0), y(0), z(0) {}
 
-    operator Coord() const;
-    Cube abs() const;
-    int min() const;
-    int max() const;
-  };
+		Cube(const Coord& axial);
 
-  struct Coord {
-    int x;
-    int y;
+		Cube(int x, int y, int z): x(x), y(y), z(z) {}
 
-    Coord(): x(0), y(0) {}
-    Coord(const Cube& cube);
-    Coord(int x, int y): x(x), y(y) {}
+		operator Coord() const;
+		Cube abs() const;
+		int min() const;
+		int max() const;
+	};
 
-    operator Cube() const;
-    Coord abs() const;
-    int min() const;
-    int max() const;
+	struct Coord
+	{
+		int x;
+		int y;
 
-    int distance() const;
-  };
+		Coord(): x(0), y(0) {}
 
-  Coord operator+(const Coord& lhs, const Coord& rhs);
-  Coord operator-(const Coord& lhs, const Coord& rhs);
-  bool operator==(const Coord& lhs, const Coord& rhs);
-  std::ostream& operator<<(std::ostream& os, const Coord& c);
+		Coord(const Cube& cube);
+
+		Coord(int x, int y): x(x), y(y) {}
+
+		operator Cube() const;
+		Coord abs() const;
+		int min() const;
+		int max() const;
+
+		int distance() const;
+	};
+
+	Coord operator+(const Coord& lhs, const Coord& rhs);
+	Coord operator-(const Coord& lhs, const Coord& rhs);
+	bool operator==(const Coord& lhs, const Coord& rhs);
+	std::ostream& operator<<(std::ostream& os, const Coord& c);
 
 	constexpr int ABILITY_COUNT = 6;
 
-  struct Position {
-    float x;
-    float y;
+	struct Position
+	{
+		float x;
+		float y;
 
-    Position() : x(INFINITY), y(INFINITY) {}
-    Position(float x, float y): x(x), y(y) {}
+		Position() : x(INFINITY), y(INFINITY) {}
 
-    float distance() const;
-  };
+		Position(float x, float y): x(x), y(y) {}
 
-  Position operator+(const Position& lhs, const Position& rhs);
-  Position operator-(const Position& lhs, const Position& rhs);
-  bool operator==(const Position& lhs, const Position& rhs);
+		float distance() const;
+	};
+
+	Position operator+(const Position& lhs, const Position& rhs);
+	Position operator-(const Position& lhs, const Position& rhs);
+	bool operator==(const Position& lhs, const Position& rhs);
 
 	template <typename T>
 	struct Matrix
@@ -105,11 +109,17 @@ namespace model
 		std::vector<T> vs;
 
 		Matrix(std::size_t m, std::size_t n) : m(m), n(n), vs(m * n) {}
-    // Create a matrix that can contain data for a hex with radius `size`
-    Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
 
-		T& operator()(std::size_t i, std::size_t j) { return vs[n * i + j]; }
-    T& operator()(const Coord& c) { return vs[n * c.y + c.x]; }
+		// Create a matrix that can contain data for a hex with radius `size`
+		Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
+
+		T& operator()(std::size_t i, std::size_t j) {
+			return vs[n * i + j];
+		}
+
+		T& operator()(const Coord& c) {
+			return vs[n * c.y + c.x];
+		}
 
 	private:
 	}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
@@ -135,19 +145,24 @@ namespace model
 	{
 	public:
 		std::size_t size;
-    Matrix<HexType> hexes;
-    Matrix<Position> positions;
+		Matrix<HexType> hexes;
+		Matrix<Position> positions;
 
 		Arena(std::size_t size) : size(size), hexes(size), positions(size) {}
 
 		bool is_valid_coord(const Coord& c) const {
-      return static_cast<std::size_t>(c.abs().max()) <= size;
+			return static_cast<std::size_t>(c.abs().max()) < size && c.min() >= 0;
 		}
 
-    HexType& operator()(Coord c) { return hexes(c); }
-    Position& pos(Coord c) { return positions(c); }
+		HexType& operator()(Coord c) {
+			return hexes(c);
+		}
 
-    Coord highlight_near(Position pos);
+		Position& pos(Coord c) {
+			return positions(c);
+		}
+
+		Coord highlight_near(Position pos);
 	};
 
 	class Mob
@@ -162,7 +177,7 @@ namespace model
 
 		abilities_t abilities;
 
-    Coord c;
+		Coord c;
 
 		Mob(int max_hp, int max_ap, abilities_t abilities)
 			: max_hp(max_hp),
@@ -186,7 +201,7 @@ namespace model
 
 		void move(Arena& arena, Coord d) {
 			if (arena.is_valid_coord(c + d)) {
-        c = c + d;
+				c = c + d;
 				ap -= d.distance(); // TODO - better calculation
 			}
 		}
@@ -198,7 +213,6 @@ namespace model
 		HexType type;
 	};
 
-
 	class PlayerInfo
 	{
 	public:
@@ -207,8 +221,9 @@ namespace model
 
 		PlayerInfo(std::size_t size) : size(size) {}
 
-		void add_mob(Mob mob) {
+		Mob& add_mob(Mob mob) {
 			mobs.push_back(mob);
+			return mobs.back();
 		}
 
 		Mob& mob_at(Coord c) {
@@ -226,12 +241,13 @@ namespace model
 	class GameInstance
 	{
 	public:
-		Arena& arena;
-		PlayerInfo& info;
+		Arena arena;
+		PlayerInfo info;
+		std::size_t size;
 
-		GameInstance(Arena& arena, PlayerInfo& info) : arena(arena), info(info) {}
+		GameInstance(std::size_t size) : arena(size), info(size), size(size) {}
 
-		std::vector<Mob*> start_turn() const {
+		std::vector<Mob*> start_turn() {
 			std::vector<Mob*> mobs;
 			for (auto& mob : info.mobs) {
 				mob.ap = std::min(mob.ap, mob.ap + mob.max_ap);
@@ -247,6 +263,13 @@ namespace model
 	};
 }
 
+constexpr int ABILITY_COUNT = 6;
+
+namespace generator
+{
+	model::Mob random_mob();
+}
+
 class DummySimulation
 {
 public:
@@ -255,23 +278,15 @@ public:
 
 		std::random_device rd;
 		std::mt19937 gen(rd());
-		std::uniform_int_distribution<int> dis(-10, 10);
-		std::uniform_int_distribution<int> cost_dis(3, 7);
-
-		Mob::abilities_t abilities;
-		for (int i = 0; i < ABILITY_COUNT; ++i) {
-			abilities.emplace_back(dis(gen), dis(gen), cost_dis(gen));
-		}
 
 		std::size_t map_size = 3;
 
-		Arena arena(map_size);
-		PlayerInfo info(map_size);
+		GameInstance game(map_size);
 
-		GameInstance game(arena, info);
+		Arena& arena = game.arena;
+		PlayerInfo& info = game.info;
 
-		Mob main_mob(10, 10, abilities);
-		info.add_mob(main_mob);
+		info.add_mob(generator::random_mob());
 
 		constexpr int SIM_TIME = 100000000;
 
