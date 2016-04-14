@@ -35,6 +35,44 @@ namespace model
 #undef min
 #undef max
 
+  struct Coord;
+  struct Cube;
+
+  struct Cube {
+    int x;
+    int y;
+    int z;
+
+    Cube(): x(0), y(0), z(0) {}
+    Cube(const Coord& axial);
+    Cube(int x, int y, int z): x(x), y(y), z(z) {}
+
+    operator Coord() const;
+    Cube abs() const;
+    int min() const;
+    int max() const;
+  };
+
+  struct Coord {
+    int x;
+    int y;
+
+    Coord(): x(0), y(0) {}
+    Coord(const Cube& cube);
+    Coord(int x, int y): x(x), y(y) {}
+
+    operator Cube() const;
+    Coord abs() const;
+    int min() const;
+    int max() const;
+
+    int distance() const;
+  };
+
+  Coord operator+(const Coord& lhs, const Coord& rhs);
+  Coord operator-(const Coord& lhs, const Coord& rhs);
+  bool operator==(const Coord& lhs, const Coord& rhs);
+  std::ostream& operator<<(std::ostream& os, const Coord& c);
 
 	constexpr int ABILITY_COUNT = 6;
 
@@ -78,8 +116,8 @@ namespace model
 
 		Arena(std::size_t size) : size(size) {}
 
-		bool is_valid_coord(int x, int y) const {
-			return std::max(std::abs(x), std::abs(y)) <= size;
+		bool is_valid_coord(const Coord& c) const {
+      return static_cast<std::size_t>(c.abs().max()) <= size;
 		}
 	};
 
@@ -95,9 +133,7 @@ namespace model
 
 		abilities_t abilities;
 
-		// TODO - fuj
-		int x = 0;
-		int y = 0;
+    Coord c;
 
 		Mob(int max_hp, int max_ap, abilities_t abilities)
 			: max_hp(max_hp),
@@ -119,11 +155,10 @@ namespace model
 			}
 		}
 
-		void move(Arena& arena, int dx, int dy) {
-			if (arena.is_valid_coord(x + dx, y + dy)) {
-				x += dx;
-				y += dy;
-				ap -= std::abs(dx) + std::abs(dy); // TODO - better calculation
+		void move(Arena& arena, Coord d) {
+			if (arena.is_valid_coord(c + d)) {
+        c = c + d;
+				ap -= d.distance(); // TODO - better calculation
 			}
 		}
 	};
@@ -153,14 +188,14 @@ namespace model
 			mobs.push_back(mob);
 		}
 
-		Mob& mob_at(int x, int y) {
+		Mob& mob_at(Coord c) {
 			for (auto& m : mobs) {
-				if (m.x == x && m.y == y) {
+				if (m.c == c) {
 					return m;
 				}
 			}
 
-			std::cerr << "Mob not found at " << x << "," << y << std::endl;
+			std::cerr << "Mob not found at " << c << std::endl;
 			throw "Mob not found";
 		}
 	};
@@ -217,7 +252,7 @@ public:
 
 		constexpr int SIM_TIME = 100000000;
 
-		Mob& player = info.mob_at(0, 0);
+		Mob& player = info.mob_at({0, 0});
 
 		std::uniform_int_distribution<int> action_dis(0, 6);
 		std::uniform_int_distribution<int> move_dis(-2, 2);
@@ -233,7 +268,7 @@ public:
 
 				// Take a random step
 				if (roll == 0) {
-					mob->move(arena, move_dis(gen), move_dis(gen));
+					mob->move(arena, {move_dis(gen), move_dis(gen)});
 				} else {
 					// Use a random ability
 					mob->use_ability(roll - 1, Target{});
