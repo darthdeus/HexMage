@@ -1,11 +1,11 @@
-s*.opensdf
+.vscode/
+
+*.opensdf
 *.sdf
 *.db
-.vscode/
 *.opendb
 *.ipdb
-x64/
 
-sdl_hex_maze/Debug/
-sdl_hex_maze/x64/
-sdl_hex_maze/My Amplifier XE Results - sdl_hex_maze/
+Debug/
+x64/
+My Amplifier XE Results*
