@@ -209,8 +209,10 @@ void game_loop(SDL_Window* window) {
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
 
-		auto player_pos = arena.pos(player.c);
-		paint_at(player_pos, radius, color_for_type(HexType::Player));
+		for (auto& mob : info.mobs) {
+			auto pos = arena.pos(mob.c);
+			paint_at(pos, radius, color_for_type(HexType::Player));
+		}
 
 		auto highlight_pos = arena.pos(highlight_hex);
 		paint_at(highlight_pos, radius, color_for_type(HexType::Wall));
