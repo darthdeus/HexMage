@@ -35,6 +35,12 @@ namespace model
 #undef min
 #undef max
 
+	enum class HexType
+	{
+		Empty = 0,
+		Wall
+	};
+
   struct Coord;
   struct Cube;
 
@@ -76,6 +82,20 @@ namespace model
 
 	constexpr int ABILITY_COUNT = 6;
 
+  struct Position {
+    float x;
+    float y;
+
+    Position() : x(INFINITY), y(INFINITY) {}
+    Position(float x, float y): x(x), y(y) {}
+
+    float distance() const;
+  };
+
+  Position operator+(const Position& lhs, const Position& rhs);
+  Position operator-(const Position& lhs, const Position& rhs);
+  bool operator==(const Position& lhs, const Position& rhs);
+
 	template <typename T>
 	struct Matrix
 	{
@@ -84,10 +104,11 @@ namespace model
 		std::vector<T> vs;
 
 		Matrix(std::size_t m, std::size_t n) : m(m), n(n), vs(m * n) {}
+    // Create a matrix that can contain data for a hex with radius `size`
+    Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
 
-		T& operator()(std::size_t i, std::size_t j) {
-			return vs[n * i + j];
-		}
+		T& operator()(std::size_t i, std::size_t j) { return vs[n * i + j]; }
+    T& operator()(const Coord& c) { return vs[n * c.y + c.x]; }
 
 	private:
 	}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
@@ -113,12 +134,19 @@ namespace model
 	{
 	public:
 		std::size_t size;
+    Matrix<HexType> hexes;
+    Matrix<Position> positions;
 
-		Arena(std::size_t size) : size(size) {}
+		Arena(std::size_t size) : size(size), hexes(size), positions(size) {}
 
 		bool is_valid_coord(const Coord& c) const {
       return static_cast<std::size_t>(c.abs().max()) <= size;
 		}
+
+    HexType& operator()(Coord c) { return hexes(c); }
+    Position& pos(Coord c) { return positions(c); }
+
+    Coord highlight_near(Position pos);
 	};
 
 	class Mob
@@ -161,12 +189,6 @@ namespace model
 				ap -= d.distance(); // TODO - better calculation
 			}
 		}
-	};
-
-	enum class HexType
-	{
-		Empty = 0,
-		Wall
 	};
 
 	class Hex
@@ -252,7 +274,7 @@ public:
 
 		constexpr int SIM_TIME = 100000000;
 
-		Mob& player = info.mob_at({0, 0});
+		// Mob& player = info.mob_at({0, 0});
 
 		std::uniform_int_distribution<int> action_dis(0, 6);
 		std::uniform_int_distribution<int> move_dis(-2, 2);
