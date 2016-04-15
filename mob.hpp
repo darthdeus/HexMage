@@ -31,9 +31,9 @@ namespace model
 		int y;
 		int z;
 
-		Cube(): x(0), y(0), z(0) {}
+		Cube() : x(0), y(0), z(0) {}
 		Cube(const Coord& axial);
-		Cube(int x, int y, int z): x(x), y(y), z(z) {}
+		Cube(int x, int y, int z) : x(x), y(y), z(z) {}
 
 		operator Coord() const;
 		Cube abs() const;
@@ -46,9 +46,9 @@ namespace model
 		int x;
 		int y;
 
-		Coord(): x(0), y(0) {}
+		Coord() : x(0), y(0) {}
 		Coord(const Cube& cube);
-		Coord(int x, int y): x(x), y(y) {}
+		Coord(int x, int y) : x(x), y(y) {}
 
 		operator Cube() const;
 		Coord abs() const;
@@ -71,15 +71,24 @@ namespace model
 		float y;
 
 		Position() : x(INFINITY), y(INFINITY) {}
-    Position(const glm::vec2& v): x(v.x), y(v.y) {}
-		Position(float x, float y): x(x), y(y) {}
+		Position(const glm::vec2& v) : x(v.x), y(v.y) {}
+		Position(float x, float y) : x(x), y(y) {}
 
 		float distance() const;
+		Position operator-() const;
+		operator glm::vec2() const;
+
+		Position abs() const;
+		float min() const;
+		float max() const;
+		Position& operator+=(const Position& position);
+		Position& operator-=(const Position& position);
 	};
 
 	Position operator+(const Position& lhs, const Position& rhs);
 	Position operator-(const Position& lhs, const Position& rhs);
 	bool operator==(const Position& lhs, const Position& rhs);
+	std::ostream& operator<<(std::ostream& os, const Position& p);
 
 	template <typename T>
 	struct Matrix
@@ -161,10 +170,10 @@ namespace model
 
 		Mob(int max_hp, int max_ap, abilities_t abilities)
 			: max_hp(max_hp),
-			  max_ap(max_ap),
-			  hp(max_hp),
-			  ap(max_ap),
-			  abilities(abilities) {
+			max_ap(max_ap),
+			hp(max_hp),
+			ap(max_ap),
+			abilities(abilities) {
 			assert(abilities.size() == ABILITY_COUNT);
 		}
 
@@ -174,7 +183,8 @@ namespace model
 			auto& ability = abilities[index];
 			if (ap >= ability.cost) {
 				return true;
-			} else {
+			}
+			else {
 				return false;
 			}
 		}
@@ -235,8 +245,8 @@ namespace model
 			}
 
 			std::sort(mobs.begin(), mobs.end(), [](Mob* m1, Mob* m2) {
-				          return m1->ap < m2->ap;
-			          });
+				return m1->ap < m2->ap;
+			});
 
 			return mobs;
 		}
@@ -270,8 +280,6 @@ public:
 
 		constexpr int SIM_TIME = 100000000;
 
-		// Mob& player = info.mob_at({0, 0});
-
 		std::uniform_int_distribution<int> action_dis(0, 6);
 		std::uniform_int_distribution<int> move_dis(-2, 2);
 
@@ -286,8 +294,9 @@ public:
 
 				// Take a random step
 				if (roll == 0) {
-					mob->move(arena, {move_dis(gen), move_dis(gen)});
-				} else {
+					mob->move(arena, { move_dis(gen), move_dis(gen) });
+				}
+				else {
 					// Use a random ability
 					mob->use_ability(roll - 1, Target{});
 				}

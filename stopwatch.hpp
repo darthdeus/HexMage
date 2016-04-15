@@ -15,7 +15,7 @@ struct stopwatch
 		start_ = std::chrono::high_resolution_clock::now();
 	}
 
-	int ms() const {
+	int64_t ms() const {
 		auto end = std::chrono::high_resolution_clock::now();
 		return std::chrono::duration_cast<std::chrono::milliseconds>(end - start_).count();
 	}

@@ -37,7 +37,7 @@ using namespace glm;
 
 float rad_for_hex(int i) {
 	float angle_deg = static_cast<float>(60 * i + 30);
-	return M_PI / 180 * angle_deg;
+	return static_cast<float>(M_PI) / 180 * angle_deg;
 }
 
 void push_vertex(std::vector<float>& vbo, float x, float y, color c) {
@@ -64,42 +64,42 @@ void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c)
 
 void handlePlayerStep(Sint32 sym, model::GameInstance& game, model::Mob& player) {
 	switch (sym) {
-		case 'a':
-			player.move(game.arena, {-1, 0});
-			break;
+	case 'a':
+		player.move(game.arena, { -1, 0 });
+		break;
 
-		case 'd':
-			player.move(game.arena, {1, 0});
-			break;
+	case 'd':
+		player.move(game.arena, { 1, 0 });
+		break;
 
-		case 'z':
-			player.move(game.arena, {0, -1});
-			break;
+	case 'z':
+		player.move(game.arena, { 0, -1 });
+		break;
 
-		case 'e':
-			player.move(game.arena, {0, 1});
-			break;
+	case 'e':
+		player.move(game.arena, { 0, 1 });
+		break;
 
-		case 'c':
-			player.move(game.arena, {1, -1});
-			break;
+	case 'c':
+		player.move(game.arena, { 1, -1 });
+		break;
 
-		case 'q':
-			player.move(game.arena, {-1, 1});
-			break;
+	case 'q':
+		player.move(game.arena, { -1, 1 });
+		break;
 	}
 }
 
 color color_for_type(model::HexType type) {
 	switch (type) {
-		case model::HexType::Empty:
-			return {0.4f, 0.2f, 0.4f};
-		case model::HexType::Wall:
-			return {0.1f, 0.03f, 0.1f};
-		case model::HexType::Player:
-			return {0.7f, 0.4f, 0.7f};
-		default:
-			throw "invalid hex type";
+	case model::HexType::Empty:
+		return{ 0.4f, 0.2f, 0.4f };
+	case model::HexType::Wall:
+		return{ 0.1f, 0.03f, 0.1f };
+	case model::HexType::Player:
+		return{ 0.7f, 0.4f, 0.7f };
+	default:
+		throw "invalid hex type";
 	}
 }
 
@@ -111,14 +111,14 @@ void paint_at(model::Position pos, float radius, color color) {
 
 }
 
-vec2 mouse2gl(Sint32 x, Sint32 y) {
+Position mouse2gl(Sint32 x, Sint32 y) {
 	float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
 	float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
 
 	rel_y = 2 * (1 - rel_y) - 1;
 	rel_x = 2 * rel_x - 1;
 
-	return {rel_x, rel_y};
+	return{ rel_x, rel_y };
 }
 
 void game_loop(SDL_Window* window) {
@@ -130,7 +130,7 @@ void game_loop(SDL_Window* window) {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	ShaderProgram program{"vertex.glsl", "fragment.glsl"};
+	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
 	std::cerr << glGetError() << std::endl;
 
 
@@ -144,13 +144,13 @@ void game_loop(SDL_Window* window) {
 	float start_y = -0.5f;
 
 	float radius = 0.1f;
-	float width = cos(30 * M_PI / 180) * radius * 2;
-	float height_offset = radius + sin(30 * M_PI / 180) * radius;
+	float width = static_cast<float>(cos(30 * M_PI / 180) * radius * 2);
+	float height_offset = static_cast<float>(radius + sin(30 * M_PI / 180) * radius);
 
 	std::vector<float> vertices;
 	vertices.reserve(1000);
 
-  int isize = static_cast<int>(game.size);
+	int isize = static_cast<int>(game.size);
 	for (int row = 0; row < isize; ++row) {
 		for (int col = 0; col < isize; ++col) {
 			float draw_x = start_x;
@@ -162,11 +162,11 @@ void game_loop(SDL_Window* window) {
 			draw_x += row * (width / 2);
 			draw_y += row * height_offset;
 
-			arena.pos({col, row}) = {draw_x, draw_y};
+			arena.pos({ col, row }) = { draw_x, draw_y };
 
-			color c = color_for_type(arena({col, row}));
+			color c = color_for_type(arena({ col, row }));
 
-			auto pos = arena.pos({col, row});
+			auto pos = arena.pos({ col, row });
 			hex_at(vertices, pos, radius, c);
 			c = c.mut(0.004f);
 		}
@@ -182,32 +182,34 @@ void game_loop(SDL_Window* window) {
 
 	Coord highlight_hex;
 
-  using namespace glm;
+	using namespace glm;
 
-  vec2 translate;
-  vec2 rel_mouse;
+	Position translate{ 0, 0 };
+	Position rel_mouse{ 0,0 };
 
-  Coord selected_hex;
+	Position current_scroll{ 0, 0 };
+
+	Coord selected_hex;
 
 	SDL_Event windowEvent;
 	while (true) {
 		st_frame.start();
 		st.start();
 
+		const float scroll_zone = 0.9f;
+		const float scroll_offset = 0.05f;
+
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-        rel_mouse = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
-
-        translate = -rel_mouse;
-
-				highlight_hex = arena.highlight_near(rel_mouse - translate);
+				rel_mouse = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
+				highlight_hex = arena.hex_near(rel_mouse - translate);
 			}
 
-      if (windowEvent.type == SDL_MOUSEBUTTONDOWN) {
-        auto rel_pos = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
+			if (windowEvent.type == SDL_MOUSEBUTTONDOWN) {
+				auto rel_pos = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
 
-        std::cout << "click" << std::endl;
-      }
+				std::cout << "click at " << rel_pos << std::endl;
+			}
 
 			if (windowEvent.type == SDL_QUIT ||
 				(windowEvent.type == SDL_KEYUP &&
@@ -215,14 +217,59 @@ void game_loop(SDL_Window* window) {
 				return;
 
 			if (windowEvent.type == SDL_KEYDOWN) {
-				handlePlayerStep(windowEvent.key.keysym.sym, game, player);
+				switch (windowEvent.key.keysym.sym) {
+				case 'w':
+					current_scroll.y = -scroll_offset;
+					break;
+				case 's':
+					current_scroll.y = scroll_offset;
+					break;
+				case 'a':
+					current_scroll.x = scroll_offset;
+					break;
+				case 'd':
+					current_scroll.x = -scroll_offset;
+					break;
+				}
+			}
+
+			if (windowEvent.type == SDL_KEYUP) {
+				switch (windowEvent.key.keysym.sym) {
+				case 'w':
+				case 's':
+					current_scroll.y = 0;
+					break;
+
+				case 'a':
+				case 'd':
+					current_scroll.x = 0;
+					break;
+				}
 			}
 		}
 
-    glm::mat4 mov = glm::translate(mat4(1.0f), vec3(translate, 0));
+		// TODO - buggy atm, fix later
+		//if (rel_mouse.abs().max() > scroll_zone) {
+		//	if (rel_mouse.x <= -scroll_zone) {
+		//		horizontal_scroll = scroll_offset;
+		//	}
+		//	if (rel_mouse.x >= scroll_zone) {
+		//		horizontal_scroll = -scroll_offset;
+		//	}
+		//	if (rel_mouse.y <= -scroll_zone) {
+		//		vertical_scroll = scroll_offset;
+		//	}
+		//	if (rel_mouse.y >= scroll_zone) {
+		//		vertical_scroll = -scroll_offset;
+		//	}
+		//}
 
-    GLint uniTrans = glGetUniformLocation(program.shaderProgram, "trans");
-    glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(mov));
+		translate += current_scroll;
+
+		glm::mat4 mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
+
+		GLint uniTrans = glGetUniformLocation(program.shaderProgram, "trans");
+		glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(mov));
 
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
