@@ -16,6 +16,7 @@
 #include <random>
 #include <unordered_map>
 #include <math.h>
+#include <iomanip>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -125,6 +126,8 @@ void game_loop(SDL_Window* window) {
 	// TODO - proc tohle nefunguje?
 	// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
 	using namespace model;
+	using namespace glm;
+
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -182,14 +185,17 @@ void game_loop(SDL_Window* window) {
 
 	Coord highlight_hex;
 
-	using namespace glm;
-
 	Position translate{ 0, 0 };
 	Position rel_mouse{ 0,0 };
 
 	Position current_scroll{ 0, 0 };
 
 	Coord selected_hex;
+	float zoom_level = 1;
+
+	mat4 zoom{ 1 };
+	mat4 mov{ 1 };
+	mat4 projection_mat{ 1 };
 
 	SDL_Event windowEvent;
 	while (true) {
@@ -201,8 +207,11 @@ void game_loop(SDL_Window* window) {
 
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
+
 				rel_mouse = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
-				highlight_hex = arena.hex_near(rel_mouse - translate);
+				auto view_mouse = inverse(projection_mat) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
+
+				highlight_hex = arena.hex_near({ view_mouse.x, view_mouse.y });
 			}
 
 			if (windowEvent.type == SDL_MOUSEBUTTONDOWN) {
@@ -246,6 +255,10 @@ void game_loop(SDL_Window* window) {
 					break;
 				}
 			}
+
+			if (windowEvent.type == SDL_MOUSEWHEEL) {
+				zoom_level += 0.07f * windowEvent.wheel.y;
+			}
 		}
 
 		// TODO - buggy atm, fix later
@@ -266,10 +279,13 @@ void game_loop(SDL_Window* window) {
 
 		translate += current_scroll;
 
-		glm::mat4 mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
+		mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
+		zoom = glm::scale(mat4(1.0f), vec3(zoom_level));
+
+		projection_mat = zoom * mov;
 
 		GLint uniTrans = glGetUniformLocation(program.shaderProgram, "trans");
-		glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(mov));
+		glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
