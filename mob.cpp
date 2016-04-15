@@ -29,7 +29,7 @@ namespace model {
     return os << "(" << c.x << "," << c.y << ")";
   }
 
-  Coord Arena::highlight_near(Position rel_pos) {
+  Coord Arena::hex_near(Position rel_pos) {
     Coord closest;
     float min = INFINITY;
 

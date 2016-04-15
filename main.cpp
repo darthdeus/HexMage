@@ -32,6 +32,8 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
+using namespace model;
+using namespace glm;
 
 float rad_for_hex(int i) {
 	float angle_deg = static_cast<float>(60 * i + 30);
@@ -109,7 +111,7 @@ void paint_at(model::Position pos, float radius, color color) {
 
 }
 
-Coord mouse2gl(Sint32 x, Sint32 y) {
+vec2 mouse2gl(Sint32 x, Sint32 y) {
 	float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
 	float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
 
@@ -178,12 +180,14 @@ void game_loop(SDL_Window* window) {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	program.setupAttributes();
 
-	model::Coord highlight_hex;
+	Coord highlight_hex;
 
   using namespace glm;
 
   vec2 translate;
   vec2 rel_mouse;
+
+  Coord selected_hex;
 
 	SDL_Event windowEvent;
 	while (true) {
@@ -192,16 +196,18 @@ void game_loop(SDL_Window* window) {
 
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-				rel_mouse.x = static_cast<float>(windowEvent.motion.x) / SCREEN_WIDTH;
-				rel_mouse.y = static_cast<float>(windowEvent.motion.y) / SCREEN_HEIGHT;
-
-				rel_mouse.y = 2 * (1 - rel_mouse.y) - 1;
-				rel_mouse.x = 2 * rel_mouse.x - 1;
+        rel_mouse = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
 
         translate = -rel_mouse;
 
 				highlight_hex = arena.highlight_near(rel_mouse - translate);
 			}
+
+      if (windowEvent.type == SDL_MOUSEBUTTONDOWN) {
+        auto rel_pos = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
+
+        std::cout << "click" << std::endl;
+      }
 
 			if (windowEvent.type == SDL_QUIT ||
 				(windowEvent.type == SDL_KEYUP &&

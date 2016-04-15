@@ -142,7 +142,7 @@ namespace model
 			return positions(c);
 		}
 
-		Coord highlight_near(Position pos);
+		Coord hex_near(Position pos);
 	};
 
 	class Mob

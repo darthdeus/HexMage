@@ -11,12 +11,6 @@
 #include <utility>
 #include "PerlinNoise.hpp"
 
-struct Coord
-{
-	float x, y;
-	Coord(float x, float y): x(x), y(y) {}
-};
-
 float rnd(float max);
 float rnd();
 float clamp(float x);
@@ -98,8 +92,8 @@ struct color
 	float r, g, b, a;
 
 	color(): r(0), g(0), b(0), a(0) {}
-	color(float r, float g, float b) : r(r), g(g), b(r), a(1) {}
-	color(float r, float g, float b, float a) : r(r), g(g), b(r), a(a) {}
+	color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
+	color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
 
 	color mut(float d) {
 		return {r + d, g + d, b + d, a};
