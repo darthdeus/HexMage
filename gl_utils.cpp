@@ -1,4 +1,7 @@
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include "gl_utils.hpp"
+#include "mob.hpp"
 
 float rnd(float max) {
 	return (static_cast<float>(rand()) / RAND_MAX) * max;
@@ -82,4 +85,44 @@ void ShaderProgram::setupAttributes() {
 	glEnableVertexAttribArray(colAttrib);
 	glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
 	glBindFragDataLocation(shaderProgram, 0, "outColor");
+}
+
+color color_for_type(model::HexType type) {
+	switch (type) {
+	case model::HexType::Empty:
+		return{ 0.4f, 0.2f, 0.4f };
+	case model::HexType::Wall:
+		return{ 0.1f, 0.03f, 0.1f };
+	case model::HexType::Player:
+		return{ 0.7f, 0.4f, 0.7f };
+	default:
+		throw "invalid hex type";
+	}
+}
+
+float rad_for_hex(int i) {
+	float angle_deg = static_cast<float>(60 * i + 30);
+	return static_cast<float>(M_PI) / 180 * angle_deg;
+}
+
+void push_vertex(std::vector<float>& vbo, float x, float y, color c) {
+	vbo.push_back(x);
+	vbo.push_back(y);
+	push_color(vbo, c.r, c.g, c.b, c.a);
+}
+
+void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c) {
+	float ri;
+	int rot = 0; // 1;
+	for (int i = rot; i < 7 + rot; i++) {
+		push_vertex(vertices, pos.x, pos.y, c);
+
+		ri = rad_for_hex(i - 1);
+		c = c.mut(0.015f);
+		push_vertex(vertices, pos.x + r * cos(ri), pos.y + r * sin(ri), c);
+
+		ri = rad_for_hex(i);
+		c = c.mut(0.015f);
+		push_vertex(vertices, pos.x + r * cos(ri), pos.y + r * sin(ri), c);
+	}
 }

@@ -9,7 +9,33 @@
 #include <fstream>
 #include <tuple>
 #include <utility>
-#include "PerlinNoise.hpp"
+#include <vector>
+
+namespace model {
+	enum class HexType;
+	struct Coord;
+	struct Cube;
+	struct Position;
+}
+
+struct color
+{
+	float r, g, b, a;
+
+	color() : r(0), g(0), b(0), a(0) {}
+	color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
+	color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
+
+	color mut(float d) const {
+		return{ r + d, g + d, b + d, a };
+	}
+};
+
+
+color color_for_type(model::HexType type);
+float rad_for_hex(int i);
+void push_vertex(std::vector<float>& vbo, float x, float y, color c);
+void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c);
 
 float rnd(float max);
 float rnd();
@@ -23,7 +49,7 @@ struct hash_int_triple
 		using namespace std;
 
 		return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
-				(hash<int>()(get<2>(tup)) << 1);
+			(hash<int>()(get<2>(tup)) << 1);
 	}
 };
 
@@ -36,22 +62,6 @@ struct hash_int_pair
 	}
 };
 
-template <typename T>
-struct matrix
-{
-	unsigned m;
-	unsigned n;
-	std::vector<T> vs;
-
-	matrix(unsigned m, unsigned n) : m(m), n(n), vs(m * n) {}
-
-	T& operator ()(unsigned i, unsigned j) {
-		return vs[n * i + j];
-	}
-
-private:
-}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
-
 // TODO - do this in a less insane way
 class ShaderSource
 {
@@ -63,7 +73,7 @@ class ShaderSource
 public:
 	ShaderSource(std::string filename);
 	ShaderSource(const ShaderSource&) = delete;
-	
+
 	const GLchar** source() const;
 	GLuint compile(GLenum type);
 };
@@ -86,20 +96,6 @@ public:
 	void setupAttributes();
 };
 
-
-struct color
-{
-	float r, g, b, a;
-
-	color(): r(0), g(0), b(0), a(0) {}
-	color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
-	color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
-
-	color mut(float d) {
-		return {r + d, g + d, b + d, a};
-	}
-};
-
 inline void push_color(std::vector<float>& vbo, color c) {
 	vbo.push_back(c.r);
 	vbo.push_back(c.g);
@@ -113,6 +109,7 @@ inline void push_color(std::vector<float>& v, float r, float g, float b, float a
 	v.push_back(b);
 	v.push_back(a);
 }
+
 
 #endif
 

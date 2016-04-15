@@ -1,6 +1,8 @@
 #ifndef MOB_HPP
 #define MOB_HPP
 
+#pragma once
+
 #include <algorithm>
 #include <assert.h>
 #include <vector>
@@ -61,6 +63,7 @@ namespace model
 	Coord operator+(const Coord& lhs, const Coord& rhs);
 	Coord operator-(const Coord& lhs, const Coord& rhs);
 	bool operator==(const Coord& lhs, const Coord& rhs);
+	inline bool operator!=(const Coord& lhs, const Coord& rhs) { return !(lhs == rhs); }
 	std::ostream& operator<<(std::ostream& os, const Coord& c);
 
 	constexpr int ABILITY_COUNT = 6;
@@ -130,14 +133,27 @@ namespace model
 		int y;
 	};
 
+	enum class VertexState { Unvisited, Open, Closed };
+
+	class Path
+	{
+	public:		
+		Coord source;
+		VertexState state;
+		int distance;
+	};
+
 	class Arena
 	{
 	public:
+		static constexpr float radius = 0.1f;
 		std::size_t size;
 		Matrix<HexType> hexes;
 		Matrix<Position> positions;
+		Matrix<Path> paths;
+		std::vector<float> vertices;
 
-		Arena(std::size_t size) : size(size), hexes(size), positions(size) {}
+		Arena(std::size_t size) : size(size), hexes(size), positions(size), paths(size) {}
 
 		bool is_valid_coord(const Coord& c) const {
 			return static_cast<std::size_t>(c.abs().max()) < size && c.min() >= 0;
@@ -152,6 +168,10 @@ namespace model
 		}
 
 		Coord hex_near(Position pos);
+
+		void dijkstra(Coord start);
+		void regenerate_geometry();
+		void draw_vertices();
 	};
 
 	class Mob

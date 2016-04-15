@@ -1,4 +1,9 @@
 #include <iostream>
+#include <queue>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include "gl_utils.hpp"
 #include "mob.hpp"
 
 namespace model {
@@ -61,6 +66,113 @@ namespace model {
 		}
 
 		return closest;
+	}
+
+	void Arena::dijkstra(Coord start) {
+		stopwatch s;
+
+		std::queue<Coord> queue;
+
+		queue.push(start);
+
+		std::vector<Coord> diffs = {
+			{ -1, 0 },
+			{ 1, 0 },
+			{ 0, -1 },
+			{ 0, 1 },
+			{ 1, -1 },
+			{ -1, 1 }
+		};
+
+		int iterations = 0;
+
+		for (int i = 0; i < paths.m; ++i) {
+			for (int j = 0; j < paths.n; ++j) {
+				auto& p = paths(i, j);
+				auto& h = hexes(i, j);
+				
+
+				p.distance = std::numeric_limits<int>::max();
+				if (h == HexType::Wall) {
+					p.state = VertexState::Closed;
+				} else {
+					p.state = VertexState::Unvisited;
+				}
+			}
+		}
+
+		while (!queue.empty()) {
+			Coord current = queue.front();
+			queue.pop();
+
+			if (iterations > 1000000 || queue.size() > 100000) {
+				std::cout << "got stuck heh\titerations: " << iterations << ", queue: " << queue.size() << std::endl;
+				return;
+			}
+
+			iterations++;
+
+			Path& p = paths(current);
+
+			if (p.state == VertexState::Closed) continue;
+
+			p.state = VertexState::Closed;
+
+			for (auto diff : diffs) {
+				auto neighbour = current + diff;
+				if (is_valid_coord(neighbour)) {
+					Path& n = paths(neighbour);
+
+					if (n.state != VertexState::Closed) {
+						if (n.distance > p.distance + 1) {
+							n.distance = p.distance + 1;
+							n.source = current;
+						}
+
+						n.state = VertexState::Open;
+						queue.push(neighbour);
+					}
+				}
+			}
+		}
+
+		std::cout << "done " << iterations << " iterations in " << s.ms() << "ms" << std::endl;
+	}
+
+	void Arena::regenerate_geometry() {
+		float start_x = -0.5f;
+		float start_y = -0.5f;
+
+		float width = static_cast<float>(cos(30 * M_PI / 180) * radius * 2);
+		float height_offset = static_cast<float>(radius + sin(30 * M_PI / 180) * radius);
+		
+		int isize = static_cast<int>(size);
+		for (int row = 0; row < isize; ++row) {
+			for (int col = 0; col < isize; ++col) {
+				float draw_x = start_x;
+				float draw_y = start_y;
+
+				// axial q-change
+				draw_x += col * width;
+				// axial r-change
+				draw_x += row * (width / 2);
+				draw_y += row * height_offset;
+
+				pos({ col, row }) = { draw_x, draw_y };
+
+				color c = color_for_type((*this)({ col, row }));
+
+				auto pos = this->pos({ col, row });
+				hex_at(vertices, pos, radius, c);
+				c = c.mut(0.004f);
+			}
+		}
+
+	}
+
+	void Arena::draw_vertices() {
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
 	}
 }
 
