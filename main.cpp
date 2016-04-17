@@ -108,8 +108,10 @@ void game_loop(SDL_Window* window) {
 	std::cout << "Arena vertices in: " << ss.ms() << "ms" << std::endl;
 
 	ss.start();
-	arena.dijkstra({ 1, 1 });
-	std::cout << "dijkstra done in " << ss.ms() << "ms" << std::endl;
+	for (int i = 0; i < 100; i++) {
+		arena.dijkstra({ 1, 1 });
+	}
+	std::cout << "100x dijkstra done in " << ss.ms() << "ms" << std::endl;
 
 	Mob& player = game.info.add_mob(generator::random_mob());
 
@@ -224,22 +226,6 @@ void game_loop(SDL_Window* window) {
 				zoom_level += 0.07f * windowEvent.wheel.y;
 			}
 		}
-
-		// TODO - buggy atm, fix later
-		//if (rel_mouse.abs().max() > scroll_zone) {
-		//	if (rel_mouse.x <= -scroll_zone) {
-		//		horizontal_scroll = scroll_offset;
-		//	}
-		//	if (rel_mouse.x >= scroll_zone) {
-		//		horizontal_scroll = -scroll_offset;
-		//	}
-		//	if (rel_mouse.y <= -scroll_zone) {
-		//		vertical_scroll = scroll_offset;
-		//	}
-		//	if (rel_mouse.y >= scroll_zone) {
-		//		vertical_scroll = -scroll_offset;
-		//	}
-		//}
 
 		translate += current_scroll;
 

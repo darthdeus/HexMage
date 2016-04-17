@@ -136,7 +136,7 @@ namespace model {
 			}
 		}
 
-		std::cout << "done " << iterations << " iterations in " << s.ms() << "ms" << std::endl;
+		//std::cout << "done " << iterations << " iterations in " << s.ms() << "ms" << std::endl;
 	}
 
 	void Arena::regenerate_geometry() {
