@@ -83,6 +83,12 @@ Position mouse2gl(Sint32 x, Sint32 y) {
 	return{ rel_x, rel_y };
 }
 
+Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
+  auto rel_mouse = mouse2gl(x, y);
+  auto view_mouse = inverse(proj) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
+  return arena.hex_near({ view_mouse.x, view_mouse.y });
+}
+
 void game_loop(SDL_Window* window) {
 	// TODO - proc tohle nefunguje?
 	// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
@@ -148,10 +154,7 @@ void game_loop(SDL_Window* window) {
 
 		while (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-				rel_mouse = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
-				auto view_mouse = inverse(projection_mat) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
-				highlight_hex = arena.hex_near({ view_mouse.x, view_mouse.y });
-
+        highlight_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
 				highlight_path.clear();
 
 				while (highlight_hex != player.c) {
@@ -161,14 +164,11 @@ void game_loop(SDL_Window* window) {
 			}
 
 			if (windowEvent.type == SDL_MOUSEBUTTONDOWN && windowEvent.button.button == SDL_BUTTON_RIGHT) {
-				auto rel_pos = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
-				auto view_mouse = inverse(projection_mat) * vec4(rel_pos.x, rel_pos.y, 0.0f, 1.0f);
-				auto click_hex = arena.hex_near({ view_mouse.x, view_mouse.y });
+        auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
 
 				if (arena(click_hex) == HexType::Empty) {
 					arena(click_hex) = HexType::Wall;
-				}
-				else {
+				} else {
 					arena(click_hex) = HexType::Empty;
 				}
 				arena.regenerate_geometry();
@@ -176,9 +176,7 @@ void game_loop(SDL_Window* window) {
 			}
 
 			if (windowEvent.type == SDL_MOUSEBUTTONDOWN && windowEvent.button.button == SDL_BUTTON_LEFT) {
-				auto rel_pos = mouse2gl(windowEvent.motion.x, windowEvent.motion.y);
-				auto view_mouse = inverse(projection_mat) * vec4(rel_pos.x, rel_pos.y, 0.0f, 1.0f);
-				auto click_hex = arena.hex_near({ view_mouse.x, view_mouse.y });
+        auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
 
 				player.c = click_hex;
 				highlight_hex = player.c;
@@ -261,7 +259,7 @@ void game_loop(SDL_Window* window) {
 	}
 }
 
-int main(int argc, char** argv) {
+int main() {
 	// TODO - error handling
 	SDL_Init(SDL_INIT_VIDEO);
 
