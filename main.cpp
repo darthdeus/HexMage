@@ -102,12 +102,56 @@ void game_loop(SDL_Window* window) {
 	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
 	std::cerr << glGetError() << std::endl;
 
+	GameInstance g(30);
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+	g.info.add_mob(generator::random_mob());
+
+	int total_size = 0;
+
+	stopwatch ss;
+
+	int iterations = 100000;
+
+	ss.start();
+	for (int i = 0; i < iterations; i++) {
+		auto r = g;
+		total_size += r.size;
+	}
+
+	std::cout << "GameInstance copy iterations " << iterations << " took " << ss.ms() << "ms\t" << ((float)ss.ms())/iterations*1000 << "us" << std::endl;
+
+	PlayerInfo ifo = g.info;
+
+	int total_mobs = 0;
+	ss.start();
+
+	int info_iterations = 1000000;
+	for (int i = 0; i < info_iterations; ++i) {
+		auto copy = ifo;
+		total_mobs += copy.mobs.size();
+	}
+
+	std::cout << "PlayerInfo copy iterations " << info_iterations << " took " << ss.ms() << "ms\t" << ((float)ss.ms()) / info_iterations * 1000 << "us" << std::endl;
+
+	DummySimulation sim;
+	sim.run();
+
+	
+	return;
+
 
 	GameInstance game(30);
 	Arena& arena = game.arena;
 	PlayerInfo& info = game.info;
 
-	stopwatch ss;
 
 	ss.start();
 	arena.regenerate_geometry();

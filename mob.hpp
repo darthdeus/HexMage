@@ -298,7 +298,7 @@ public:
 
 		info.add_mob(generator::random_mob());
 
-		constexpr int SIM_TIME = 100000000;
+		constexpr int SIM_TIME = 10000000;
 
 		std::uniform_int_distribution<int> action_dis(0, 6);
 		std::uniform_int_distribution<int> move_dis(-2, 2);
@@ -325,7 +325,8 @@ public:
 		}
 		total_time += s.ms();
 
-		std::cout << "Simulated " << iterations << " iterations took: " << total_time << "ms, per second: " << iterations / total_time * 1000 << std::endl;
+		std::cout << "Simulated " << iterations << " iterations took: " << total_time << "ms, per second: " << (int)(iterations / total_time * 1000)
+			<< "\t iteration " << ((float)total_time)/iterations << "ms" << std::endl;
 	}
 };
 
