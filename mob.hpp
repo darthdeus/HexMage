@@ -305,7 +305,8 @@ public:
 
 		double total_time = 0;
 		std::size_t iterations = 0;
-		stopwatch s;
+
+		Stopwatch s;
 		for (int i = 0; i < SIM_TIME; ++i) {
 			auto mob_list = game.start_turn();
 

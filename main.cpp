@@ -32,7 +32,6 @@
 
 #include "stopwatch.hpp"
 #include "gl_utils.hpp"
-#include <tgaimage.h>
 #include "mob.hpp"
 
 const int SCREEN_WIDTH = 1024;
@@ -74,8 +73,7 @@ void paint_at(model::Position pos, float radius, color color) {
 	std::vector<float> player_vertices;
 	hex_at(player_vertices, pos, radius, color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, player_vertices.size() / 3);
-
+	glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(player_vertices.size()) / 3);
 }
 
 Position mouse2gl(Sint32 x, Sint32 y) {
@@ -111,11 +109,12 @@ void dummy_profiling() {
 	g.info.add_mob(generator::random_mob());
 	g.info.add_mob(generator::random_mob());
 
-	int total_size = 0;
 
-	stopwatch ss;
+	Stopwatch ss;
 
 	int iterations = 100000;
+
+	std::size_t total_size = 0;
 
 	ss.start();
 	for (int i = 0; i < iterations; i++) {
@@ -129,7 +128,7 @@ void dummy_profiling() {
 
 	PlayerInfo ifo = g.info;
 
-	int total_mobs = 0;
+	std::size_t total_mobs = 0;
 	ss.start();
 
 	int info_iterations = 1000000;
@@ -164,27 +163,23 @@ void game_loop(SDL_Window* window) {
 	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
 	std::cerr << glGetError() << std::endl;
 
-	stopwatch ss;
+	Stopwatch st;
 
 	GameInstance game(30);
 	Arena& arena = game.arena;
 	PlayerInfo& info = game.info;
 
-
-	ss.start();
+	st.start();
 	arena.regenerate_geometry();
-	std::cout << "Arena vertices in: " << ss.ms() << "ms" << std::endl;
+	std::cout << "Arena vertices in: " << st.ms() << "ms" << std::endl;
 
-	ss.start();
+	st.start();
 	for (int i = 0; i < 100; i++) {
 		arena.dijkstra({ 1, 1 });
 	}
-	std::cout << "100x dijkstra done in " << ss.ms() << "ms" << std::endl;
+	std::cout << "100x dijkstra done in " << st.ms() << "ms" << std::endl;
 
 	Mob& player = game.info.add_mob(generator::random_mob());
-
-	stopwatch st;
-	stopwatch st_frame;
 
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
@@ -200,7 +195,7 @@ void game_loop(SDL_Window* window) {
 	Position current_scroll{ 0, 0 };
 
 	Coord selected_hex;
-	float zoom_level = 0.7;
+	float zoom_level = 0.7f;
 
 	mat4 zoom{ 1 };
 	mat4 mov{ 1 };
@@ -208,10 +203,6 @@ void game_loop(SDL_Window* window) {
 
 	SDL_Event windowEvent;
 	while (true) {
-		st_frame.start();
-		st.start();
-
-		const float scroll_zone = 0.9f;
 		const float scroll_offset = 0.05f;
 
 		while (SDL_PollEvent(&windowEvent)) {
@@ -342,7 +333,6 @@ void game_loop(SDL_Window* window) {
 }
 
 int main(int argc, char* argv[]) {
-	// TODO - error handling
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
 		std::cerr << "Unable to initialize SDL_Init " << SDL_GetError() << std::endl;
 		return 1;
@@ -353,7 +343,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
 	SDL_Window* window = SDL_CreateWindow(
-		"OpenGL", 300, 300, // TODO - better default screen position
+		"HexMage", 300, 300, // TODO - better default screen position
 		SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
 	if (window == nullptr) {

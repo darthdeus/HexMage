@@ -180,7 +180,6 @@
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\imgui\imgui_impl_sdl.cpp" />
-    <ClCompile Include="tgaimage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />
@@ -189,7 +188,6 @@
   <ItemGroup>
     <ClInclude Include="gl_utils.hpp" />
     <ClInclude Include="include\imgui_impl_sdl.h" />
-    <ClInclude Include="include\tgaimage.h" />
     <ClInclude Include="mob.hpp" />
     <ClInclude Include="stopwatch.hpp" />
   </ItemGroup>

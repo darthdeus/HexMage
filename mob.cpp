@@ -69,7 +69,7 @@ namespace model {
 	}
 
 	void Arena::dijkstra(Coord start) {
-		stopwatch s;
+		Stopwatch s;
 
 		std::queue<Coord> queue;
 
