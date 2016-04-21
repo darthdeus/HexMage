@@ -24,9 +24,10 @@
 
 #include <format.h>
 
-#include "stopwatch.hpp"
-#include "gl_utils.hpp"
-#include "model.hpp"
+#include <stopwatch.hpp>
+#include <gl_utils.hpp>
+#include <model.hpp>
+#include <simulation.hpp>
 
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
@@ -84,61 +85,6 @@ Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
 	auto rel_mouse = mouse2gl(x, y);
 	auto view_mouse = inverse(proj) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
 	return arena.hex_near({ view_mouse.x, view_mouse.y });
-}
-
-std::vector<std::string> profiling_results;
-
-void dummy_profiling() {
-	profiling_results.clear();
-
-	GameInstance g(30);
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-	g.info.add_mob(generator::random_mob());
-
-	Stopwatch ss;
-
-	int iterations = 100000;
-
-	std::size_t total_size = 0;
-
-	ss.start();
-	for (int i = 0; i < iterations; i++) {
-		auto r = g;
-		total_size += r.size;
-	}
-
-	std::string str;
-	str = fmt::sprintf("GameInstance copy iterations %d took %dms\t%fus", iterations, ss.ms(), ((float)ss.ms()) / iterations * 1000);
-	profiling_results.push_back(str);
-
-	PlayerInfo ifo = g.info;
-
-	std::size_t total_mobs = 0;
-	ss.start();
-
-	int info_iterations = 1000000;
-	for (int i = 0; i < info_iterations; ++i) {
-		auto copy = ifo;
-		total_mobs += copy.mobs.size();
-	}
-
-	str = fmt::sprintf("PlayerInfo copy iterations %d took %dms\t%fus", info_iterations, ss.ms(), ((float)ss.ms()) / info_iterations * 1000);
-	profiling_results.push_back(str);
-
-	ss.start();
-	DummySimulation sim;
-	sim.run();
-
-	str = fmt::sprintf("DummySimulation took %dms", ss.ms());
-	profiling_results.push_back(str);
 }
 
 void game_loop(SDL_Window* window) {
@@ -310,11 +256,11 @@ void game_loop(SDL_Window* window) {
 
 		ImGui::Begin("Profiling");
 		if (ImGui::Button("Dummy profile")) {
-			dummy_profiling();
+			simulation::dummy_profiling();
 		}
 
-		if (profiling_results.size() > 0) {
-			for (auto& res : profiling_results) {
+		if (simulation::profiling_results.size() > 0) {
+			for (auto& res : simulation::profiling_results) {
 				ImGui::Text(res.c_str());
 			}
 		}

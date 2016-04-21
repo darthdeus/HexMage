@@ -171,25 +171,36 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="glad.c" />
-    <ClCompile Include="gl_utils.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="model.cpp" />
-    <ClCompile Include="src\format.cpp" />
-    <ClCompile Include="src\imgui\imgui.cpp" />
-    <ClCompile Include="src\imgui\imgui_demo.cpp" />
-    <ClCompile Include="src\imgui\imgui_draw.cpp" />
-    <ClCompile Include="src\imgui\imgui_impl_sdl.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="fragment.glsl" />
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gl_utils.hpp" />
+    <ClCompile Include="include\generator.cpp" />
+    <ClCompile Include="simulation.cpp" />
+    <ClCompile Include="src\format.cpp" />
+    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\gl_utils.cpp" />
+    <ClCompile Include="src\imgui.cpp" />
+    <ClCompile Include="src\imgui_demo.cpp" />
+    <ClCompile Include="src\imgui_draw.cpp" />
+    <ClCompile Include="src\imgui_impl_sdl.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\model.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\format.h" />
+    <ClInclude Include="include\generator.hpp" />
+    <ClInclude Include="include\gl_utils.hpp" />
+    <ClInclude Include="include\imconfig.h" />
+    <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\imgui_impl_sdl.h" />
-    <ClInclude Include="model.hpp" />
-    <ClInclude Include="stopwatch.hpp" />
+    <ClInclude Include="include\imgui_internal.h" />
+    <ClInclude Include="include\model.hpp" />
+    <ClInclude Include="include\simulation.hpp" />
+    <ClInclude Include="include\stb_rect_pack.h" />
+    <ClInclude Include="include\stb_textedit.h" />
+    <ClInclude Include="include\stb_truetype.h" />
+    <ClInclude Include="include\stopwatch.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
