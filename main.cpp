@@ -28,6 +28,8 @@
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 
+#include <format.h>
+
 #include "stopwatch.hpp"
 #include "gl_utils.hpp"
 #include <tgaimage.h>
@@ -92,7 +94,11 @@ Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
 	return arena.hex_near({ view_mouse.x, view_mouse.y });
 }
 
+std::vector<std::string> profiling_results;
+
 void dummy_profiling() {
+	profiling_results.clear();
+
 	GameInstance g(30);
 	g.info.add_mob(generator::random_mob());
 	g.info.add_mob(generator::random_mob());
@@ -117,7 +123,9 @@ void dummy_profiling() {
 		total_size += r.size;
 	}
 
-	std::cout << "GameInstance copy iterations " << iterations << " took " << ss.ms() << "ms\t" << ((float)ss.ms()) / iterations * 1000 << "us" << std::endl;
+	std::string str;
+	str = fmt::sprintf("GameInstance copy iterations %d took %dms\t%fus", iterations, ss.ms(), ((float)ss.ms()) / iterations * 1000);
+	profiling_results.push_back(str);
 
 	PlayerInfo ifo = g.info;
 
@@ -130,10 +138,15 @@ void dummy_profiling() {
 		total_mobs += copy.mobs.size();
 	}
 
-	std::cout << "PlayerInfo copy iterations " << info_iterations << " took " << ss.ms() << "ms\t" << ((float)ss.ms()) / info_iterations * 1000 << "us" << std::endl;
+	str = fmt::sprintf("PlayerInfo copy iterations %d took %dms\t%fus", info_iterations, ss.ms(), ((float)ss.ms()) / info_iterations * 1000);
+	profiling_results.push_back(str);
 
+	ss.start();
 	DummySimulation sim;
 	sim.run();
+
+	str = fmt::sprintf("DummySimulation took %dms", ss.ms());
+	profiling_results.push_back(str);
 }
 
 void game_loop(SDL_Window* window) {
@@ -150,11 +163,6 @@ void game_loop(SDL_Window* window) {
 
 	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
 	std::cerr << glGetError() << std::endl;
-
-#ifdef DUMMY_PROFILING
-	dummy_profiling();
-	return;
-#endif
 
 	stopwatch ss;
 
@@ -314,6 +322,18 @@ void game_loop(SDL_Window* window) {
 		ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
 		ImGui::Begin("Framerate");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+
+		ImGui::Begin("Profiling");
+		if (ImGui::Button("Dummy profile")) {
+			dummy_profiling();
+		}
+
+		if (profiling_results.size() > 0) {
+			for (auto& res : profiling_results) {
+				ImGui::Text(res.c_str());
+			}
+		}
 		ImGui::End();
 
 		ImGui::Render();
