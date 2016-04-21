@@ -325,7 +325,7 @@ void game_loop(SDL_Window* window) {
 	}
 }
 
-int main(int argc, char* argv[]) {
+int main(int, char**) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
 		std::cerr << "Unable to initialize SDL_Init " << SDL_GetError() << std::endl;
 		return 1;

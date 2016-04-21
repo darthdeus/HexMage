@@ -1,11 +1,53 @@
-LIBS=-lsdl2
-INCLUDES=-I./include -I/usr/local/include
-CXXFLAGS=-O0 -g -std=c++14 $(INCLUDES) -L/usr/local/lib
-SRC=main.cpp glad.c model.cpp gl_utils.cpp src/*.cpp src/**/*.cpp
+APPNAME   := bin/main
+SOURCES		:= $(wildcard src/*.cpp src/*.c)
+OBJECTS 	:= $(patsubst src%, obj%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
 
-default:
-	@clang++ $(CXXFLAGS) $(SRC) $(LIBS) -o bin/main
-	@./bin/main
+INCLUDE   := -I./include -I/usr/local/include
+LIBPATH		:= -L/usr/local/lib
+LIBS			:= -lsdl2
+
+FLAGS			:= -O0 -g -fno-strict-aliasing
+CCFLAGS 	:= $(FLAGS)
+CXXFLAGS  := $(FLAGS) -std=c++14
+
+CC        := clang
+CXX       := clang++
+
+all: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(OBJECTS) -o $(APPNAME) $(LIBPATH) $(LIBS)
+	./bin/main
+
+obj/%.o: src/%.c
+	$(CC) $(CCFLAGS) $(INCLUDE) -c $< -o $@
+
+obj/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	@rm ./bin/main
+	rm -rf obj/*
+	rm -f $(APPNAME)
+
+# SRC=main.cpp glad.c model.cpp gl_utils.cpp src/*.cpp src/**/*.cpp
+#
+# CC=clang++
+# OPTS=-c -Wall -std=c++14 -g -O0 $(INCLUDES)
+# LIBS=-lsdl2 -L/usr/local/lib
+#
+# EXECUTABLE=bin/main
+
+# all: $(EXECUTABLE)
+#
+# $(EXECUTABLE): $(OBJECTS)
+# 	$(LINK.o) $^ -o $@ $(LIBS)
+#
+# clean:
+# 	rm $(EXECUTABLE) $(OBJECTS)
+
+# default:
+# 	@clang++ $(CXXFLAGS) $(SRC) $(LIBS) -o bin/main
+# 	@./bin/main
+#
+# %.o: %.cpp
+
+# clean:
+# 	@rm ./bin/main
