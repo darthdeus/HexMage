@@ -12,7 +12,9 @@
 // SDL,GL3W
 #include <glad/glad.h>
 #include <SDL/SDL.h>
+#ifdef _WIN32
 #include <SDL/SDL_syswm.h>
+#endif
 #include <SDL/SDL_opengl.h>
 
 // Data
