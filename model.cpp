@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "gl_utils.hpp"
-#include "mob.hpp"
+#include "model.hpp"
 
 namespace model {
 	Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
@@ -135,8 +135,6 @@ namespace model {
 				}
 			}
 		}
-
-		//std::cout << "done " << iterations << " iterations in " << s.ms() << "ms" << std::endl;
 	}
 
 	void Arena::regenerate_geometry() {
@@ -172,7 +170,7 @@ namespace model {
 
 	void Arena::draw_vertices() {
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 3);
 	}
 }
 

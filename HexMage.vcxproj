@@ -174,7 +174,7 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="gl_utils.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="mob.cpp" />
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="src\format.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
@@ -188,7 +188,7 @@
   <ItemGroup>
     <ClInclude Include="gl_utils.hpp" />
     <ClInclude Include="include\imgui_impl_sdl.h" />
-    <ClInclude Include="mob.hpp" />
+    <ClInclude Include="model.hpp" />
     <ClInclude Include="stopwatch.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

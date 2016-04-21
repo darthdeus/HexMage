@@ -1,6 +1,8 @@
 #ifndef STOPWATCH_HPP
 #define STOPWATCH_HPP
 
+#include <iostream>
+#include <string>
 #include <chrono>
 
 struct Stopwatch
@@ -24,6 +26,10 @@ struct Stopwatch
 		auto end = std::chrono::high_resolution_clock::now();
 		auto val = std::chrono::duration_cast<std::chrono::microseconds>(end - start_).count();
 		return (float)val / 1000.0f;
+	}
+
+	void print(std::string s) {
+		std::cout << s << " in: " << ms_f() << std::endl;
 	}
 };
 

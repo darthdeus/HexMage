@@ -1,7 +1,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "gl_utils.hpp"
-#include "mob.hpp"
+// TODO - remove this dependency
+#include "model.hpp"
 
 float rnd(float max) {
 	return (static_cast<float>(rand()) / RAND_MAX) * max;

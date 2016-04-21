@@ -8,15 +8,9 @@
 
 #include <algorithm>
 #include <string>
-#include <cmath>
 #include <iostream>
-#include <fstream>
-#include <chrono>
 #include <vector>
-#include <random>
-#include <unordered_map>
 #include <math.h>
-#include <iomanip>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -32,7 +26,7 @@
 
 #include "stopwatch.hpp"
 #include "gl_utils.hpp"
-#include "mob.hpp"
+#include "model.hpp"
 
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
@@ -109,7 +103,6 @@ void dummy_profiling() {
 	g.info.add_mob(generator::random_mob());
 	g.info.add_mob(generator::random_mob());
 
-
 	Stopwatch ss;
 
 	int iterations = 100000;
@@ -171,13 +164,13 @@ void game_loop(SDL_Window* window) {
 
 	st.start();
 	arena.regenerate_geometry();
-	std::cout << "Arena vertices in: " << st.ms() << "ms" << std::endl;
+	st.print("Arena vertices");
 
 	st.start();
 	for (int i = 0; i < 100; i++) {
 		arena.dijkstra({ 1, 1 });
 	}
-	std::cout << "100x dijkstra done in " << st.ms() << "ms" << std::endl;
+	st.print("100x dijkstra");
 
 	Mob& player = game.info.add_mob(generator::random_mob());
 
