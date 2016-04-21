@@ -192,11 +192,13 @@
     <ClInclude Include="include\format.h" />
     <ClInclude Include="include\game.hpp" />
     <ClInclude Include="include\generator.hpp" />
+    <ClInclude Include="include\glad\glad.h" />
     <ClInclude Include="include\gl_utils.hpp" />
     <ClInclude Include="include\imconfig.h" />
     <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\imgui_impl_sdl.h" />
     <ClInclude Include="include\imgui_internal.h" />
+    <ClInclude Include="include\KHR\khrplatform.h" />
     <ClInclude Include="include\model.hpp" />
     <ClInclude Include="include\simulation.hpp" />
     <ClInclude Include="include\stb_rect_pack.h" />
