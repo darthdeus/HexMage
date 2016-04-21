@@ -4,16 +4,9 @@
 #pragma once
 
 #include <algorithm>
-#include <assert.h>
 #include <vector>
-#include <numeric>
-#include <cmath>
-#include <random>
 #include <iostream>
-#include <chrono>
 #include <glm/glm.hpp>
-
-#include "stopwatch.hpp"
 
 namespace model
 {
@@ -93,6 +86,7 @@ namespace model
 	bool operator==(const Position& lhs, const Position& rhs);
 	std::ostream& operator<<(std::ostream& os, const Position& p);
 
+	// TODO - update this to a proper container
 	template <typename T>
 	struct Matrix
 	{
@@ -115,6 +109,9 @@ namespace model
 
 	private:
 	}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
+
+
+	Position mouse2gl(int x, int y);
 
 	class Ability
 	{

@@ -88,7 +88,7 @@ void ShaderProgram::setupAttributes() {
 	glBindFragDataLocation(shaderProgram, 0, "outColor");
 }
 
-color color_for_type(model::HexType type) {
+Color color_for_type(model::HexType type) {
 	switch (type) {
 	case model::HexType::Empty:
 		return{ 0.4f, 0.2f, 0.4f };
@@ -106,13 +106,13 @@ float rad_for_hex(int i) {
 	return static_cast<float>(M_PI) / 180 * angle_deg;
 }
 
-void push_vertex(std::vector<float>& vbo, float x, float y, color c) {
+void push_vertex(std::vector<float>& vbo, float x, float y, Color c) {
 	vbo.push_back(x);
 	vbo.push_back(y);
 	push_color(vbo, c.r, c.g, c.b, c.a);
 }
 
-void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c) {
+void hex_at(std::vector<float>& vertices, model::Position pos, float r, Color c) {
 	float ri;
 	int rot = 0; // 1;
 	for (int i = rot; i < 7 + rot; i++) {

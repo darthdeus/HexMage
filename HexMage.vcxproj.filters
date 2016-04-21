@@ -35,7 +35,10 @@
     <ClCompile Include="src\imgui_impl_sdl.cpp">
       <Filter>Libraries</Filter>
     </ClCompile>
-    <ClCompile Include="include\generator.cpp">
+    <ClCompile Include="game.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generator.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -91,6 +94,9 @@
       <Filter>Library Headers</Filter>
     </ClInclude>
     <ClInclude Include="include\generator.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\game.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

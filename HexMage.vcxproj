@@ -175,9 +175,10 @@
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\generator.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="simulation.cpp" />
     <ClCompile Include="src\format.cpp" />
+    <ClCompile Include="src\generator.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\gl_utils.cpp" />
     <ClCompile Include="src\imgui.cpp" />
@@ -189,6 +190,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\format.h" />
+    <ClInclude Include="include\game.hpp" />
     <ClInclude Include="include\generator.hpp" />
     <ClInclude Include="include\gl_utils.hpp" />
     <ClInclude Include="include\imconfig.h" />

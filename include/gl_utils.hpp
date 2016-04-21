@@ -18,24 +18,24 @@ namespace model {
 	struct Position;
 }
 
-struct color
+struct Color
 {
 	float r, g, b, a;
 
-	color() : r(0), g(0), b(0), a(0) {}
-	color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
-	color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
+	Color() : r(0), g(0), b(0), a(0) {}
+	Color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
+	Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
 
-	color mut(float d) const {
+	Color mut(float d) const {
 		return{ r + d, g + d, b + d, a };
 	}
 };
 
 
-color color_for_type(model::HexType type);
+Color color_for_type(model::HexType type);
 float rad_for_hex(int i);
-void push_vertex(std::vector<float>& vbo, float x, float y, color c);
-void hex_at(std::vector<float>& vertices, model::Position pos, float r, color c);
+void push_vertex(std::vector<float>& vbo, float x, float y, Color c);
+void hex_at(std::vector<float>& vertices, model::Position pos, float r, Color c);
 
 float rnd(float max);
 float rnd();
@@ -96,7 +96,7 @@ public:
 	void setupAttributes();
 };
 
-inline void push_color(std::vector<float>& vbo, color c) {
+inline void push_color(std::vector<float>& vbo, Color c) {
 	vbo.push_back(c.r);
 	vbo.push_back(c.g);
 	vbo.push_back(c.b);
@@ -109,6 +109,7 @@ inline void push_color(std::vector<float>& v, float r, float g, float b, float a
 	v.push_back(b);
 	v.push_back(a);
 }
+
 
 
 #endif

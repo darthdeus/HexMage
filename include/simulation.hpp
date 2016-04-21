@@ -4,7 +4,9 @@
 #pragma once
 
 #include <vector>
+#include <random>
 #include <model.hpp>
+#include <stopwatch.hpp>
 #include <generator.hpp>
 
 namespace simulation

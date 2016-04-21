@@ -3,8 +3,9 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "gl_utils.hpp"
-#include "model.hpp"
+#include <stopwatch.hpp>
+#include <gl_utils.hpp>
+#include <model.hpp>
 
 namespace model {
 	Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
@@ -158,7 +159,7 @@ namespace model {
 
 				pos({ col, row }) = { draw_x, draw_y };
 
-				color c = color_for_type((*this)({ col, row }));
+				Color c = color_for_type((*this)({ col, row }));
 
 				auto pos = this->pos({ col, row });
 				hex_at(vertices, pos, radius, c);
@@ -171,5 +172,19 @@ namespace model {
 	void Arena::draw_vertices() {
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 3);
+	}
+
+	Position mouse2gl(int x, int y) {
+		// TODO - figure out a place to put this
+		constexpr int SCREEN_WIDTH = 800;
+		constexpr int SCREEN_HEIGHT = 600;
+
+		float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
+		float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
+
+		rel_y = 2 * (1 - rel_y) - 1;
+		rel_x = 2 * rel_x - 1;
+
+		return{ rel_x, rel_y };
 	}
 }
