@@ -25,6 +25,9 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+
 #include "stopwatch.hpp"
 #include "gl_utils.hpp"
 #include <tgaimage.h>
@@ -84,24 +87,12 @@ Position mouse2gl(Sint32 x, Sint32 y) {
 }
 
 Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
-  auto rel_mouse = mouse2gl(x, y);
-  auto view_mouse = inverse(proj) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
-  return arena.hex_near({ view_mouse.x, view_mouse.y });
+	auto rel_mouse = mouse2gl(x, y);
+	auto view_mouse = inverse(proj) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
+	return arena.hex_near({ view_mouse.x, view_mouse.y });
 }
 
-void game_loop(SDL_Window* window) {
-	// TODO - proc tohle nefunguje?
-	// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
-	using namespace model;
-	using namespace glm;
-
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
-	std::cerr << glGetError() << std::endl;
-
+void dummy_profiling() {
 	GameInstance g(30);
 	g.info.add_mob(generator::random_mob());
 	g.info.add_mob(generator::random_mob());
@@ -126,7 +117,7 @@ void game_loop(SDL_Window* window) {
 		total_size += r.size;
 	}
 
-	std::cout << "GameInstance copy iterations " << iterations << " took " << ss.ms() << "ms\t" << ((float)ss.ms())/iterations*1000 << "us" << std::endl;
+	std::cout << "GameInstance copy iterations " << iterations << " took " << ss.ms() << "ms\t" << ((float)ss.ms()) / iterations * 1000 << "us" << std::endl;
 
 	PlayerInfo ifo = g.info;
 
@@ -143,10 +134,29 @@ void game_loop(SDL_Window* window) {
 
 	DummySimulation sim;
 	sim.run();
+}
 
+void game_loop(SDL_Window* window) {
+	// TODO - proc tohle nefunguje?
+	// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
+	using namespace model;
+	using namespace glm;
 	
-	return;
+	ImGui_ImplSdlGL3_Init(window);
 
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
+	std::cerr << glGetError() << std::endl;
+
+#ifdef DUMMY_PROFILING
+	dummy_profiling();
+	return;
+#endif
+
+	stopwatch ss;
 
 	GameInstance game(30);
 	Arena& arena = game.arena;
@@ -197,8 +207,10 @@ void game_loop(SDL_Window* window) {
 		const float scroll_offset = 0.05f;
 
 		while (SDL_PollEvent(&windowEvent)) {
+			ImGui_ImplSdlGL3_ProcessEvent(&windowEvent);
+
 			if (windowEvent.type == SDL_MOUSEMOTION) {
-        highlight_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
+				highlight_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
 				highlight_path.clear();
 
 				while (highlight_hex != player.c) {
@@ -208,11 +220,12 @@ void game_loop(SDL_Window* window) {
 			}
 
 			if (windowEvent.type == SDL_MOUSEBUTTONDOWN && windowEvent.button.button == SDL_BUTTON_RIGHT) {
-        auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
+				auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
 
 				if (arena(click_hex) == HexType::Empty) {
 					arena(click_hex) = HexType::Wall;
-				} else {
+				}
+				else {
 					arena(click_hex) = HexType::Empty;
 				}
 				arena.regenerate_geometry();
@@ -220,7 +233,7 @@ void game_loop(SDL_Window* window) {
 			}
 
 			if (windowEvent.type == SDL_MOUSEBUTTONDOWN && windowEvent.button.button == SDL_BUTTON_LEFT) {
-        auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
+				auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
 
 				player.c = click_hex;
 				highlight_hex = player.c;
@@ -269,6 +282,8 @@ void game_loop(SDL_Window* window) {
 			}
 		}
 
+		ImGui_ImplSdlGL3_NewFrame(window);
+
 		translate += current_scroll;
 
 		mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
@@ -281,7 +296,6 @@ void game_loop(SDL_Window* window) {
 
 		glClearColor(0.3f, 0.2f, 0.3f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
-
 
 		arena.draw_vertices();
 
@@ -297,15 +311,22 @@ void game_loop(SDL_Window* window) {
 			paint_at(arena.pos(c), Arena::radius, { 0.85f, 0.75f, 0.85f });
 		}
 
-		SDL_GL_SwapWindow(window);
+		ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+		ImGui::Begin("Framerate");
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
 
-		// std::cout << "Frame: " << st_frame.ms() << "ms" << std::endl;
+		ImGui::Render();
+		SDL_GL_SwapWindow(window);
 	}
 }
 
-int main() {
+int main(int argc, char* argv[]) {
 	// TODO - error handling
-	SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+		std::cerr << "Unable to initialize SDL_Init " << SDL_GetError() << std::endl;
+		return 1;
+	}
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
