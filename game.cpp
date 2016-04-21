@@ -57,7 +57,7 @@ namespace game {
 		}
 	}
 
-	void paint_at(model::Position pos, float radius, Color color) {
+	void paint_at(Position pos, float radius, Color color) {
 		std::vector<float> player_vertices;
 		hex_at(player_vertices, pos, radius, color);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
