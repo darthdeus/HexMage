@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <string>
-#include <iostream>
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -71,19 +70,10 @@ namespace game {
 	}
 
 	void game_loop(SDL_Window* window) {
-		// TODO - proc tohle nefunguje?
-		// glEnable(GL_POLYGON_SMOOTH | GL_MULTISAMPLE);
 		using namespace model;
 		using namespace glm;
 
 		ImGui_ImplSdlGL3_Init(window);
-
-		GLuint vao;
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		ShaderProgram program{ "vertex.glsl", "fragment.glsl" };
-		std::cerr << glGetError() << std::endl;
 
 		Stopwatch st;
 
@@ -103,20 +93,34 @@ namespace game {
 
 		Mob& player = game.info.add_mob(generator::random_mob());
 
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
 		GLuint vbo;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		program.setupAttributes();
+		
+		GLsizei stride = 6 * sizeof(GLfloat);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(0));
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(2 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(1);
+
+		//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(6 * sizeof(GLfloat)));
+		//glEnableVertexAttribArray(2);
+
+		gl::Shader shaderProgram{ "vertex.glsl", "fragment.glsl" };
+		shaderProgram.use();
 
 		Coord highlight_hex;
 		std::vector<Coord> highlight_path;
 
 		Position translate{ 0, 0 };
-		Position rel_mouse{ 0,0 };
 
 		Position current_scroll{ 0, 0 };
 
-		Coord selected_hex;
 		float zoom_level = 0.7f;
 
 		mat4 zoom{ 1 };
@@ -212,7 +216,7 @@ namespace game {
 
 			projection_mat = zoom * mov;
 
-			GLint uniTrans = glGetUniformLocation(program.shaderProgram, "trans");
+			GLint uniTrans = glGetUniformLocation(shaderProgram.program, "trans");
 			glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
 			glClearColor(0.3f, 0.2f, 0.3f, 1);

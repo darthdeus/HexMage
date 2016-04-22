@@ -2,6 +2,7 @@
 #include <math.h>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 #include <model.hpp>
 
 Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
@@ -75,72 +76,65 @@ float clamp(float x) {
 	return x;
 }
 
-ShaderSource::ShaderSource(std::string filename) : filename_(filename) {
-	std::ifstream is{ filename };
+GLuint load_and_compile_shader_(const GLchar* path, GLenum shaderType) {
+	using namespace std;
 
-	contents_ = { std::istreambuf_iterator<char>(is),
-		std::istreambuf_iterator<char>() };
+	ifstream file(path);
 
-	c_str_ = contents_.c_str();
-	source_ = &c_str_;
-}
+	stringstream str;
+	str << file.rdbuf();
 
-const GLchar** ShaderSource::source() const {
-	return source_;
-}
+	string code = str.str();
+	const GLchar* code_c = code.c_str();
 
-GLuint ShaderSource::compile(GLenum type) {
-	// TODO - deallocate resources
-	GLuint shaderID = glCreateShader(type);
-	glShaderSource(shaderID, 1, source(), nullptr);
-	glCompileShader(shaderID);
+	GLint success;
+	GLchar errorLog[512];
 
-	GLint status;
-	glGetShaderiv(shaderID, GL_COMPILE_STATUS, &status);
-	if (status != GL_TRUE) {
-		std::cerr << "Shader from " << filename_ << " failed to compile"
-			<< std::endl;
+	GLuint shaderId = glCreateShader(shaderType);
+	glShaderSource(shaderId, 1, &code_c, nullptr);
+	glCompileShader(shaderId);
 
-		char buffer[512];
-		glGetShaderInfoLog(shaderID, 512, nullptr, buffer);
-		std::cerr << buffer << std::endl;
+	// Check for compile errors
+	glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(shaderId, 512, nullptr, errorLog);
+		cerr << "ERROR: shader " << path << " failed to compile: " << errorLog << endl;
+		throw "Shader failed to compile";
 	}
 
-	return shaderID;
+	return shaderId;
 }
 
-ShaderProgram::ShaderProgram(std::string vertex_file, std::string fragment_file_) : vertexShaderSource_{ vertex_file }, fragmentShaderSource_{ fragment_file_ } {
-	vertexShader = vertexShaderSource_.compile(GL_VERTEX_SHADER);
-	fragmentShader = fragmentShaderSource_.compile(GL_FRAGMENT_SHADER);
+namespace gl
+{
+	Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
+		using namespace std;
 
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
+		GLuint vertex = load_and_compile_shader_("vertex.glsl", GL_VERTEX_SHADER);
+		GLuint fragment = load_and_compile_shader_("fragment.glsl", GL_FRAGMENT_SHADER);
 
-	glLinkProgram(shaderProgram);
-	use();
-}
+		program = glCreateProgram();
+		glAttachShader(program, vertex);
+		glAttachShader(program, fragment);
+		glLinkProgram(program);
 
+		GLint success;
+		GLchar errorLog[512];
+		glGetProgramiv(program, GL_LINK_STATUS, &success);
+		if (!success) {
+			glGetProgramInfoLog(program, 512, nullptr, errorLog);
+			cerr << "ERROR: program link fail: " << errorLog << endl;
+			throw "glLinkProgram failed";
+		}
 
-ShaderProgram::~ShaderProgram() {
-	glDeleteProgram(shaderProgram);
-	glDeleteShader(fragmentShader);
-	glDeleteShader(vertexShader);
-}
+		glDeleteShader(vertex);
+		glDeleteShader(fragment);
+	}
 
-void ShaderProgram::use() {
-	glUseProgram(shaderProgram);
-}
+	// TODO - check the rule of five? do I actually want to delete multiple copies of the program?
+	Shader::~Shader() { glDeleteProgram(program); }
 
-void ShaderProgram::setupAttributes() {
-	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
-
-	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
-	glBindFragDataLocation(shaderProgram, 0, "outColor");
+	void Shader::use() { glUseProgram(program); }
 }
 
 Color color_for_type(HexType type) {

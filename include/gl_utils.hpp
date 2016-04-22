@@ -156,40 +156,6 @@ struct hash_int_pair
 	}
 };
 
-// TODO - do this in a less insane way
-class ShaderSource
-{
-	std::string filename_;
-	std::string contents_;
-	const char* c_str_;
-	const GLchar** source_;
-
-public:
-	ShaderSource(std::string filename);
-	ShaderSource(const ShaderSource&) = delete;
-
-	const GLchar** source() const;
-	GLuint compile(GLenum type);
-};
-
-class ShaderProgram
-{
-public:
-	ShaderSource vertexShaderSource_;
-	ShaderSource fragmentShaderSource_;
-
-	GLuint vertexShader;
-	GLuint fragmentShader;
-	GLuint shaderProgram;
-
-	ShaderProgram(std::string vertex_file, std::string fragment_file_);
-	ShaderProgram(const ShaderProgram&) = delete;
-	~ShaderProgram();
-
-	void use();
-	void setupAttributes();
-};
-
 inline void push_color(std::vector<float>& vbo, Color c) {
 	vbo.push_back(c.r);
 	vbo.push_back(c.g);
@@ -202,6 +168,20 @@ inline void push_color(std::vector<float>& v, float r, float g, float b, float a
 	v.push_back(g);
 	v.push_back(b);
 	v.push_back(a);
+}
+
+namespace gl
+{
+	class Shader
+	{
+	public:
+		GLuint program;
+		
+		Shader(const GLchar* vertexPath, const GLchar* fragmentPath);
+		~Shader();
+
+		void use();
+	};
 }
 
 
