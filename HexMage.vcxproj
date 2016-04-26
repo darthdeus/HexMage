@@ -118,8 +118,7 @@
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy $(ProjectDir)lib\SDL2.dll $(TargetDir)SDL2.dll
-</Command>
+      <Command>copy $(ProjectDir)lib\SDL2.dll $(ReleaseDir)SDL2.dll</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -175,9 +174,8 @@
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="game.cpp" />
-    <ClCompile Include="simulation.cpp" />
     <ClCompile Include="src\format.cpp" />
+    <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\generator.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\gl_utils.cpp" />
@@ -187,6 +185,7 @@
     <ClCompile Include="src\imgui_impl_sdl.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\model.cpp" />
+    <ClCompile Include="src\simulation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\format.h" />

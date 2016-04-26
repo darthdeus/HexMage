@@ -25,20 +25,20 @@ int main(int, char**) {
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
 
 	SDL_Window* window = SDL_CreateWindow(
 		"HexMage", 300, 300, // TODO - better default screen position
 		game::SCREEN_WIDTH, game::SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
 	if (window == nullptr) {
-		std::cerr << "Unable to initialize SDL_Window, exiting." << std::endl;
+		std::cerr << "Unable to initialize SDL_Window, exiting." << SDL_GetError() << std::endl;
 		return 1;
 	}
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	if (context == nullptr) {
-		std::cerr << "Unable to initialize OpenGL context, exiting." << std::endl;
+		std::cerr << "Unable to initialize OpenGL context, exiting." << SDL_GetError() << std::endl;
 		return 1;
 	}
 

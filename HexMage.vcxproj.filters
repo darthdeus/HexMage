@@ -17,9 +17,6 @@
     <ClCompile Include="src\model.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="simulation.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
     <ClCompile Include="src\glad.c">
       <Filter>Libraries</Filter>
     </ClCompile>
@@ -35,10 +32,13 @@
     <ClCompile Include="src\imgui_impl_sdl.cpp">
       <Filter>Libraries</Filter>
     </ClCompile>
-    <ClCompile Include="game.cpp">
+    <ClCompile Include="src\generator.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\generator.cpp">
+    <ClCompile Include="src\game.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\simulation.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
