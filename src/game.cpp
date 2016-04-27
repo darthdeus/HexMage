@@ -6,9 +6,6 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include <glad/glad.h>
 #include <SDL/SDL.h>
@@ -23,6 +20,8 @@
 #include <gl_utils.hpp>
 #include <model.hpp>
 #include <simulation.hpp>
+
+#include <glm/glm.hpp>
 
 using namespace model;
 using namespace glm;
@@ -121,25 +120,16 @@ namespace game {
 		Coord highlight_hex;
 		std::vector<Coord> highlight_path;
 
-		Position translate{ 0, 0 };
-
-		Position current_scroll{ 0, 0 };
-
-		float zoom_level = 0.7f;
-
-		mat4 zoom{ 1 };
-		mat4 mov{ 1 };
-		mat4 projection_mat{ 1 };
+		gl::Camera camera;
 
 		SDL_Event windowEvent;
 		while (true) {
-			const float scroll_offset = 0.05f;
 
 			while (SDL_PollEvent(&windowEvent)) {
 				ImGui_ImplSdlGL3_ProcessEvent(&windowEvent);
 
 				if (windowEvent.type == SDL_MOUSEMOTION) {
-					highlight_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
+					highlight_hex = hex_at_mouse(camera.projection(), arena, windowEvent.motion.x, windowEvent.motion.y);
 					highlight_path.clear();
 
 					while (highlight_hex != player.c) {
@@ -149,7 +139,7 @@ namespace game {
 				}
 
 				if (windowEvent.type == SDL_MOUSEBUTTONDOWN && windowEvent.button.button == SDL_BUTTON_RIGHT) {
-					auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
+					auto click_hex = hex_at_mouse(camera.projection(), arena, windowEvent.motion.x, windowEvent.motion.y);
 
 					if (arena(click_hex) == HexType::Empty) {
 						arena(click_hex) = HexType::Wall;
@@ -162,7 +152,7 @@ namespace game {
 				}
 
 				if (windowEvent.type == SDL_MOUSEBUTTONDOWN && windowEvent.button.button == SDL_BUTTON_LEFT) {
-					auto click_hex = hex_at_mouse(projection_mat, arena, windowEvent.motion.x, windowEvent.motion.y);
+					auto click_hex = hex_at_mouse(camera.projection(), arena, windowEvent.motion.x, windowEvent.motion.y);
 
 					player.c = click_hex;
 					highlight_hex = player.c;
@@ -176,52 +166,32 @@ namespace game {
 					return;
 
 				if (windowEvent.type == SDL_KEYDOWN) {
-					switch (windowEvent.key.keysym.sym) {
-					case 'w':
-						current_scroll.y = -scroll_offset;
-						break;
-					case 's':
-						current_scroll.y = scroll_offset;
-						break;
-					case 'a':
-						current_scroll.x = scroll_offset;
-						break;
-					case 'd':
-						current_scroll.x = -scroll_offset;
-						break;
-					}
+					camera.keydown(windowEvent.key.keysym.sym);
 				}
 
 				if (windowEvent.type == SDL_KEYUP) {
-					switch (windowEvent.key.keysym.sym) {
-					case 'w':
-					case 's':
-						current_scroll.y = 0;
-						break;
-
-					case 'a':
-					case 'd':
-						current_scroll.x = 0;
-						break;
-					}
+					camera.keyup(windowEvent.key.keysym.sym);
 				}
 
 				if (windowEvent.type == SDL_MOUSEWHEEL) {
-					zoom_level += 0.07f * windowEvent.wheel.y;
+					camera.scroll(windowEvent.wheel.y);
 				}
 			}
 
 			ImGui_ImplSdlGL3_NewFrame(window);
 
-			translate += current_scroll;
+			camera.update_camera();
 
-			mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
-			zoom = glm::scale(mat4(1.0f), vec3(zoom_level));
+			//translate += current_scroll;
 
-			projection_mat = zoom * mov;
+			//mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
+			//zoom = glm::scale(mat4(1.0f), vec3(zoom_level));
+
+			//projection_mat = zoom * mov;
 
 			GLint uniTrans = glGetUniformLocation(shaderProgram.program, "trans");
-			glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(projection_mat));
+			//glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(projection_mat));
+			glUniformMatrix4fv(uniTrans, 1, GL_FALSE, camera.value_ptr());
 
 			glClearColor(0.3f, 0.2f, 0.3f, 1);
 			glClear(GL_COLOR_BUFFER_BIT);

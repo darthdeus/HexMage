@@ -8,6 +8,9 @@
 #include <utility>
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <SDL/SDL_hints.h>
 
 enum class HexType
 {
@@ -172,11 +175,76 @@ inline void push_color(std::vector<float>& v, float r, float g, float b, float a
 
 namespace gl
 {
+	class Camera
+	{
+		glm::mat4 projection_{ 1 };
+		glm::mat4 zoom_{ 1 };
+		glm::mat4 mov_{ 1 };
+		Position current_scroll_{ 0, 0 };
+		Position translate_{ 0, 0 };
+		float zoom_level_ = 0.7f;
+
+		const float scroll_offset = 0.05f;
+	public:
+
+		void update_camera() {
+			translate_ += current_scroll_;
+
+			mov_ = glm::translate(glm::mat4(1.0), glm::vec3(static_cast<glm::vec2>(translate_), 0));
+			zoom_ = glm::scale(glm::mat4(1.0f), glm::vec3(zoom_level_));
+			projection_ = zoom_ * mov_;
+		}
+
+		glm::mat4 projection() {
+			return projection_;
+		}
+
+		float* value_ptr() {
+			return glm::value_ptr(projection_);
+		}
+
+		void keydown(Sint32 key) {
+			switch (key) {
+			case 'w':
+				current_scroll_.y = -scroll_offset;
+				break;
+			case 's':
+				current_scroll_.y = scroll_offset;
+				break;
+			case 'a':
+				current_scroll_.x = scroll_offset;
+				break;
+			case 'd':
+				current_scroll_.x = -scroll_offset;
+				break;
+			}
+		}
+
+		void keyup(Sint32 key) {
+			switch (key) {
+			case 'w':
+			case 's':
+				current_scroll_.y = 0;
+				break;
+
+			case 'a':
+			case 'd':
+				current_scroll_.x = 0;
+				break;
+			}
+		}
+
+		void scroll(Sint32 direction) {
+			zoom_level_ += 0.07f * direction;
+		}
+
+	};
+
 	class Shader
 	{
 	public:
 		GLuint program;
-		
+
 		Shader(const GLchar* vertexPath, const GLchar* fragmentPath);
 		~Shader();
 
