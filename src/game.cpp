@@ -97,15 +97,19 @@ namespace game {
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
+		int x;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &x);
+		fmt::printf("max texture units %i", x);
+
 		GLuint vbo;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		
-		GLsizei stride = 6 * sizeof(GLfloat);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(0));
+		GLsizei stride = 7 * sizeof(GLfloat);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(0));
 		glEnableVertexAttribArray(0);
 
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(2 * sizeof(GLfloat)));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(3 * sizeof(GLfloat)));
 		glEnableVertexAttribArray(1);
 
 		//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(6 * sizeof(GLfloat)));

@@ -182,6 +182,19 @@ namespace gl
 
 		void use();
 	};
+
+	//class Batch
+	//{
+	//	
+	//};
+
+	//class Scene
+	//{
+	//public:
+	//	Batch batch(GLenum mode) {
+	//		
+	//	}
+	//};
 }
 
 

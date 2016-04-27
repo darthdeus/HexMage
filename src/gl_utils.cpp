@@ -110,8 +110,8 @@ namespace gl
 	Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
 		using namespace std;
 
-		GLuint vertex = load_and_compile_shader_("vertex.glsl", GL_VERTEX_SHADER);
-		GLuint fragment = load_and_compile_shader_("fragment.glsl", GL_FRAGMENT_SHADER);
+		GLuint vertex = load_and_compile_shader_(vertexPath, GL_VERTEX_SHADER);
+		GLuint fragment = load_and_compile_shader_(fragmentPath, GL_FRAGMENT_SHADER);
 
 		program = glCreateProgram();
 		glAttachShader(program, vertex);
@@ -158,6 +158,7 @@ float rad_for_hex(int i) {
 void push_vertex(std::vector<float>& vbo, float x, float y, Color c) {
 	vbo.push_back(x);
 	vbo.push_back(y);
+	vbo.push_back(0.0f);
 	push_color(vbo, c.r, c.g, c.b, c.a);
 }
 
