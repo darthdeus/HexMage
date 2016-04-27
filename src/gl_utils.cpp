@@ -85,6 +85,7 @@ GLuint load_and_compile_shader_(const GLchar* path, GLenum shaderType) {
 	str << file.rdbuf();
 
 	string code = str.str();
+	cout << code << endl << endl;
 	const GLchar* code_c = code.c_str();
 
 	GLint success;
@@ -216,7 +217,8 @@ void push_vertex(std::vector<float>& vbo, float x, float y, Color c) {
 void hex_at(std::vector<float>& vertices, Position pos, float r, Color c) {
 	float ri;
 	int rot = 0; // 1;
-	for (int i = rot; i < 7 + rot; i++) {
+
+	for (int i = rot; i < 6 + rot; i++) {
 		push_vertex(vertices, pos.x, pos.y, c);
 
 		ri = rad_for_hex(i - 1);

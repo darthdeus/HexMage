@@ -1,0 +1,4 @@
+- Neni jasne jak generovat nahodne tahy tak, aby vyuzivaly naplno AP
+	a zaroven to bylo levne.
+- Jak efektivne vybirat kam mam jit, aby to bylo v dobehove vzdalenosti?
+	- predpocitat nejakou matici offsetu a z ni vybirat?

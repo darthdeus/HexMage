@@ -8,6 +8,7 @@
 #include <model.hpp>
 #include <stopwatch.hpp>
 #include <generator.hpp>
+#include <format.h>
 
 namespace simulation
 {
@@ -62,8 +63,11 @@ namespace simulation
 			}
 			total_time += s.ms();
 
-			std::cout << "Simulated " << iterations << " iterations took: " << total_time << "ms, per second: " << (int)(iterations / total_time * 1000)
-				<< "\t iteration " << ((float)total_time) / iterations << "ms" << std::endl;
+			fmt::printf("Simulated %d iterations, took: %fms, per second: %i\titeration: %fms\n",
+				iterations,
+				total_time,
+				(int)(iterations / total_time * 1000),
+				((float)total_time) / iterations);
 		}
 	};
 

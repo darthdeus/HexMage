@@ -59,7 +59,7 @@ namespace game {
 		std::vector<float> player_vertices;
 		hex_at(player_vertices, pos, radius, color);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(player_vertices.size()) / 3);
+		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(player_vertices.size()) / 6);
 	}
 
 	Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
@@ -114,7 +114,7 @@ namespace game {
 		//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(6 * sizeof(GLfloat)));
 		//glEnableVertexAttribArray(2);
 
-		gl::Shader shaderProgram{ "vertex.glsl", "fragment.glsl" };
+		gl::Shader shaderProgram{ "C:\\dev\\HexMage\\vertex.glsl", "C:\\dev\\HexMage\\fragment.glsl" };
 		shaderProgram.use();
 
 		Coord highlight_hex;
@@ -122,6 +122,7 @@ namespace game {
 
 		gl::Camera camera;
 
+		SDL_GL_SetSwapInterval(1);
 		SDL_Event windowEvent;
 		while (true) {
 
