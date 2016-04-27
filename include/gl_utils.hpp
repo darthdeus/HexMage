@@ -187,57 +187,12 @@ namespace gl
 		const float scroll_offset = 0.05f;
 	public:
 
-		void update_camera() {
-			translate_ += current_scroll_;
-
-			mov_ = glm::translate(glm::mat4(1.0), glm::vec3(static_cast<glm::vec2>(translate_), 0));
-			zoom_ = glm::scale(glm::mat4(1.0f), glm::vec3(zoom_level_));
-			projection_ = zoom_ * mov_;
-		}
-
-		glm::mat4 projection() {
-			return projection_;
-		}
-
-		float* value_ptr() {
-			return glm::value_ptr(projection_);
-		}
-
-		void keydown(Sint32 key) {
-			switch (key) {
-			case 'w':
-				current_scroll_.y = -scroll_offset;
-				break;
-			case 's':
-				current_scroll_.y = scroll_offset;
-				break;
-			case 'a':
-				current_scroll_.x = scroll_offset;
-				break;
-			case 'd':
-				current_scroll_.x = -scroll_offset;
-				break;
-			}
-		}
-
-		void keyup(Sint32 key) {
-			switch (key) {
-			case 'w':
-			case 's':
-				current_scroll_.y = 0;
-				break;
-
-			case 'a':
-			case 'd':
-				current_scroll_.x = 0;
-				break;
-			}
-		}
-
-		void scroll(Sint32 direction) {
-			zoom_level_ += 0.07f * direction;
-		}
-
+		void update_camera();
+		glm::mat4 projection() const;
+		float* value_ptr();
+		void keydown(Sint32 key);
+		void keyup(Sint32 key);
+		void scroll(Sint32 direction);
 	};
 
 	class Shader

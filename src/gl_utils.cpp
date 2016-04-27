@@ -107,6 +107,57 @@ GLuint load_and_compile_shader_(const GLchar* path, GLenum shaderType) {
 
 namespace gl
 {
+	void Camera::update_camera() {
+		translate_ += current_scroll_;
+
+		mov_ = glm::translate(glm::mat4(1.0), glm::vec3(static_cast<glm::vec2>(translate_), 0));
+		zoom_ = glm::scale(glm::mat4(1.0f), glm::vec3(zoom_level_));
+		projection_ = zoom_ * mov_;
+	}
+
+	glm::mat4 Camera::projection() const {
+		return projection_;
+	}
+
+	float* Camera::value_ptr() {
+		return glm::value_ptr(projection_);
+	}
+
+	void Camera::keydown(Sint32 key) {
+		switch (key) {
+			case 'w':
+				current_scroll_.y = -scroll_offset;
+				break;
+			case 's':
+				current_scroll_.y = scroll_offset;
+				break;
+			case 'a':
+				current_scroll_.x = scroll_offset;
+				break;
+			case 'd':
+				current_scroll_.x = -scroll_offset;
+				break;
+		}
+	}
+
+	void Camera::keyup(Sint32 key) {
+		switch (key) {
+			case 'w':
+			case 's':
+				current_scroll_.y = 0;
+				break;
+
+			case 'a':
+			case 'd':
+				current_scroll_.x = 0;
+				break;
+		}
+	}
+
+	void Camera::scroll(Sint32 direction) {
+		zoom_level_ += 0.07f * direction;
+	}
+
 	Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
 		using namespace std;
 

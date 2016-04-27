@@ -161,36 +161,19 @@ namespace game {
 				}
 
 				if (windowEvent.type == SDL_QUIT ||
-					(windowEvent.type == SDL_KEYUP &&
-						windowEvent.key.keysym.sym == SDLK_ESCAPE))
+					(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE))
 					return;
 
-				if (windowEvent.type == SDL_KEYDOWN) {
-					camera.keydown(windowEvent.key.keysym.sym);
-				}
-
-				if (windowEvent.type == SDL_KEYUP) {
-					camera.keyup(windowEvent.key.keysym.sym);
-				}
-
-				if (windowEvent.type == SDL_MOUSEWHEEL) {
-					camera.scroll(windowEvent.wheel.y);
-				}
+				if (windowEvent.type == SDL_KEYDOWN) camera.keydown(windowEvent.key.keysym.sym);
+				if (windowEvent.type == SDL_KEYUP) camera.keyup(windowEvent.key.keysym.sym);
+				if (windowEvent.type == SDL_MOUSEWHEEL) camera.scroll(windowEvent.wheel.y);
 			}
 
 			ImGui_ImplSdlGL3_NewFrame(window);
 
 			camera.update_camera();
 
-			//translate += current_scroll;
-
-			//mov = glm::translate(mat4(1.0f), vec3(static_cast<vec2>(translate), 0));
-			//zoom = glm::scale(mat4(1.0f), vec3(zoom_level));
-
-			//projection_mat = zoom * mov;
-
 			GLint uniTrans = glGetUniformLocation(shaderProgram.program, "trans");
-			//glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(projection_mat));
 			glUniformMatrix4fv(uniTrans, 1, GL_FALSE, camera.value_ptr());
 
 			glClearColor(0.3f, 0.2f, 0.3f, 1);
