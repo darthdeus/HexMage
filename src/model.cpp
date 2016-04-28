@@ -6,6 +6,7 @@
 #include <stopwatch.hpp>
 #include <gl_utils.hpp>
 #include <model.hpp>
+#include <boost/optional.hpp>
 
 namespace model {
 
@@ -53,8 +54,9 @@ namespace model {
 				auto& p = paths(i, j);
 				auto& h = hexes(i, j);
 				
-
+				p.source = boost::none;
 				p.distance = std::numeric_limits<int>::max();
+
 				if (h == HexType::Wall) {
 					p.state = VertexState::Closed;
 				} else {
@@ -67,7 +69,7 @@ namespace model {
 			Coord current = queue.front();
 			queue.pop();
 
-			if (iterations > 1000000 || queue.size() > 100000) {
+			if (iterations > 10000 || queue.size() > 1000) {
 				std::cout << "got stuck heh\titerations: " << iterations << ", queue: " << queue.size() << std::endl;
 				return;
 			}

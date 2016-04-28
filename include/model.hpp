@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <gl_utils.hpp>
+#include <boost/optional.hpp>
 
 namespace model
 {
@@ -33,7 +34,7 @@ namespace model
 	class Path
 	{
 	public:
-		Coord source;
+		boost::optional<Coord> source;
 		VertexState state;
 		int distance;
 	};

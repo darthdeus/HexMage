@@ -84,13 +84,14 @@ namespace game {
 		arena.regenerate_geometry();
 		st.print("Arena vertices");
 
-		st.start();
-		for (int i = 0; i < 100; i++) {
-			arena.dijkstra({ 1, 1 });
-		}
-		st.print("100x dijkstra");
+		//st.start();
+		//for (int i = 0; i < 100; i++) {
+		//	arena.dijkstra({ 1, 1 });
+		//}
+		//st.print("100x dijkstra");
 
 		Mob& player = game.info.add_mob(generator::random_mob());
+		player.c = { 0, 0 };
 
 		GLuint vao;
 		glGenVertexArrays(1, &vao);
@@ -117,25 +118,38 @@ namespace game {
 		gl::Shader shaderProgram{ "C:\\dev\\HexMage\\vertex.glsl", "C:\\dev\\HexMage\\fragment.glsl" };
 		shaderProgram.use();
 
-		Coord highlight_hex;
-		std::vector<Coord> highlight_path;
+		Coord highlight_hex, mouse_hex;
 
+		std::vector<Coord> highlight_path;
 		gl::Camera camera;
 
 		SDL_GL_SetSwapInterval(1);
 		SDL_Event windowEvent;
 		while (true) {
-
 			while (SDL_PollEvent(&windowEvent)) {
 				ImGui_ImplSdlGL3_ProcessEvent(&windowEvent);
 
 				if (windowEvent.type == SDL_MOUSEMOTION) {
 					highlight_hex = hex_at_mouse(camera.projection(), arena, windowEvent.motion.x, windowEvent.motion.y);
+					mouse_hex = highlight_hex;
 					highlight_path.clear();
 
-					while (highlight_hex != player.c) {
-						highlight_path.push_back(highlight_hex);
-						highlight_hex = arena.paths(highlight_hex).source;
+					if (arena(highlight_hex) != HexType::Wall) {
+						while (highlight_hex != player.c) {
+							if (arena(highlight_hex) == HexType::Wall) {
+								highlight_path.clear();
+								break;
+							}
+
+							if (auto source = arena.paths(highlight_hex).source) {
+								highlight_hex = *source;
+								highlight_path.push_back(highlight_hex);
+							} else {
+								highlight_path.clear();
+								break;
+							}
+								
+						}
 					}
 				}
 
@@ -190,8 +204,12 @@ namespace game {
 			auto highlight_pos = arena.pos(highlight_hex);
 			paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
+			Color highlight_color{ 0.85f, 0.75f, 0.85f };
+			auto mouse_pos = arena.pos(mouse_hex);
+			paint_at(mouse_pos, Arena::radius, highlight_color);
+
 			for (Coord c : highlight_path) {
-				paint_at(arena.pos(c), Arena::radius, { 0.85f, 0.75f, 0.85f });
+				paint_at(arena.pos(c), Arena::radius, highlight_color);
 			}
 
 			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
