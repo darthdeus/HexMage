@@ -143,7 +143,9 @@ namespace game {
 
 							if (auto source = arena.paths(highlight_hex).source) {
 								highlight_hex = *source;
-								highlight_path.push_back(highlight_hex);
+								if (highlight_hex != player.c) {
+									highlight_path.push_back(highlight_hex);
+								}
 							} else {
 								highlight_path.clear();
 								break;
