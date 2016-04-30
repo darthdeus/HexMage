@@ -41,6 +41,9 @@
     <ClCompile Include="src\simulation.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\input_manager.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -104,6 +107,9 @@
     </ClInclude>
     <ClInclude Include="include\glad\glad.h">
       <Filter>Library Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\input_manager.hpp">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

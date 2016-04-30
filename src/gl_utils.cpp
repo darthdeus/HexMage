@@ -116,6 +116,11 @@ namespace gl
 		projection_ = zoom_ * mov_;
 	}
 
+	void Camera::update_and_load_camera() {
+		update_camera();
+		glUniformMatrix4fv(0, 1, GL_FALSE, value_ptr());
+	}
+
 	glm::mat4 Camera::projection() const {
 		return projection_;
 	}
@@ -200,6 +205,43 @@ namespace gl
 		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size());
 	}
 
+	void Batch::push_triangle(v2 p1, v2 p2, v2 p3, v3 c) {
+		using namespace std;
+		push_triangle(move(p1), move(p2), move(p3), v4(c, 1.0f));
+	}
+
+	void Batch::push_triangle(v2 p1, v2 p2, v2 p3, v4 color) {
+		push_back({ p1, color });
+		push_back({ p2, color });
+		push_back({ p3, color });
+	}
+
+	void Batch::push_triangle(v2 p1, v2 p2, v2 p3, float z, v4 color) {
+		push_back({ v3(p1, z), color });
+		push_back({ v3(p2, z), color });
+		push_back({ v3(p3, z), color });
+	}
+
+	void Batch::push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v3 color) {
+		using namespace std;
+		push_quad(move(p1),
+			move(p2),
+			move(p3),
+			move(p4),
+			{color.x, color.y, color.z, 1}
+		);
+		
+	}
+	void Batch::push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v4 color) {
+		push_triangle(p1, p2, p3, color);
+		push_triangle(p1, p3, p4, color);
+	}
+
+	void Batch::push_quad(v2 p1, v2 p2, v2 p3, v2 p4, float z, v4 color) {
+		push_triangle(p1, p2, p3, z, color);
+		push_triangle(p1, p3, p4, z, color);
+	}
+
 	float rad_for_hex(int i) {
 		float angle_deg = static_cast<float>(60 * i + 30);
 		return static_cast<float>(M_PI) / 180 * angle_deg;
@@ -256,28 +298,4 @@ Color color_for_type(HexType type) {
 float rad_for_hex(int i) {
 	float angle_deg = static_cast<float>(60 * i + 30);
 	return static_cast<float>(M_PI) / 180 * angle_deg;
-}
-
-void push_vertex(std::vector<float>& vbo, float x, float y, Color c) {
-	vbo.push_back(x);
-	vbo.push_back(y);
-	vbo.push_back(0.0f);
-	push_color(vbo, c.r, c.g, c.b, c.a);
-}
-
-void hex_at(std::vector<float>& vertices, Position pos, float r, Color c) {
-	float ri;
-	int rot = 0; // 1;
-
-	for (int i = rot; i < 6 + rot; i++) {
-		push_vertex(vertices, pos.x, pos.y, c);
-
-		ri = rad_for_hex(i - 1);
-		c = c.mut(0.015f);
-		push_vertex(vertices, pos.x + r * cos(ri), pos.y + r * sin(ri), c);
-
-		ri = rad_for_hex(i);
-		c = c.mut(0.015f);
-		push_vertex(vertices, pos.x + r * cos(ri), pos.y + r * sin(ri), c);
-	}
 }

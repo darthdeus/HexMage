@@ -7,7 +7,7 @@ layout (location = 2) in vec3 texcoord;
 out vec4 Color;
 out vec2 Texcoord;
 
-uniform mat4 trans;
+layout (location = 0) uniform mat4 trans;
 
 void main()
 {	

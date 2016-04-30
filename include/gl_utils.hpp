@@ -153,7 +153,6 @@ struct Color
 Color color_for_type(HexType type);
 float rad_for_hex(int i);
 void push_vertex(std::vector<float>& vbo, float x, float y, Color c);
-void hex_at(std::vector<float>& vertices, Position pos, float r, Color c);
 
 float rnd(float max);
 float rnd();
@@ -209,6 +208,7 @@ namespace gl
 	public:
 
 		void update_camera();
+		void update_and_load_camera();
 		glm::mat4 projection() const;
 		float* value_ptr();
 		void keydown(Sint32 key);
@@ -274,15 +274,28 @@ namespace gl
 	class Batch
 	{
 	public:
+		using v2 = glm::vec2;
+		using v3 = glm::vec3;
+		using v4 = glm::vec4;
+
 		std::vector<Vertex> vertices;
 
 		void clear();
 		void push_back(Vertex v);
 		void draw_arrays();
 
-		void push_hex(glm::vec2 position, glm::vec3 color, float r);
-		void push_hex(glm::vec2 position, glm::vec4 color, float r);
-		void push_hex(glm::vec3 position, glm::vec4 color, float r);
+		// TODO - cleanup these overloads
+		void push_triangle(v2 p1, v2 p2, v2 p3, v3 color);
+		void push_triangle(v2 p1, v2 p2, v2 p3, v4 color);
+		void push_triangle(v2 p1, v2 p2, v2 p3, float z, v4 color);
+
+		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v3 color);
+		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v4 color);
+		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, float z, v4 color);
+
+		void push_hex(v2 position, v3 color, float r);
+		void push_hex(v2 position, v4 color, float r);
+		void push_hex(v3 position, v4 color, float r);
 	};
 
 	//class Scene
