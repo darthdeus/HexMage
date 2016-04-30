@@ -3,10 +3,13 @@
 
 #include <string>
 #include <istream>
-#include <glad/glad.h>
+#include <functional>
 #include <tuple>
 #include <utility>
 #include <vector>
+
+#include <glad/glad.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -29,7 +32,9 @@ struct Cube
 	int z;
 
 	Cube() : x(0), y(0), z(0) {}
+
 	Cube(const Coord& axial);
+
 	Cube(int x, int y, int z) : x(x), y(y), z(z) {}
 
 	operator Coord() const;
@@ -44,7 +49,9 @@ struct Coord
 	int y;
 
 	Coord() : x(0), y(0) {}
+
 	Coord(const Cube& cube);
+
 	Coord(int x, int y) : x(x), y(y) {}
 
 	operator Cube() const;
@@ -58,7 +65,11 @@ struct Coord
 Coord operator+(const Coord& lhs, const Coord& rhs);
 Coord operator-(const Coord& lhs, const Coord& rhs);
 bool operator==(const Coord& lhs, const Coord& rhs);
-inline bool operator!=(const Coord& lhs, const Coord& rhs) { return !(lhs == rhs); }
+
+inline bool operator!=(const Coord& lhs, const Coord& rhs) {
+	return !(lhs == rhs);
+}
+
 std::ostream& operator<<(std::ostream& os, const Coord& c);
 
 constexpr int ABILITY_COUNT = 6;
@@ -69,7 +80,9 @@ struct Position
 	float y;
 
 	Position() : x(INFINITY), y(INFINITY) {}
+
 	Position(const glm::vec2& v) : x(v.x), y(v.y) {}
+
 	Position(float x, float y) : x(x), y(y) {}
 
 	float distance() const;
@@ -81,6 +94,8 @@ struct Position
 	float max() const;
 	Position& operator+=(const Position& position);
 	Position& operator-=(const Position& position);
+
+	operator glm::vec2() { return{ x, y }; }
 };
 
 Position operator+(const Position& lhs, const Position& rhs);
@@ -120,11 +135,17 @@ struct Color
 	float r, g, b, a;
 
 	Color() : r(0), g(0), b(0), a(0) {}
+
 	Color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
+
 	Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
 
 	Color mut(float d) const {
-		return{ r + d, g + d, b + d, a };
+		return {r + d, g + d, b + d, a};
+	}
+
+	operator glm::vec4() const {
+		return{ r, g, b, a };
 	}
 };
 
@@ -146,7 +167,7 @@ struct hash_int_triple
 		using namespace std;
 
 		return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
-			(hash<int>()(get<2>(tup)) << 1);
+				(hash<int>()(get<2>(tup)) << 1);
 	}
 };
 
@@ -177,11 +198,11 @@ namespace gl
 {
 	class Camera
 	{
-		glm::mat4 projection_{ 1 };
-		glm::mat4 zoom_{ 1 };
-		glm::mat4 mov_{ 1 };
-		Position current_scroll_{ 0, 0 };
-		Position translate_{ 0, 0 };
+		glm::mat4 projection_{1};
+		glm::mat4 zoom_{1};
+		glm::mat4 mov_{1};
+		Position current_scroll_{0, 0};
+		Position translate_{0, 0};
 		float zoom_level_ = 0.7f;
 
 		const float scroll_offset = 0.05f;
@@ -201,15 +222,65 @@ namespace gl
 		GLuint program;
 
 		Shader(const GLchar* vertexPath, const GLchar* fragmentPath);
+
+		Shader(const Shader& other) = delete;
+		Shader(Shader&& other) = default;
+		Shader& operator=(const Shader& other) = delete;
+		Shader& operator=(Shader&& other) = default;
 		~Shader();
 
 		void use();
 	};
 
-	//class Batch
-	//{
-	//	
-	//};
+	class Vertex
+	{
+	public:
+		glm::vec3 position;
+		glm::vec4 color;
+		glm::vec3 texCoord;
+
+		Vertex(glm::vec2 position, glm::vec4 color)
+			: Vertex({position.x, position.y, 0}, std::move(color), {0,0,0}) {}
+
+		Vertex(glm::vec3 position, glm::vec4 color)
+			: Vertex(std::move(position), std::move(color), {0,0,0}) {}
+
+		Vertex(glm::vec2 position, glm::vec4 color, glm::vec3 tex_coord)
+			: Vertex({position.x, position.y, 0},
+			         std::move(color),
+			         std::move(tex_coord)) {}
+
+		Vertex(glm::vec2 position, glm::vec3 color, glm::vec3 tex_coord)
+			: Vertex({position.x, position.y, 0},
+			         {color.x, color.y, color.z, 1},
+			         std::move(tex_coord)) {}
+
+		Vertex(glm::vec3 position, glm::vec4 color, glm::vec3 tex_coord)
+			: position{std::move(position)},
+			  color{std::move(color)},
+			  texCoord{std::move(tex_coord)} {}
+
+		void setup_attributes() {
+			GLsizei stride = sizeof(gl::Vertex);
+			glVertexAttribPointer(0, sizeof(position) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, position));
+			glVertexAttribPointer(1, sizeof(color) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, color));
+			glVertexAttribPointer(2, sizeof(texCoord) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, texCoord));
+		}
+	};
+
+	class Batch
+	{
+	public:
+		std::vector<Vertex> vertices;
+
+		void clear();
+		void push_back(Vertex v);
+		void draw_arrays();
+
+		void push_hex(glm::vec2 position, glm::vec3 color, float r);
+		void push_hex(glm::vec2 position, glm::vec4 color, float r);
+		void push_hex(glm::vec3 position, glm::vec4 color, float r);
+	};
 
 	//class Scene
 	//{
@@ -221,6 +292,4 @@ namespace gl
 }
 
 
-
 #endif
-

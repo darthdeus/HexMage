@@ -9,8 +9,6 @@
 #include <boost/optional.hpp>
 
 namespace model {
-
-
 	Coord Arena::hex_near(Position rel_pos) {
 		Coord closest;
 		float min = INFINITY;
@@ -101,12 +99,16 @@ namespace model {
 		}
 	}
 
+	gl::Batch b;
+
 	void Arena::regenerate_geometry() {
 		float start_x = -0.5f;
 		float start_y = -0.5f;
 
 		float width = static_cast<float>(cos(30 * M_PI / 180) * radius * 2);
 		float height_offset = static_cast<float>(radius + sin(30 * M_PI / 180) * radius);
+
+		b.clear();
 		
 		int isize = static_cast<int>(size);
 		for (int row = 0; row < isize; ++row) {
@@ -125,7 +127,8 @@ namespace model {
 				Color c = color_for_type((*this)({ col, row }));
 
 				auto pos = this->pos({ col, row });
-				hex_at(vertices, pos, radius, c);
+				b.push_hex({ pos.x, pos.y, 0 }, c, radius);
+				//hex_at(vertices, pos, radius, c);
 				c = c.mut(0.004f);
 			}
 		}
@@ -133,8 +136,9 @@ namespace model {
 	}
 
 	void Arena::draw_vertices() {
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 6);
+		b.draw_arrays();
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		//glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 6);
 	}
 
 }

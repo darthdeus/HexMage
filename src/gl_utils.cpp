@@ -85,7 +85,7 @@ GLuint load_and_compile_shader_(const GLchar* path, GLenum shaderType) {
 	str << file.rdbuf();
 
 	string code = str.str();
-	cout << code << endl << endl;
+	//cout << code << endl << endl;
 	const GLchar* code_c = code.c_str();
 
 	GLint success;
@@ -183,10 +183,61 @@ namespace gl
 		glDeleteShader(fragment);
 	}
 
-	// TODO - check the rule of five? do I actually want to delete multiple copies of the program?
 	Shader::~Shader() { glDeleteProgram(program); }
 
 	void Shader::use() { glUseProgram(program); }
+
+	void Batch::clear() {
+		vertices.clear();
+	}
+
+	void Batch::push_back(Vertex v) {
+		vertices.push_back(std::move(v));
+	}
+
+	void Batch::draw_arrays() {
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size() / 3);
+	}
+
+	float rad_for_hex(int i) {
+		float angle_deg = static_cast<float>(60 * i + 30);
+		return static_cast<float>(M_PI) / 180 * angle_deg;
+	}
+
+	void Batch::push_hex(glm::vec2 position, glm::vec3 color, float r) {
+		push_hex(glm::vec3(position, 0), glm::vec4(color, 1), r);
+	}
+
+	void Batch::push_hex(glm::vec2 position, glm::vec4 color, float r) {
+		push_hex(glm::vec3(position, 0), color, r);
+	}
+
+	void Batch::push_hex(glm::vec3 position, glm::vec4 color, float r) {
+		float ri;
+		int rot = 0; // 1;
+
+		glm::vec3 c = {color.x, color.y, color.z};
+
+		for (int i = rot; i < 6 + rot; i++) {
+			push_back({position, {c.x, c.y, c.z, color.w}});
+			ri = rad_for_hex(i - 1);
+			c += 0.015f;
+
+			push_back({
+				{position.x + r * cos(ri), position.y + r * sin(ri), position.z},
+				{c.x, c.y, c.z, color.w}
+			});
+
+			ri = rad_for_hex(i);
+			c += 0.015f;
+
+			push_back({
+				{position.x + r * cos(ri), position.y + r * sin(ri), position.z},
+				{c.x, c.y, c.z, color.w}
+			});
+		}
+	}
 }
 
 Color color_for_type(HexType type) {

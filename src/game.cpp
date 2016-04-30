@@ -56,10 +56,13 @@ namespace game {
 	}
 
 	void paint_at(Position pos, float radius, Color color) {
-		std::vector<float> player_vertices;
-		hex_at(player_vertices, pos, radius, color);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(player_vertices.size()) / 6);
+		gl::Batch b;
+		b.push_hex(pos, color, radius);
+		b.draw_arrays();
+		//std::vector<float> player_vertices;
+		//hex_at(player_vertices, pos, radius, color);
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
+		//glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(player_vertices.size()) / 6);
 	}
 
 	Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
@@ -90,32 +93,20 @@ namespace game {
 		//}
 		//st.print("100x dijkstra");
 
-		Mob& player = game.info.add_mob(generator::random_mob());
+		Mob& player = info.add_mob(generator::random_mob());
 		player.c = { 0, 0 };
 
 		GLuint vao;
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
-		int x;
-		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &x);
-		fmt::printf("max texture units %i", x);
-
 		GLuint vbo;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		
-		GLsizei stride = 7 * sizeof(GLfloat);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(0));
-		glEnableVertexAttribArray(0);
 
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(3 * sizeof(GLfloat)));
-		glEnableVertexAttribArray(1);
+		gl::Batch batch;
 
-		//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<GLvoid*>(6 * sizeof(GLfloat)));
-		//glEnableVertexAttribArray(2);
-
-		gl::Shader shaderProgram{ "C:\\dev\\HexMage\\vertex.glsl", "C:\\dev\\HexMage\\fragment.glsl" };
+		gl::Shader shaderProgram{ "vertex.glsl", "fragment.glsl" };
 		shaderProgram.use();
 
 		Coord highlight_hex, mouse_hex;
@@ -125,9 +116,10 @@ namespace game {
 
 		SDL_GL_SetSwapInterval(1);
 		SDL_Event windowEvent;
+
 		while (true) {
 			while (SDL_PollEvent(&windowEvent)) {
-				ImGui_ImplSdlGL3_ProcessEvent(&windowEvent);
+				//ImGui_ImplSdlGL3_ProcessEvent(&windowEvent);
 
 				if (windowEvent.type == SDL_MOUSEMOTION) {
 					highlight_hex = hex_at_mouse(camera.projection(), arena, windowEvent.motion.x, windowEvent.motion.y);
@@ -150,7 +142,6 @@ namespace game {
 								highlight_path.clear();
 								break;
 							}
-								
 						}
 					}
 				}
@@ -160,8 +151,7 @@ namespace game {
 
 					if (arena(click_hex) == HexType::Empty) {
 						arena(click_hex) = HexType::Wall;
-					}
-					else {
+					} else {
 						arena(click_hex) = HexType::Empty;
 					}
 					arena.regenerate_geometry();
@@ -196,42 +186,46 @@ namespace game {
 			glClearColor(0.3f, 0.2f, 0.3f, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			arena.draw_vertices();
+			fmt::print("Error {}\n", GetLastError());
+			paint_at({ 0, 0 }, 0.3, { 1,1,1,1 });
 
-			for (auto& mob : info.mobs) {
-				auto pos = arena.pos(mob.c);
-				paint_at(pos, Arena::radius, color_for_type(HexType::Player));
-			}
+			//arena.draw_vertices();
 
-			auto highlight_pos = arena.pos(highlight_hex);
-			paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
+			//for (auto& mob : info.mobs) {
+			//	auto pos = arena.pos(mob.c);
+			//	paint_at(pos, Arena::radius, color_for_type(HexType::Player));
+			//}
 
-			Color highlight_color{ 0.85f, 0.75f, 0.85f };
-			auto mouse_pos = arena.pos(mouse_hex);
-			paint_at(mouse_pos, Arena::radius, highlight_color);
+			//auto highlight_pos = arena.pos(highlight_hex);
+			//paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
-			for (Coord c : highlight_path) {
-				paint_at(arena.pos(c), Arena::radius, highlight_color);
-			}
+			//Color highlight_color{ 0.85f, 0.75f, 0.85f };
+			//auto mouse_pos = arena.pos(mouse_hex);
+			//paint_at(mouse_pos, Arena::radius, highlight_color);
 
-			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
-			ImGui::Begin("Framerate");
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::End();
+			//for (Coord c : highlight_path) {
+			//	paint_at(arena.pos(c), Arena::radius, highlight_color);
+			//}
 
-			ImGui::Begin("Profiling");
-			if (ImGui::Button("Dummy profile")) {
-				simulation::dummy_profiling();
-			}
+			//ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+			//ImGui::Begin("Framerate");
+			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			//ImGui::End();
 
-			if (simulation::profiling_results.size() > 0) {
-				for (auto& res : simulation::profiling_results) {
-					ImGui::Text(res.c_str());
-				}
-			}
-			ImGui::End();
+			//ImGui::Begin("Profiling");
+			//if (ImGui::Button("Dummy profile")) {
+			//	simulation::dummy_profiling();
+			//}
 
-			ImGui::Render();
+			//if (simulation::profiling_results.size() > 0) {
+			//	for (auto& res : simulation::profiling_results) {
+			//		ImGui::Text(res.c_str());
+			//	}
+			//}
+
+			//ImGui::End();
+			//ImGui::Render();
+
 			SDL_GL_SwapWindow(window);
 		}
 	}
