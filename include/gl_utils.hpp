@@ -260,11 +260,14 @@ namespace gl
 			  color{std::move(color)},
 			  texCoord{std::move(tex_coord)} {}
 
-		void setup_attributes() {
+		static void setup_attributes() {
 			GLsizei stride = sizeof(gl::Vertex);
 			glVertexAttribPointer(0, sizeof(position) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, position));
 			glVertexAttribPointer(1, sizeof(color) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, color));
 			glVertexAttribPointer(2, sizeof(texCoord) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, texCoord));
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(2);
 		}
 	};
 

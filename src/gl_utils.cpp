@@ -197,7 +197,7 @@ namespace gl
 
 	void Batch::draw_arrays() {
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size() / 3);
+		glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertices.size());
 	}
 
 	float rad_for_hex(int i) {

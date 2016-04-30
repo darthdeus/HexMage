@@ -59,10 +59,6 @@ namespace game {
 		gl::Batch b;
 		b.push_hex(pos, color, radius);
 		b.draw_arrays();
-		//std::vector<float> player_vertices;
-		//hex_at(player_vertices, pos, radius, color);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * player_vertices.size(), player_vertices.data(), GL_STATIC_DRAW);
-		//glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(player_vertices.size()) / 6);
 	}
 
 	Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
@@ -103,6 +99,8 @@ namespace game {
 		GLuint vbo;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		gl::Vertex::setup_attributes();
 
 		gl::Batch batch;
 
@@ -186,45 +184,42 @@ namespace game {
 			glClearColor(0.3f, 0.2f, 0.3f, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			fmt::print("Error {}\n", GetLastError());
-			paint_at({ 0, 0 }, 0.3, { 1,1,1,1 });
+			arena.draw_vertices();
 
-			//arena.draw_vertices();
+			for (auto& mob : info.mobs) {
+				auto pos = arena.pos(mob.c);
+				paint_at(pos, Arena::radius, color_for_type(HexType::Player));
+			}
 
-			//for (auto& mob : info.mobs) {
-			//	auto pos = arena.pos(mob.c);
-			//	paint_at(pos, Arena::radius, color_for_type(HexType::Player));
-			//}
+			auto highlight_pos = arena.pos(highlight_hex);
+			paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
-			//auto highlight_pos = arena.pos(highlight_hex);
-			//paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
+			Color highlight_color{ 0.85f, 0.75f, 0.85f };
+			auto mouse_pos = arena.pos(mouse_hex);
+			paint_at(mouse_pos, Arena::radius, highlight_color);
 
-			//Color highlight_color{ 0.85f, 0.75f, 0.85f };
-			//auto mouse_pos = arena.pos(mouse_hex);
-			//paint_at(mouse_pos, Arena::radius, highlight_color);
+			for (Coord c : highlight_path) {
+				paint_at(arena.pos(c), Arena::radius, highlight_color);
+			}
 
-			//for (Coord c : highlight_path) {
-			//	paint_at(arena.pos(c), Arena::radius, highlight_color);
-			//}
+			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+			ImGui::Begin("Framerate");
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::End();
 
-			//ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
-			//ImGui::Begin("Framerate");
-			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			//ImGui::End();
+			ImGui::Begin("Profiling");
+			if (ImGui::Button("Dummy profile")) {
+				simulation::dummy_profiling();
+			}
 
-			//ImGui::Begin("Profiling");
-			//if (ImGui::Button("Dummy profile")) {
-			//	simulation::dummy_profiling();
-			//}
+			if (simulation::profiling_results.size() > 0) {
+				for (auto& res : simulation::profiling_results) {
+					ImGui::Text(res.c_str());
+				}
+			}
 
-			//if (simulation::profiling_results.size() > 0) {
-			//	for (auto& res : simulation::profiling_results) {
-			//		ImGui::Text(res.c_str());
-			//	}
-			//}
-
-			//ImGui::End();
-			//ImGui::Render();
+			ImGui::End();
+			ImGui::Render();
 
 			SDL_GL_SwapWindow(window);
 		}
