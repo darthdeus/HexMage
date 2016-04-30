@@ -29,34 +29,6 @@ using namespace glm;
 
 namespace game
 {
-	void handlePlayerStep(Sint32 sym, model::GameInstance& game, model::Mob& player) {
-		switch (sym) {
-			case 'a':
-				player.move(game.arena, {-1, 0});
-				break;
-
-			case 'd':
-				player.move(game.arena, {1, 0});
-				break;
-
-			case 'z':
-				player.move(game.arena, {0, -1});
-				break;
-
-			case 'e':
-				player.move(game.arena, {0, 1});
-				break;
-
-			case 'c':
-				player.move(game.arena, {1, -1});
-				break;
-
-			case 'q':
-				player.move(game.arena, {-1, 1});
-				break;
-		}
-	}
-
 	void paint_at(Position pos, float radius, Color color) {
 		gl::Batch b;
 		b.push_hex(pos, color, radius);
