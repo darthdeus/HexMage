@@ -73,11 +73,6 @@ namespace game
 		using namespace model;
 		using namespace glm;
 
-		glDisable(GL_CULL_FACE);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-		//glBlendEquation(GL_FUNC_ADD);
-
 		ImGui_ImplSdlGL3_Init(window);
 
 		Stopwatch st;
@@ -103,8 +98,6 @@ namespace game
 
 		gl::Vertex::setup_attributes();
 
-		gl::Batch batch;
-
 		gl::Shader shader{"vertex.glsl", "fragment.glsl"};
 		shader.use();
 
@@ -127,16 +120,6 @@ namespace game
 			camera.update_and_load_camera();
 			arena.draw_vertices();
 
-			for (auto& mob : info.mobs) {
-				auto pos = arena.pos(mob.c);
-				paint_at(pos, Arena::radius, color_for_type(HexType::Player));
-			}
-
-			//batch.push_triangle({ 0, 0 }, { 0.5, 0.5 }, { 0, 0.5 }, { 1,1,1 });
-			batch.push_quad({0, 0}, {0.0, 0.5}, {0.5, 0.5}, {0.5, 0}, -0.5, {1,0,1,0.5f});
-			//batch.push_quad({ 0, 0 }, { 0.0, 0.5 }, { 0.5, 0.5 }, { 0.5, 0 }, { 1,1,0,0.5 });
-			batch.draw_arrays();
-
 			auto highlight_pos = arena.pos(input_manager.highlight_hex);
 			paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
@@ -147,6 +130,17 @@ namespace game
 			for (Coord c : input_manager.highlight_path) {
 				paint_at(arena.pos(c), Arena::radius, highlight_color);
 			}
+
+			gl::Batch b;
+
+			for (auto& mob : info.mobs) {
+				auto pos = arena.pos(mob.c);
+				paint_at(pos, Arena::radius, color_for_type(HexType::Player));
+
+				Healthbar::draw(pos, b, 0.1f);
+			}
+
+			b.draw_arrays();
 
 			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
 			ImGui::Begin("Framerate");
