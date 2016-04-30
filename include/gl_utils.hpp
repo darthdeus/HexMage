@@ -293,6 +293,9 @@ namespace gl
 		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v4 color);
 		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, float z, v4 color);
 
+		void push_quad_bot_left(v2 bot_left, float width, float height, float z, v4 color);
+		void push_quad(v2 center, float width, float height, float z, v4 color);
+
 		void push_hex(v2 position, v3 color, float r);
 		void push_hex(v2 position, v4 color, float r);
 		void push_hex(v3 position, v4 color, float r);

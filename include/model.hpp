@@ -73,27 +73,32 @@ namespace model
 	class Healthbar
 	{
 	public:
-		static void draw(glm::vec2 pos, gl::Batch& b, float percentage) {
+		static void draw(glm::vec2 pos, gl::Batch& b, float hp, float ap) {
 			using namespace glm;
+			using namespace std;
 
-			float hb_x = Arena::radius / 5;
-			float hb_y = Arena::radius * 0.7f;
-			b.push_quad(
-				pos + vec2(-hb_x, -hb_y),
-				pos + vec2(hb_x, -hb_y),
-				pos + vec2(hb_x, hb_y),
-				pos + vec2(-hb_x, hb_y),
-				{ 0, 0.5, 0, 1 }
+			float width = Arena::radius / 5 * 2;
+			float height = Arena::radius * 0.7f * 2;
+
+			float hp_max = height * hp;
+			float ap_max = height * ap;
+
+			b.push_quad_bot_left(
+				{pos.x - width, pos.y - height / 2},
+				width, height, 0, {0, 0.5, 0, 1}
+			);
+			b.push_quad_bot_left(
+				{pos.x - width, pos.y - height / 2},
+				width, hp_max, 0, {0, 1, 0, 1}
 			);
 
-			float hb_max = 2 * hb_y * percentage;
-
-			b.push_quad(
-				pos + vec2(-hb_x, -hb_y),
-				pos + vec2(hb_x, -hb_y),
-				pos + vec2(hb_x, hb_max - hb_y),
-				pos + vec2(-hb_x, hb_max - hb_y),
-				{ 0, 1, 0, 1 }
+			b.push_quad_bot_left(
+				{pos.x, pos.y - height / 2},
+				width, height, 0, {0.5, 0.5, 0, 1}
+			);
+			b.push_quad_bot_left(
+				{pos.x, pos.y - height / 2},
+				width, ap_max, 0, {1, 1, 0, 1}
 			);
 		}
 	};

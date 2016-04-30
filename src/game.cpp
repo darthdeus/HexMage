@@ -137,7 +137,7 @@ namespace game
 				auto pos = arena.pos(mob.c);
 				paint_at(pos, Arena::radius, color_for_type(HexType::Player));
 
-				Healthbar::draw(pos, b, 0.1f);
+				Healthbar::draw(pos, b, 0.7f, 0.5f);
 			}
 
 			b.draw_arrays();

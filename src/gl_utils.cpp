@@ -131,32 +131,32 @@ namespace gl
 
 	void Camera::keydown(Sint32 key) {
 		switch (key) {
-			case 'w':
-				current_scroll_.y = -scroll_offset;
-				break;
-			case 's':
-				current_scroll_.y = scroll_offset;
-				break;
-			case 'a':
-				current_scroll_.x = scroll_offset;
-				break;
-			case 'd':
-				current_scroll_.x = -scroll_offset;
-				break;
+		case 'w':
+			current_scroll_.y = -scroll_offset;
+			break;
+		case 's':
+			current_scroll_.y = scroll_offset;
+			break;
+		case 'a':
+			current_scroll_.x = scroll_offset;
+			break;
+		case 'd':
+			current_scroll_.x = -scroll_offset;
+			break;
 		}
 	}
 
 	void Camera::keyup(Sint32 key) {
 		switch (key) {
-			case 'w':
-			case 's':
-				current_scroll_.y = 0;
-				break;
+		case 'w':
+		case 's':
+			current_scroll_.y = 0;
+			break;
 
-			case 'a':
-			case 'd':
-				current_scroll_.x = 0;
-				break;
+		case 'a':
+		case 'd':
+			current_scroll_.x = 0;
+			break;
 		}
 	}
 
@@ -228,9 +228,9 @@ namespace gl
 			move(p2),
 			move(p3),
 			move(p4),
-			{color.x, color.y, color.z, 1}
+			{ color.x, color.y, color.z, 1 }
 		);
-		
+
 	}
 	void Batch::push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v4 color) {
 		push_triangle(p1, p2, p3, color);
@@ -240,6 +240,25 @@ namespace gl
 	void Batch::push_quad(v2 p1, v2 p2, v2 p3, v2 p4, float z, v4 color) {
 		push_triangle(p1, p2, p3, z, color);
 		push_triangle(p1, p3, p4, z, color);
+	}
+
+	void Batch::push_quad_bot_left(v2 bot_left, float width, float height, float z, v4 color) {
+		push_quad(bot_left,
+		          {bot_left.x + width, bot_left.y},
+		          {bot_left.x + width, bot_left.y + height},
+		          {bot_left.x, bot_left.y + height},
+		          z,
+		          color);
+	}
+
+	void Batch::push_quad(v2 center, float width, float height, float z, v4 color) {
+		push_quad(
+			{center.x - width / 2, center.y - height / 2},
+			{center.x + width / 2, center.y - height / 2},
+			{center.x + width / 2, center.y + height / 2},
+			{center.x - width / 2, center.y + height / 2},
+			z, color
+		);
 	}
 
 	float rad_for_hex(int i) {
@@ -259,10 +278,10 @@ namespace gl
 		float ri;
 		int rot = 0; // 1;
 
-		glm::vec3 c = {color.x, color.y, color.z};
+		glm::vec3 c = { color.x, color.y, color.z };
 
 		for (int i = rot; i < 6 + rot; i++) {
-			push_back({position, {c.x, c.y, c.z, color.w}});
+			push_back({ position, {c.x, c.y, c.z, color.w} });
 			ri = rad_for_hex(i - 1);
 			c += 0.015f;
 
