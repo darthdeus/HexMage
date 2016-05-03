@@ -24,18 +24,19 @@ namespace simulation
 
 		Stopwatch ss;
 
-		int iterations = 100000;
+		//int iterations = 100000;
 
-		std::size_t total_size = 0;
+		//std::size_t total_size = 0;
 
-		ss.start();
-		for (int i = 0; i < iterations; i++) {
-			auto r = g;
-			total_size += r.size;
-		}
+		//ss.start();
+		//for (int i = 0; i < iterations; i++) {
+		//	auto r = g;
+		//	total_size += r.size;
+		//}
 
 		std::string str;
-		str = fmt::sprintf("GameInstance copy iterations %d took %dms\t%fus", iterations, ss.ms(), ((float)ss.ms()) / iterations * 1000);
+		//str = fmt::sprintf("GameInstance copy iterations %d took %dms\t%fus", iterations, ss.ms(), ((float)ss.ms()) / iterations * 1000);
+		str = fmt::sprintf("!!!!!!!!! GAME INSTANCE COPYING DISABLED, BENCHMARK NOT RUN !!!!!!!!!");
 		profiling_results.push_back(str);
 
 		PlayerInfo ifo = g.info;
