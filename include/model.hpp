@@ -41,6 +41,10 @@ namespace model
 
 	class Arena
 	{
+		gl::VAO vao;
+		gl::VBO vbo;
+
+		gl::Batch b;
 	public:
 		static constexpr float radius = 0.1f;
 		std::size_t size;
@@ -48,8 +52,9 @@ namespace model
 		Matrix<Position> positions;
 		Matrix<Path> paths;
 		std::vector<float> vertices;
+		gl::Shader shader{ "vertex.glsl", "fragment.glsl" };
 
-		Arena(std::size_t size) : size(size), hexes(size), positions(size), paths(size) {}
+		explicit Arena(std::size_t size);
 
 		bool is_valid_coord(const Coord& c) const {
 			return static_cast<std::size_t>(c.abs().max()) < size && c.min() >= 0;

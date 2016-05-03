@@ -162,50 +162,6 @@ struct Color
 
 Color color_for_type(HexType type);
 float rad_for_hex(int i);
-void push_vertex(std::vector<float>& vbo, float x, float y, Color c);
-
-float rnd(float max);
-float rnd();
-float clamp(float x);
-
-#define RZ(x, m) (clamp((x)+rnd(m) - (m) / 2))
-
-struct hash_int_triple
-{
-	std::size_t operator()(const std::tuple<int, int, int>& tup) const
-	{
-		using namespace std;
-
-		return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
-				(hash<int>()(get<2>(tup)) << 1);
-	}
-};
-
-struct hash_int_pair
-{
-	std::size_t operator()(const std::pair<int, int>& tup) const
-	{
-		using namespace std;
-
-		return hash<int>()(tup.first) ^ (hash<int>()(tup.second) << 1);
-	}
-};
-
-inline void push_color(std::vector<float>& vbo, Color c)
-{
-	vbo.push_back(c.r);
-	vbo.push_back(c.g);
-	vbo.push_back(c.b);
-	vbo.push_back(c.a);
-}
-
-inline void push_color(std::vector<float>& v, float r, float g, float b, float a)
-{
-	v.push_back(r);
-	v.push_back(g);
-	v.push_back(b);
-	v.push_back(a);
-}
 
 namespace gl
 {
@@ -216,7 +172,7 @@ namespace gl
 		glm::mat4 mov_{1};
 		Position current_scroll_{0, 0};
 		Position translate_{0, 0};
-		float zoom_level_ = 0.7f;
+		float zoom_level_ = 0.7;
 
 		const float scroll_offset = 0.05f;
 	public:
@@ -324,9 +280,10 @@ namespace gl
 		Shader(const GLchar* vertexPath, const GLchar* fragmentPath);
 
 		Shader(const Shader& other) = delete;
-		Shader(Shader&& other) = default;
+		Shader(Shader&& other) = delete;
 		Shader& operator=(const Shader& other) = delete;
-		Shader& operator=(Shader&& other) = default;
+		Shader& operator=(Shader&& other) = delete;
+
 		~Shader();
 
 		void set(const GLchar* name, int value);
@@ -345,8 +302,12 @@ namespace gl
 		explicit SpriteRenderer(Shader& shader): shader(shader) {
 			initialize();
 		}
-		// TODO - deallocate vao/vbo
-		// TODO - disable copying
+
+		SpriteRenderer(const SpriteRenderer& other) = delete;
+		SpriteRenderer(SpriteRenderer&& other) = delete;
+		SpriteRenderer& operator=(const SpriteRenderer& other) = delete;
+		SpriteRenderer& operator=(SpriteRenderer&& other) = delete;
+
 		~SpriteRenderer() = default;
 
 		void draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size = glm::vec2(10, 10), glm::vec3 color = glm::vec3(1.0f));
@@ -355,8 +316,6 @@ namespace gl
 
 		VAO vao;
 		VBO vbo;
-		//GLuint vao;
-		//GLuint vbo;
 		void initialize();
 	};
 
@@ -409,7 +368,7 @@ namespace gl
 			glVertexAttribPointer(0, sizeof(position) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, position));
 			glVertexAttribPointer(1, sizeof(color) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, color));
 			glVertexAttribPointer(2, sizeof(texCoord) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, texCoord));
-			glVertexAttribPointer(2, sizeof(useTexture) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, useTexture));
+			glVertexAttribPointer(3, sizeof(useTexture) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, useTexture));
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
 			glEnableVertexAttribArray(2);

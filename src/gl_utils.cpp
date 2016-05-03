@@ -191,26 +191,32 @@ namespace gl
 	Shader::~Shader() { glDeleteProgram(program); }
 
 	void Shader::set(const GLchar* name, int value) {
+		use();
 		glUniform1i(glGetUniformLocation(program, name), value);
 	}
 
 	void Shader::set(const GLchar* name, float value) {
+		use();
 		glUniform1f(glGetUniformLocation(program, name), value);
 	}
 
 	void Shader::set(const GLchar* name, const glm::vec2& v) {
+		use();
 		glUniform2f(glGetUniformLocation(program, name), v.x, v.y);
 	}
 
 	void Shader::set(const GLchar* name, const glm::vec3& v) {
+		use();
 		glUniform3f(glGetUniformLocation(program, name), v.x, v.y, v.z);
 	}
 
 	void Shader::set(const GLchar* name, const glm::vec4& v) {
+		use();
 		glUniform4f(glGetUniformLocation(program, name), v.x, v.y, v.z, v.w);
 	}
 
 	void Shader::set(const GLchar* name, const glm::mat4& matrix) {
+		use();
 		glUniformMatrix4fv(glGetUniformLocation(program, name), 1, GL_FALSE, glm::value_ptr(matrix));
 	}
 

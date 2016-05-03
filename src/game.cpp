@@ -129,12 +129,6 @@ namespace game
 		Mob& player = info.add_mob(generator::random_mob());
 		player.c = {0, 0};
 
-		//gl::VAO vao;
-		//gl::VBO vbo;
-		//gl::Vertex::setup_attributes();
-		//gl::Shader shader{"vertex.glsl", "fragment.glsl"};
-		//shader.use();
-
 		gl::Camera camera;
 
 		SDL_GL_SetSwapInterval(1);
@@ -146,9 +140,7 @@ namespace game
 		t.load_png("res/chicken.png");
 
 		gl::Shader spriteShader("res/sprite.vs.glsl", "res/sprite.fs.glsl");
-		spriteShader.use();
-		auto or = glm::ortho(0.f, (float)game::SCREEN_WIDTH, (float)game::SCREEN_HEIGHT, 0.f, -1.f, 1.f);
-		spriteShader.set("projection", or);
+		auto projection = glm::ortho(0.f, (float)game::SCREEN_WIDTH, (float)game::SCREEN_HEIGHT, 0.f, -1.f, 1.f);
 		gl::SpriteRenderer sprites{ spriteShader };
 
 		InputManager input_manager;
@@ -156,23 +148,22 @@ namespace game
 			glClearColor(0.3f, 0.2f, 0.3f, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			//ImGui_ImplSdlGL3_NewFrame(window);
+			ImGui_ImplSdlGL3_NewFrame(window);
 
 			bool keep_running = input_manager.handle_events(camera, arena, player);
 			if (!keep_running) {
 				break;
 			}
+			camera.update_camera();
 
-			spriteShader.use();
+			spriteShader.set("projection", camera.projection() * projection);
 			t.bind();
 			sprites.draw_sprite(t, {0, 0}, {32, 32});
 			sprites.draw_sprite(t, {32, 32}, {32, 32});
 
-			//shader.use();
-			//vao.bind();
-			//vbo.bind();
-			//camera.update_and_load_camera();
-			//arena.draw_vertices();
+			arena.shader.use();
+			camera.update_and_load_camera();
+			arena.draw_vertices();
 
 			//gl::Batch b1;
 			//b1.push_back(gl::Vertex({ 0, 0, 0 }, { 1,1,1,1 }, { 0, 0 }, 1));
@@ -180,50 +171,49 @@ namespace game
 			//b1.push_back(gl::Vertex({ 0, 1, 0 }, { 1,1,1,1 }, { 0, 1 }, 1));
 
 			//b1.draw_arrays();
-			//b.push_triangle({0, 0}, {0, 1}, {1, 0}, 0, gl::ColorTex({}))
 
-			//auto highlight_pos = arena.pos(input_manager.highlight_hex);
-			//paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
+			auto highlight_pos = arena.pos(input_manager.highlight_hex);
+			paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
-			//Color highlight_color{0.85f, 0.75f, 0.85f};
-			//auto mouse_pos = arena.pos(input_manager.mouse_hex);
-			//paint_at(mouse_pos, Arena::radius, highlight_color);
+			Color highlight_color{0.85f, 0.75f, 0.85f};
+			auto mouse_pos = arena.pos(input_manager.mouse_hex);
+			paint_at(mouse_pos, Arena::radius, highlight_color);
 
-			//for (Coord c : input_manager.highlight_path) {
-			//	paint_at(arena.pos(c), Arena::radius, highlight_color);
-			//}
+			for (Coord c : input_manager.highlight_path) {
+				paint_at(arena.pos(c), Arena::radius, highlight_color);
+			}
 
-			//gl::Batch b;
+			gl::Batch b;
 
-			//for (auto& mob : info.mobs) {
-			//	auto pos = arena.pos(mob.c);
-			//	paint_at(pos, Arena::radius, color_for_type(HexType::Player));
+			for (auto& mob : info.mobs) {
+				auto pos = arena.pos(mob.c);
+				paint_at(pos, Arena::radius, color_for_type(HexType::Player));
 
-			//	Healthbar::draw(pos, b, 0.7f, 0.5f);
-			//}
+				Healthbar::draw(pos, b, 0.7f, 0.5f);
+			}
 
-			//b.draw_arrays();
+			b.draw_arrays();
 
 			//my_stbtt_print(0, 0, "hello");
 
-			//ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
-			//ImGui::Begin("Framerate");
-			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			//ImGui::End();
+			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+			ImGui::Begin("Framerate");
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::End();
 
-			//ImGui::Begin("Profiling");
-			//if (ImGui::Button("Dummy profile")) {
-			//	simulation::dummy_profiling();
-			//}
+			ImGui::Begin("Profiling");
+			if (ImGui::Button("Dummy profile")) {
+				simulation::dummy_profiling();
+			}
 
-			//if (simulation::profiling_results.size() > 0) {
-			//	for (auto& res : simulation::profiling_results) {
-			//		ImGui::Text(res.c_str());
-			//	}
-			//}
+			if (simulation::profiling_results.size() > 0) {
+				for (auto& res : simulation::profiling_results) {
+					ImGui::Text(res.c_str());
+				}
+			}
 
-			//ImGui::End();
-			//ImGui::Render();
+			ImGui::End();
+			ImGui::Render();
 
 			SDL_GL_SwapWindow(window);
 		}

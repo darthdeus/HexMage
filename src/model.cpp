@@ -9,6 +9,10 @@
 #include <boost/optional.hpp>
 
 namespace model {
+	Arena::Arena(std::size_t size): size(size), hexes(size), positions(size), paths(size) {
+		gl::Vertex::setup_attributes();
+	}
+
 	Coord Arena::hex_near(Position rel_pos) {
 		Coord closest;
 		float min = INFINITY;
@@ -99,8 +103,6 @@ namespace model {
 		}
 	}
 
-	gl::Batch b;
-
 	void Arena::regenerate_geometry() {
 		float start_x = -0.5f;
 		float start_y = -0.5f;
@@ -136,7 +138,11 @@ namespace model {
 	}
 
 	void Arena::draw_vertices() {
+		shader.use();
+		vao.bind();
+		vbo.bind();
 		b.draw_arrays();
+
 		//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 		//glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 6);
 	}
