@@ -1,6 +1,7 @@
 #ifndef GL_UTILS_HPP__
 #define GL_UTILS_HPP__
 
+#include <iostream>
 #include <string>
 #include <istream>
 #include <functional>
@@ -231,6 +232,39 @@ namespace gl
 		void scroll(Sint32 direction);
 	};
 
+	class VAO
+	{
+	public:
+		GLuint id;
+		VAO() { glGenVertexArrays(1, &id); bind(); }
+		~VAO() { glDeleteVertexArrays(1, &id); }
+
+		VAO(const VAO& other) = delete;
+		VAO(VAO&& other) = delete;
+		VAO& operator=(const VAO& other) = delete;
+		VAO& operator=(VAO&& other) = delete;
+
+		void bind() const { glBindVertexArray(id); }
+		void unbind() const { glBindVertexArray(0); }
+	};
+
+	class VBO
+	{
+	public:
+		GLuint id;
+
+		VBO() { glGenBuffers(1, &id); bind(); }
+		~VBO() { glDeleteBuffers(1, &id); }
+
+		VBO(const VBO& other) = delete;
+		VBO(VBO&& other) = delete;
+		VBO& operator=(const VBO& other) = delete;
+		VBO& operator=(VBO&& other) = delete;
+
+		void bind() const { glBindBuffer(GL_ARRAY_BUFFER, id); }
+		void unbind() const { glBindBuffer(GL_ARRAY_BUFFER, 0); }
+	};
+
 	class Texture2D
 	{
 	public:
@@ -245,12 +279,16 @@ namespace gl
 			wrap_s(GL_REPEAT), wrap_t(GL_REPEAT),
 			filter_min(GL_LINEAR), filter_mag(GL_LINEAR) {
 			glGenTextures(1, &id);
+			std::cout << "Texture2D() generated" << std::endl;
 		}
 
 		Texture2D(const Texture2D&) = delete;
 		Texture2D& operator=(const Texture2D&) = delete;
 
-		~Texture2D() { glDeleteTextures(1, &id); }
+		~Texture2D() {
+			glDeleteTextures(1, &id);
+			std::cout << "~Texture2D()" << std::endl;
+		}
 
 		void load_png(const std::string& filename) {
 			std::vector<unsigned char> data;
@@ -304,16 +342,21 @@ namespace gl
 	class SpriteRenderer
 	{
 	public:
-		explicit SpriteRenderer(Shader& shader): shader(shader) {}
+		explicit SpriteRenderer(Shader& shader): shader(shader) {
+			initialize();
+		}
 		// TODO - deallocate vao/vbo
 		// TODO - disable copying
 		~SpriteRenderer() = default;
 
-		void draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size = glm::vec2(10, 10), GLfloat rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f));
+		void draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size = glm::vec2(10, 10), glm::vec3 color = glm::vec3(1.0f));
 	private:
 		Shader& shader;
-		GLuint vao;
-		GLuint vbo;
+
+		VAO vao;
+		VBO vbo;
+		//GLuint vao;
+		//GLuint vbo;
 		void initialize();
 	};
 
