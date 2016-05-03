@@ -47,7 +47,7 @@ void my_stbtt_initfont(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
-void my_stbtt_print(float x, float y, char* text)
+void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 {
 	gl::Batch b;
 	// assume orthographic projection with units = screen pixels, origin at top left
@@ -62,8 +62,13 @@ void my_stbtt_print(float x, float y, char* text)
 			//fmt::printf("%f,%f\t%f,%f\n", q.x0, q.y0, q.s0, q.t1);
 			float z = -0.5f;
 
-			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t1}});
-			b.push_back({{q.x1, q.y0, z}, {q.s1, q.t1}});
+			fmt::printf("%f %f %f %f\t%f %f %f %f\n", q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
+			auto v = proj * glm::vec4(q.x0, q.y0, 0, 1);
+			auto v2 = proj * glm::vec4(q.x1, q.y1, 0, 1);
+			//fmt::printf("\t%f %f %f %f\n", v.x, v.y, v2.x, v2.y);
+
+			b.push_back({{q.x0, -q.y0, z}, {q.s0, q.t1}});
+			b.push_back({{q.x1, -q.y0, z}, {q.s1, q.t1}});
 			b.push_back({{q.x1, q.y1, z}, {q.s1, q.t0}});
 			b.push_back({{q.x0, q.y1, z}, {q.s0, q.t0}});
 		}
@@ -132,7 +137,7 @@ namespace game
 		gl::Camera camera;
 
 		SDL_GL_SetSwapInterval(1);
-		//my_stbtt_initfont();
+		my_stbtt_initfont();
 
 		gl::Texture2D t;
 		t.image_format = GL_RGBA;
@@ -194,7 +199,9 @@ namespace game
 
 			b.draw_arrays();
 
-			//my_stbtt_print(0, 0, "hello");
+			arena.shader.set("projection", projection);
+			my_stbtt_print(0, 0, "hell ole", projection);
+			arena.shader.set("projection", glm::mat4(1.0f));
 
 			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
 			ImGui::Begin("Framerate");

@@ -172,7 +172,7 @@ namespace gl
 		glm::mat4 mov_{1};
 		Position current_scroll_{0, 0};
 		Position translate_{0, 0};
-		float zoom_level_ = 0.7;
+		float zoom_level_ = 0.7f;
 
 		const float scroll_offset = 0.05f;
 	public:

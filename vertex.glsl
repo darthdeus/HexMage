@@ -10,10 +10,11 @@ out vec2 Texcoord;
 out float UseTexture;
 
 layout (location = 0) uniform mat4 trans;
+layout (location = 1) uniform mat4 projection;
 
 void main()
 {	
-    gl_Position = trans * vec4(position, 1.0);
+    gl_Position = projection * trans * vec4(position, 1.0);
     Color = color;
 	Texcoord = texcoord;
 	UseTexture = useTexture;

@@ -11,6 +11,7 @@
 namespace model {
 	Arena::Arena(std::size_t size): size(size), hexes(size), positions(size), paths(size) {
 		gl::Vertex::setup_attributes();
+		shader.set("projection", glm::mat4(1.0f));
 	}
 
 	Coord Arena::hex_near(Position rel_pos) {
