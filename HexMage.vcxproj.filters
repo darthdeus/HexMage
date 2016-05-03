@@ -3,6 +3,8 @@
   <ItemGroup>
     <None Include="fragment.glsl" />
     <None Include="vertex.glsl" />
+    <None Include="res\sprite.vs.glsl" />
+    <None Include="res\sprite.fs.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\format.cpp">
@@ -43,6 +45,9 @@
     </ClCompile>
     <ClCompile Include="src\input_manager.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lodepng.cpp">
+      <Filter>Libraries</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -110,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="include\input_manager.hpp">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lodepng.h">
+      <Filter>Library Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

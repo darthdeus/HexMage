@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <SDL/SDL_hints.h>
+#include <lodepng.h>
 
 enum class HexType
 {
@@ -66,7 +67,8 @@ Coord operator+(const Coord& lhs, const Coord& rhs);
 Coord operator-(const Coord& lhs, const Coord& rhs);
 bool operator==(const Coord& lhs, const Coord& rhs);
 
-inline bool operator!=(const Coord& lhs, const Coord& rhs) {
+inline bool operator!=(const Coord& lhs, const Coord& rhs)
+{
 	return !(lhs == rhs);
 }
 
@@ -95,7 +97,10 @@ struct Position
 	Position& operator+=(const Position& position);
 	Position& operator-=(const Position& position);
 
-	operator glm::vec2() { return{ x, y }; }
+	operator glm::vec2()
+	{
+		return {x, y};
+	}
 };
 
 Position operator+(const Position& lhs, const Position& rhs);
@@ -118,11 +123,13 @@ struct Matrix
 	// Create a matrix that can contain data for a hex with radius `size`
 	Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
 
-	T& operator()(std::size_t i, std::size_t j) {
+	T& operator()(std::size_t i, std::size_t j)
+	{
 		return vs[n * i + j];
 	}
 
-	T& operator()(const Coord& c) {
+	T& operator()(const Coord& c)
+	{
 		return vs[n * c.y + c.x];
 	}
 
@@ -140,12 +147,14 @@ struct Color
 
 	Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
 
-	Color mut(float d) const {
+	Color mut(float d) const
+	{
 		return {r + d, g + d, b + d, a};
 	}
 
-	operator glm::vec4() const {
-		return{ r, g, b, a };
+	operator glm::vec4() const
+	{
+		return {r, g, b, a};
 	}
 };
 
@@ -162,7 +171,8 @@ float clamp(float x);
 
 struct hash_int_triple
 {
-	std::size_t operator()(const std::tuple<int, int, int>& tup) const {
+	std::size_t operator()(const std::tuple<int, int, int>& tup) const
+	{
 		using namespace std;
 
 		return hash<int>()(get<0>(tup)) ^ (hash<int>()(get<1>(tup)) << 1) ^
@@ -172,21 +182,24 @@ struct hash_int_triple
 
 struct hash_int_pair
 {
-	std::size_t operator()(const std::pair<int, int>& tup) const {
+	std::size_t operator()(const std::pair<int, int>& tup) const
+	{
 		using namespace std;
 
 		return hash<int>()(tup.first) ^ (hash<int>()(tup.second) << 1);
 	}
 };
 
-inline void push_color(std::vector<float>& vbo, Color c) {
+inline void push_color(std::vector<float>& vbo, Color c)
+{
 	vbo.push_back(c.r);
 	vbo.push_back(c.g);
 	vbo.push_back(c.b);
 	vbo.push_back(c.a);
 }
 
-inline void push_color(std::vector<float>& v, float r, float g, float b, float a) {
+inline void push_color(std::vector<float>& v, float r, float g, float b, float a)
+{
 	v.push_back(r);
 	v.push_back(g);
 	v.push_back(b);
@@ -209,11 +222,60 @@ namespace gl
 
 		void update_camera();
 		void update_and_load_camera();
+
 		glm::mat4 projection() const;
 		float* value_ptr();
+
 		void keydown(Sint32 key);
 		void keyup(Sint32 key);
 		void scroll(Sint32 direction);
+	};
+
+	class Texture2D
+	{
+	public:
+		GLuint id, width, height, internal_format, image_format;
+		GLuint wrap_s, wrap_t, filter_min, filter_mag;
+
+		bool invalid = false;
+
+		Texture2D():
+			width(0), height(0),
+			internal_format(GL_RGB), image_format(GL_RGB),
+			wrap_s(GL_REPEAT), wrap_t(GL_REPEAT),
+			filter_min(GL_LINEAR), filter_mag(GL_LINEAR) {
+			glGenTextures(1, &id);
+		}
+
+		Texture2D(const Texture2D&) = delete;
+		Texture2D& operator=(const Texture2D&) = delete;
+
+		~Texture2D() { glDeleteTextures(1, &id); }
+
+		void load_png(const std::string& filename) {
+			std::vector<unsigned char> data;
+			lodepng::decode(data, width, height, filename);
+			load(width, height, data.data());
+		}
+		
+		void load(GLuint width, GLuint height, unsigned char* data) {
+			this->width = width;
+			this->height = height;
+
+			glBindTexture(GL_TEXTURE_2D, id);	
+			glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, image_format, GL_UNSIGNED_BYTE, data);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_min);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_mag);
+			
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+
+		void bind() const {
+			glBindTexture(GL_TEXTURE_2D, id);
+		}
 	};
 
 	class Shader
@@ -229,7 +291,54 @@ namespace gl
 		Shader& operator=(Shader&& other) = default;
 		~Shader();
 
+		void set(const GLchar* name, int value);
+		void set(const GLchar* name, float value);
+		void set(const GLchar* name, const glm::vec2& v);
+		void set(const GLchar* name, const glm::vec3& v);
+		void set(const GLchar* name, const glm::vec4& v);
+		void set(const GLchar* name, const glm::mat4& matrix);
+
 		void use();
+	};
+
+	class SpriteRenderer
+	{
+	public:
+		explicit SpriteRenderer(Shader& shader): shader(shader) {}
+		// TODO - deallocate vao/vbo
+		// TODO - disable copying
+		~SpriteRenderer() = default;
+
+		void draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size = glm::vec2(10, 10), GLfloat rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f));
+	private:
+		Shader& shader;
+		GLuint vao;
+		GLuint vbo;
+		void initialize();
+	};
+
+	struct ColorTex
+	{
+		glm::vec4 color;
+		glm::vec2 tex;
+		GLfloat useTexture;
+
+		ColorTex(float x, float y, float z, float w)
+			: color(x,y,z,w), tex(0, 0), useTexture(false) {}
+
+		ColorTex(float s, float t)
+			: color(1,1,1,1), tex(s, t), useTexture(true) {}
+
+		ColorTex(const glm::vec4& color)
+			: ColorTex(color, {0, 0}, false) {}
+
+		ColorTex(const glm::vec2& tex)
+			: ColorTex({1,1,1,1}, tex, true) {}
+
+		ColorTex(const glm::vec4& color, const glm::vec2& tex, GLfloat useTexture)
+			: color(color),
+			  tex(tex),
+			  useTexture(useTexture) {}
 	};
 
 	class Vertex
@@ -237,37 +346,31 @@ namespace gl
 	public:
 		glm::vec3 position;
 		glm::vec4 color;
-		glm::vec3 texCoord;
+		glm::vec2 texCoord;
+		GLfloat useTexture;
 
-		Vertex(glm::vec2 position, glm::vec4 color)
-			: Vertex({position.x, position.y, 0}, std::move(color), {0,0,0}) {}
+		Vertex(glm::vec3 position):
+			Vertex(std::move(position), {0,0,0,0}, {0,0}, false) {}
 
-		Vertex(glm::vec3 position, glm::vec4 color)
-			: Vertex(std::move(position), std::move(color), {0,0,0}) {}
+		Vertex(glm::vec3 position, ColorTex ct) :
+			Vertex(std::move(position), std::move(ct.color), std::move(ct.tex), ct.useTexture) {}
 
-		Vertex(glm::vec2 position, glm::vec4 color, glm::vec3 tex_coord)
-			: Vertex({position.x, position.y, 0},
-			         std::move(color),
-			         std::move(tex_coord)) {}
-
-		Vertex(glm::vec2 position, glm::vec3 color, glm::vec3 tex_coord)
-			: Vertex({position.x, position.y, 0},
-			         {color.x, color.y, color.z, 1},
-			         std::move(tex_coord)) {}
-
-		Vertex(glm::vec3 position, glm::vec4 color, glm::vec3 tex_coord)
-			: position{std::move(position)},
-			  color{std::move(color)},
-			  texCoord{std::move(tex_coord)} {}
+		Vertex(glm::vec3 position, glm::vec4 color, glm::vec2 tex_coord, GLfloat useTexture):
+			position{std::move(position)},
+			color{std::move(color)},
+			texCoord{std::move(tex_coord)},
+			useTexture(useTexture) {}
 
 		static void setup_attributes() {
 			GLsizei stride = sizeof(gl::Vertex);
 			glVertexAttribPointer(0, sizeof(position) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, position));
 			glVertexAttribPointer(1, sizeof(color) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, color));
 			glVertexAttribPointer(2, sizeof(texCoord) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, texCoord));
+			glVertexAttribPointer(2, sizeof(useTexture) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, stride, (GLvoid*)offsetof(Vertex, useTexture));
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
 			glEnableVertexAttribArray(2);
+			glEnableVertexAttribArray(3);
 		}
 	};
 
@@ -285,16 +388,11 @@ namespace gl
 		void draw_arrays();
 
 		// TODO - cleanup these overloads
-		void push_triangle(v2 p1, v2 p2, v2 p3, v3 color);
-		void push_triangle(v2 p1, v2 p2, v2 p3, v4 color);
-		void push_triangle(v2 p1, v2 p2, v2 p3, float z, v4 color);
+		void push_triangle(v2 p1, v2 p2, v2 p3, float z, ColorTex ct);
+		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, float z, ColorTex ct);
 
-		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v3 color);
-		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, v4 color);
-		void push_quad(v2 p1, v2 p2, v2 p3, v2 p4, float z, v4 color);
-
-		void push_quad_bot_left(v2 bot_left, float width, float height, float z, v4 color);
-		void push_quad(v2 center, float width, float height, float z, v4 color);
+		void push_quad(v2 center, float width, float height, float z, ColorTex ct);
+		void push_quad_bot_left(v2 bot_left, float width, float height, float z, ColorTex ct);
 
 		void push_hex(v2 position, v3 color, float r);
 		void push_hex(v2 position, v4 color, float r);

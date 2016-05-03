@@ -21,27 +21,90 @@
 #include <model.hpp>
 #include <simulation.hpp>
 #include <input_manager.hpp>
+#include <lodepng.h>
 
 #include <glm/glm.hpp>
+
+#define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
+#include "stb_truetype.h"
+
+unsigned char ttf_buffer[1 << 20];
+unsigned char temp_bitmap[512 * 512];
+
+stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
+GLuint ftex;
+
+void my_stbtt_initfont(void)
+{
+	fread(ttf_buffer, 1, 1 << 20, fopen("c:/windows/fonts/times.ttf", "rb"));
+	stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+	// can free ttf_buffer at this point
+	glGenTextures(1, &ftex);
+	glBindTexture(GL_TEXTURE_2D, ftex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512, 512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
+	// can free temp_bitmap at this point
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+}
+
+void my_stbtt_print(float x, float y, char* text)
+{
+	gl::Batch b;
+	// assume orthographic projection with units = screen pixels, origin at top left
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, ftex);
+
+	while (*text++) {
+		if (*text >= 32 && *text < 128) {
+			stbtt_aligned_quad q;
+			stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
+
+			//fmt::printf("%f,%f\t%f,%f\n", q.x0, q.y0, q.s0, q.t1);
+			float z = -0.5f;
+
+			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t1}});
+			b.push_back({{q.x1, q.y0, z}, {q.s1, q.t1}});
+			b.push_back({{q.x1, q.y1, z}, {q.s1, q.t0}});
+			b.push_back({{q.x0, q.y1, z}, {q.s0, q.t0}});
+		}
+	}
+
+	b.draw_arrays();
+	//glBegin(GL_QUADS);
+	//while (*text) {
+	//	if (*text >= 32 && *text < 128) {
+	//		stbtt_aligned_quad q;
+	//		stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);//1=opengl & d3d10+,0=d3d9
+	//		glTexCoord2f(q.s0, q.t1); glVertex2f(q.x0, q.y0);
+	//		glTexCoord2f(q.s1, q.t1); glVertex2f(q.x1, q.y0);
+	//		glTexCoord2f(q.s1, q.t0); glVertex2f(q.x1, q.y1);
+	//		glTexCoord2f(q.s0, q.t0); glVertex2f(q.x0, q.y1);
+	//	}
+	//	++text;
+	//}
+	//glEnd();
+}
 
 using namespace model;
 using namespace glm;
 
 namespace game
 {
-	void paint_at(Position pos, float radius, Color color) {
+	void paint_at(Position pos, float radius, Color color)
+	{
 		gl::Batch b;
 		b.push_hex(pos, color, radius);
 		b.draw_arrays();
 	}
 
-	Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y) {
+	Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y)
+	{
 		auto rel_mouse = mouse2gl(x, y);
 		auto view_mouse = inverse(proj) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
 		return arena.hex_near({view_mouse.x, view_mouse.y});
 	}
 
-	void game_loop(SDL_Window* window) {
+	void game_loop(SDL_Window* window)
+	{
 		using namespace model;
 		using namespace glm;
 
@@ -76,6 +139,18 @@ namespace game
 		gl::Camera camera;
 
 		SDL_GL_SetSwapInterval(1);
+		my_stbtt_initfont();
+
+		std::vector<unsigned char> tex_buf;
+		unsigned w, h;
+		lodepng::decode(tex_buf, w, h, "c:/dev/chicken.png");
+
+		gl::Texture2D t;
+		t.load_png("c:/dev/chicken.png");
+
+		gl::Shader spriteShader("res/sprite.vs.glsl", "res/sprite.fs.glsl");
+		gl::SpriteRenderer sprites{ spriteShader };
+
 
 		InputManager input_manager;
 		while (true) {
@@ -90,7 +165,17 @@ namespace game
 			}
 
 			camera.update_and_load_camera();
-			arena.draw_vertices();
+			//arena.draw_vertices();
+
+
+			sprites.draw_sprite(t, { 0, 0 });
+			//gl::Batch b1;
+			//b1.push_back(gl::Vertex({ 0, 0, 0 }, { 1,1,1,1 }, { 0, 0 }, 1));
+			//b1.push_back(gl::Vertex({ 1, 0, 0 }, { 1,1,1,1 }, { 1, 0 }, 1));
+			//b1.push_back(gl::Vertex({ 0, 1, 0 }, { 1,1,1,1 }, { 0, 1 }, 1));
+
+			//b1.draw_arrays();
+			//b.push_triangle({0, 0}, {0, 1}, {1, 0}, 0, gl::ColorTex({}))
 
 			auto highlight_pos = arena.pos(input_manager.highlight_hex);
 			paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
@@ -113,6 +198,8 @@ namespace game
 			}
 
 			b.draw_arrays();
+
+			my_stbtt_print(0, 0, "hello");
 
 			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
 			ImGui::Begin("Framerate");

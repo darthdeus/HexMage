@@ -171,6 +171,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />
+    <None Include="res\sprite.fs.glsl" />
+    <None Include="res\sprite.vs.glsl" />
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
@@ -184,6 +186,7 @@
     <ClCompile Include="src\imgui_demo.cpp" />
     <ClCompile Include="src\imgui_draw.cpp" />
     <ClCompile Include="src\imgui_impl_sdl.cpp" />
+    <ClCompile Include="src\lodepng.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\simulation.cpp" />
@@ -200,6 +203,7 @@
     <ClInclude Include="include\imgui_impl_sdl.h" />
     <ClInclude Include="include\imgui_internal.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
+    <ClInclude Include="include\lodepng.h" />
     <ClInclude Include="include\model.hpp" />
     <ClInclude Include="include\simulation.hpp" />
     <ClInclude Include="include\stb_rect_pack.h" />
