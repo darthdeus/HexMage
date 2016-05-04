@@ -352,7 +352,7 @@ namespace gl
 		GLfloat useTexture;
 
 		Vertex(glm::vec3 position):
-			Vertex(std::move(position), {0,0,0,0}, {0,0}, false) {}
+			Vertex(std::move(position), {1,1,1,1}, {0,0}, false) {}
 
 		Vertex(glm::vec3 position, ColorTex ct) :
 			Vertex(std::move(position), std::move(ct.color), std::move(ct.tex), ct.useTexture) {}

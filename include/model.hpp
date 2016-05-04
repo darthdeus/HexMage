@@ -41,11 +41,11 @@ namespace model
 
 	class Arena
 	{
+		gl::Batch b;
+	public:
 		gl::VAO vao;
 		gl::VBO vbo;
 
-		gl::Batch b;
-	public:
 		static constexpr float radius = 0.1f;
 		std::size_t size;
 		Matrix<HexType> hexes;

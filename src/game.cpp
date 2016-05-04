@@ -34,15 +34,17 @@ unsigned char temp_bitmap[512 * 512];
 
 stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
 GLuint ftex;
-
 void my_stbtt_initfont(void)
 {
 	fread(ttf_buffer, 1, 1 << 20, fopen("c:/windows/fonts/times.ttf", "rb"));
+	//fread(ttf_buffer, 1, 1 << 20, fopen("res/ProggyClean.ttf", "rb"));
 	stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+
+	lodepng::encode("foo.png", temp_bitmap, 512, 512, LCT_GREY);
 	// can free ttf_buffer at this point
 	glGenTextures(1, &ftex);
 	glBindTexture(GL_TEXTURE_2D, ftex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512, 512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_BGRA, 512, 512, 0, GL_BGR, GL_UNSIGNED_BYTE, temp_bitmap);
 	// can free temp_bitmap at this point
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
@@ -51,7 +53,7 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 {
 	gl::Batch b;
 	// assume orthographic projection with units = screen pixels, origin at top left
-	glEnable(GL_TEXTURE_2D);
+	//glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, ftex);
 
 	while (*text++) {
@@ -62,15 +64,26 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 			//fmt::printf("%f,%f\t%f,%f\n", q.x0, q.y0, q.s0, q.t1);
 			float z = -0.5f;
 
-			fmt::printf("%f %f %f %f\t%f %f %f %f\n", q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
+			//fmt::printf("%f %f %f %f\t%f %f %f %f\n", q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
 			auto v = proj * glm::vec4(q.x0, q.y0, 0, 1);
 			auto v2 = proj * glm::vec4(q.x1, q.y1, 0, 1);
 			//fmt::printf("\t%f %f %f %f\n", v.x, v.y, v2.x, v2.y);
 
-			b.push_back({{q.x0, -q.y0, z}, {q.s0, q.t1}});
-			b.push_back({{q.x1, -q.y0, z}, {q.s1, q.t1}});
-			b.push_back({{q.x1, q.y1, z}, {q.s1, q.t0}});
-			b.push_back({{q.x0, q.y1, z}, {q.s0, q.t0}});
+			b.push_back({{q.x0, -q.y0, z}, {0, 1} });
+			b.push_back({{q.x1, -q.y0, z}, {1, 1,}});
+			b.push_back({{q.x1, q.y1, z},  {1, 0}});
+
+			b.push_back({{q.x0, -q.y0, z}, {0, 1}});
+			b.push_back({{q.x1, q.y1, z},  {1, 0}});
+			b.push_back({{q.x0, q.y1, z},  {0, 0}});
+
+			//b.push_back({{q.x0, -q.y0, z}, {q.s0, q.t1}});
+			//b.push_back({{q.x1, -q.y0, z}, {q.s1, q.t1}});
+			//b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
+
+			//b.push_back({{q.x0, -q.y0, z}, {q.s0, q.t1}});
+			//b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
+			//b.push_back({{q.x0, q.y1, z},  {q.s0, q.t0}});
 		}
 	}
 
@@ -150,7 +163,7 @@ namespace game
 
 		InputManager input_manager;
 		while (true) {
-			glClearColor(0.3f, 0.2f, 0.3f, 1);
+			glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			ImGui_ImplSdlGL3_NewFrame(window);
@@ -199,28 +212,31 @@ namespace game
 
 			b.draw_arrays();
 
-			arena.shader.set("projection", projection);
+			arena.vao.bind();
+			arena.vbo.bind();
+			arena.shader.use();
+			arena.shader.set("projection", glm::translate(glm::scale(projection, glm::vec3(10, 10, 1)), glm::vec3(20, 10, 0)));
 			my_stbtt_print(0, 0, "hell ole", projection);
 			arena.shader.set("projection", glm::mat4(1.0f));
 
-			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
-			ImGui::Begin("Framerate");
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::End();
+			//ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+			//ImGui::Begin("Framerate");
+			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			//ImGui::End();
 
-			ImGui::Begin("Profiling");
-			if (ImGui::Button("Dummy profile")) {
-				simulation::dummy_profiling();
-			}
+			//ImGui::Begin("Profiling");
+			//if (ImGui::Button("Dummy profile")) {
+			//	simulation::dummy_profiling();
+			//}
 
-			if (simulation::profiling_results.size() > 0) {
-				for (auto& res : simulation::profiling_results) {
-					ImGui::Text(res.c_str());
-				}
-			}
+			//if (simulation::profiling_results.size() > 0) {
+			//	for (auto& res : simulation::profiling_results) {
+			//		ImGui::Text(res.c_str());
+			//	}
+			//}
 
-			ImGui::End();
-			ImGui::Render();
+			//ImGui::End();
+			//ImGui::Render();
 
 			SDL_GL_SwapWindow(window);
 		}
