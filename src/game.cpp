@@ -41,7 +41,7 @@ void my_stbtt_initfont(void)
 	//fread(ttf_buffer, 1, 1 << 20, fopen("res/ProggyClean.ttf", "rb"));
 	stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
 
-	lodepng::encode("foo.png", temp_bitmap, 512, 512, LCT_GREY);
+	//lodepng::encode("foo.png", temp_bitmap, 512, 512, LCT_GREY);
 	// can free ttf_buffer at this point
 	glGenTextures(1, &ftex);
 	glBindTexture(GL_TEXTURE_2D, ftex);
@@ -58,7 +58,7 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 	//glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, ftex);
 
-	while (*text++) {
+	while (*text) {
 		if (*text >= 32 && *text < 128) {
 			stbtt_aligned_quad q;
 			stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
@@ -69,7 +69,7 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 			//fmt::printf("%f %f %f %f\t%f %f %f %f\n", q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
 			auto v = proj * glm::vec4(q.x0, q.y0, 0, 1);
 			auto v2 = proj * glm::vec4(q.x1, q.y1, 0, 1);
-			fmt::printf("\t%f %f %f %f\n", v.x, v.y, v2.x, v2.y);
+			//fmt::printf("\t%f %f %f %f\n", v.x, v.y, v2.x, v2.y);
 
 			//b.push_back({{q.x0, -q.y0, z}, {0, 1} });
 			//b.push_back({{q.x1, -q.y0, z}, {1, 1,}});
@@ -87,6 +87,7 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
 			b.push_back({{q.x0, q.y1, z},  {q.s0, q.t0}});
 		}
+		++text;
 	}
 
 	b.draw_arrays();
@@ -184,6 +185,7 @@ namespace game
 			arena.vao.bind();
 			arena.vbo.bind();
 			//arena.shader.set("projection", glm::translate(glm::scale(projection, glm::vec3(10, 10, 1)), glm::vec3(20, 10, 0)));
+			projection = glm::ortho(0.f, 800.f, 0.f, 600.f);
 			arena.shader.set("projection", translate(projection, vec3(20, 20, 0)));
 			my_stbtt_print(50, 50, "hello world", projection);
 			arena.shader.set("projection", glm::mat4(1.0f));
