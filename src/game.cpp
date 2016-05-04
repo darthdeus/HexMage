@@ -26,56 +26,6 @@
 #include <game.hpp>
 #include <glm/glm.hpp>
 
-#include <stb_easy_font.h>
-
-void print_string(float x, float y, char *text, float r, float g, float b)
-{
-  static char buffer[99999]; // ~500 chars
-  int num_quads;
-
-  num_quads = stb_easy_font_print(x, y, text, NULL, buffer, sizeof(buffer));
-
-  struct Vert
-  {
-	  float x, y, z;
-	  unsigned char c[4];
-  };
-
-  Vert* vertices = (Vert*)buffer;
-
-  gl::Batch boo;
-  
-  for (size_t i = 0; i < num_quads * 4; i += 4) {
-	  auto v1 = vertices[i+0];
-	  auto v2 = vertices[i+1];
-	  auto v3 = vertices[i+2];
-	  auto v4 = vertices[i+3];
-
-	  using namespace gl;
-
-	  Vertex v1d{{v1.x, v1.y,v1.z}, ColorTex{(float)v1.c[0], (float)v1.c[1], (float)v1.c[2], (float)v1.c[3]}};
-	  Vertex v2d{{v2.x, v2.y,v2.z}, ColorTex{(float)v2.c[0], (float)v2.c[1], (float)v2.c[2], (float)v2.c[3]}};
-	  Vertex v3d{{v3.x, v3.y,v3.z}, ColorTex{(float)v3.c[0], (float)v3.c[1], (float)v3.c[2], (float)v3.c[3]}};
-	  Vertex v4d{{v4.x, v4.y,v4.z}, ColorTex{(float)v4.c[0], (float)v4.c[1], (float)v4.c[2], (float)v4.c[3]}};
-
-	  boo.push_back(v1d);
-	  boo.push_back(v2d);
-	  boo.push_back(v3d);
-
-	  boo.push_back(v1d);
-	  boo.push_back(v3d);
-	  boo.push_back(v4d);
-  }
-
-  boo.draw_arrays();
-
-  //glColor3f(r,g,b);
-  //glEnableClientState(GL_VERTEX_ARRAY);
-  //glVertexPointer(2, GL_FLOAT, 16, buffer);
-  //glDrawArrays(GL_QUADS, 0, num_quads*4);
-  //glDisableClientState(GL_VERTEX_ARRAY);
-}
-
 #define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
 #include "stb_truetype.h"
 
@@ -95,7 +45,7 @@ void my_stbtt_initfont(void)
 	// can free ttf_buffer at this point
 	glGenTextures(1, &ftex);
 	glBindTexture(GL_TEXTURE_2D, ftex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_BGRA, 512, 512, 0, GL_BGR, GL_UNSIGNED_BYTE, temp_bitmap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
 	// can free temp_bitmap at this point
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
@@ -121,21 +71,21 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 			auto v2 = proj * glm::vec4(q.x1, q.y1, 0, 1);
 			fmt::printf("\t%f %f %f %f\n", v.x, v.y, v2.x, v2.y);
 
-			b.push_back({{q.x0, -q.y0, z}, {0, 1} });
-			b.push_back({{q.x1, -q.y0, z}, {1, 1,}});
-			b.push_back({{q.x1, q.y1, z},  {1, 0}});
+			//b.push_back({{q.x0, -q.y0, z}, {0, 1} });
+			//b.push_back({{q.x1, -q.y0, z}, {1, 1,}});
+			//b.push_back({{q.x1, q.y1, z},  {1, 0}});
 
-			b.push_back({{q.x0, -q.y0, z}, {0, 1}});
-			b.push_back({{q.x1, q.y1, z},  {1, 0}});
-			b.push_back({{q.x0, q.y1, z},  {0, 0}});
+			//b.push_back({{q.x0, -q.y0, z}, {0, 1}});
+			//b.push_back({{q.x1, q.y1, z},  {1, 0}});
+			//b.push_back({{q.x0, q.y1, z},  {0, 0}});
 
-			//b.push_back({{q.x0, -q.y0, z}, {q.s0, q.t1}});
-			//b.push_back({{q.x1, -q.y0, z}, {q.s1, q.t1}});
-			//b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
+			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t1}});
+			b.push_back({{q.x1, q.y0, z}, {q.s1, q.t1}});
+			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
 
-			//b.push_back({{q.x0, -q.y0, z}, {q.s0, q.t1}});
-			//b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
-			//b.push_back({{q.x0, q.y1, z},  {q.s0, q.t0}});
+			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t1}});
+			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
+			b.push_back({{q.x0, q.y1, z},  {q.s0, q.t0}});
 		}
 	}
 
@@ -180,7 +130,7 @@ namespace game
 		using namespace glm;
 
 		glViewport(0, 0, game::SCREEN_WIDTH, game::SCREEN_HEIGHT);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -227,10 +177,17 @@ namespace game
 			}
 			camera.update_camera();
 
-			arena.shader.use();
-			arena.shader.set("projection", projection);
-			my_stbtt_print(0, 0, "hell ole", projection);
+			//arena.shader.use();
+			//arena.shader.set("projection", projection);
+			//my_stbtt_print(0, 0, "hell ole", projection);
+			//arena.shader.set("projection", glm::mat4(1.0f));
+			arena.vao.bind();
+			arena.vbo.bind();
+			//arena.shader.set("projection", glm::translate(glm::scale(projection, glm::vec3(10, 10, 1)), glm::vec3(20, 10, 0)));
+			arena.shader.set("projection", translate(projection, vec3(20, 20, 0)));
+			my_stbtt_print(50, 50, "hello world", projection);
 			arena.shader.set("projection", glm::mat4(1.0f));
+
 
 			//fontShader.set("projection", projection);
 
@@ -262,13 +219,6 @@ namespace game
 
 			//	Healthbar::draw(pos, b, 0.7f, 0.5f);
 			//}
-
-			arena.vao.bind();
-			arena.vbo.bind();
-			arena.shader.use();
-			arena.shader.set("projection", glm::translate(glm::scale(projection, glm::vec3(10, 10, 1)), glm::vec3(20, 10, 0)));
-			my_stbtt_print(0, 0, "hell ole", projection);
-			arena.shader.set("projection", glm::mat4(1.0f));
 
 
 			//ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);

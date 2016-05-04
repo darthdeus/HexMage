@@ -14,7 +14,7 @@ layout (location = 1) uniform mat4 projection;
 
 void main()
 {	
-    gl_Position = projection * trans * vec4(position, 1.0);
+    gl_Position = projection * vec4(position, 1.0);
     Color = color;
 	Texcoord = texcoord;
 	UseTexture = useTexture;
