@@ -277,7 +277,8 @@ namespace gl
 	public:
 		GLuint program;
 
-		Shader(const GLchar* vertexPath, const GLchar* fragmentPath);
+		explicit Shader(std::string name);
+		Shader(std::string vertex, std::string fragment);
 
 		Shader(const Shader& other) = delete;
 		Shader(Shader&& other) = delete;

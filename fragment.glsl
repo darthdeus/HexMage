@@ -9,10 +9,11 @@ out vec4 color;
 
 void main()
 {
-	//color = Color * texture(t, Texcoord.st);
 	 if (UseTexture > 0.5) {
 	 	color = Color * texture(t, Texcoord.st);
 	 } else {
 	 	color = Color;
 	 }
+
+	 color = vec4(1, 0, 0, 1);
 }

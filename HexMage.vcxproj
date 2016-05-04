@@ -171,6 +171,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />
+    <None Include="res\font.fs.glsl" />
+    <None Include="res\font.vs.glsl" />
     <None Include="res\sprite.fs.glsl" />
     <None Include="res\sprite.vs.glsl" />
     <None Include="vertex.glsl" />
@@ -206,6 +208,7 @@
     <ClInclude Include="include\lodepng.h" />
     <ClInclude Include="include\model.hpp" />
     <ClInclude Include="include\simulation.hpp" />
+    <ClInclude Include="include\stb_easy_font.h" />
     <ClInclude Include="include\stb_rect_pack.h" />
     <ClInclude Include="include\stb_textedit.h" />
     <ClInclude Include="include\stb_truetype.h" />

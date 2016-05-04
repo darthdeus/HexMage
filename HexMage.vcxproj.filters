@@ -5,6 +5,8 @@
     <None Include="vertex.glsl" />
     <None Include="res\sprite.vs.glsl" />
     <None Include="res\sprite.fs.glsl" />
+    <None Include="res\font.vs.glsl" />
+    <None Include="res\font.fs.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\format.cpp">
@@ -117,6 +119,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="include\lodepng.h">
+      <Filter>Library Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stb_easy_font.h">
       <Filter>Library Headers</Filter>
     </ClInclude>
   </ItemGroup>

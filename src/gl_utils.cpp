@@ -164,12 +164,13 @@ namespace gl
 		zoom_level_ += 0.07f * direction;
 	}
 
-	Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
+	Shader::Shader(std::string name): Shader(name + "vs.glsl", name + "fs.glsl") { }
+
+	Shader::Shader(std::string vertexPath, std::string fragmentPath) {
 		using namespace std;
 
-		GLuint vertex = load_and_compile_shader_(vertexPath, GL_VERTEX_SHADER);
-		GLuint fragment = load_and_compile_shader_(fragmentPath, GL_FRAGMENT_SHADER);
-
+		GLuint vertex = load_and_compile_shader_(vertexPath.c_str(), GL_VERTEX_SHADER);
+		GLuint fragment = load_and_compile_shader_(fragmentPath.c_str(), GL_FRAGMENT_SHADER); 
 		program = glCreateProgram();
 		glAttachShader(program, vertex);
 		glAttachShader(program, fragment);
