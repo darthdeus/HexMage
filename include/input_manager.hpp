@@ -9,9 +9,9 @@ class InputManager
 {
 public:
 	SDL_Event windowEvent;
-	Coord highlight_hex;
-	Coord mouse_hex;
-	std::vector<Coord> highlight_path;
+	model::Coord highlight_hex;
+	model::Coord mouse_hex;
+	std::vector<model::Coord> highlight_path;
 
 	bool handle_events(::gl::Camera& camera, model::Arena& arena, model::Mob& player);
 };

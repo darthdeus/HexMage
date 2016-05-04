@@ -131,7 +131,6 @@ namespace game
 		using namespace glm;
 
 		glViewport(0, 0, game::SCREEN_WIDTH, game::SCREEN_HEIGHT);
-		//glEnable(GL_CULL_FACE);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -155,10 +154,10 @@ namespace game
 		SDL_GL_SetSwapInterval(1);
 		my_stbtt_initfont();
 
-		//gl::Texture2D t;
-		//t.image_format = GL_RGBA;
-		//t.internal_format = GL_RGBA;
-		//t.load_png("res/chicken.png");
+		gl::Texture2D t;
+		t.image_format = GL_RGBA;
+		t.internal_format = GL_RGBA;
+		t.load_png("res/chicken.png");
 
 		gl::Shader spriteShader("res/sprite.vs.glsl", "res/sprite.fs.glsl");
 		auto projection = glm::ortho(0.f, (float)game::SCREEN_WIDTH, (float)game::SCREEN_HEIGHT, 0.f, -1.f, 1.f);
@@ -170,7 +169,7 @@ namespace game
 			glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			//ImGui_ImplSdlGL3_NewFrame(window);
+			ImGui_ImplSdlGL3_NewFrame(window);
 
 			bool keep_running = input_manager.handle_events(camera, arena, player);
 			if (!keep_running) {
@@ -223,24 +222,24 @@ namespace game
 			//}
 
 
-			//ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
-			//ImGui::Begin("Framerate");
-			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			//ImGui::End();
+			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+			ImGui::Begin("Framerate");
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::End();
 
-			//ImGui::Begin("Profiling");
-			//if (ImGui::Button("Dummy profile")) {
-			//	simulation::dummy_profiling();
-			//}
+			ImGui::Begin("Profiling");
+			if (ImGui::Button("Dummy profile")) {
+				simulation::dummy_profiling();
+			}
 
-			//if (simulation::profiling_results.size() > 0) {
-			//	for (auto& res : simulation::profiling_results) {
-			//		ImGui::Text(res.c_str());
-			//	}
-			//}
+			if (simulation::profiling_results.size() > 0) {
+				for (auto& res : simulation::profiling_results) {
+					ImGui::Text(res.c_str());
+				}
+			}
 
-			//ImGui::End();
-			//ImGui::Render();
+			ImGui::End();
+			ImGui::Render();
 
 			SDL_GL_SwapWindow(window);
 		}

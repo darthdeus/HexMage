@@ -9,6 +9,81 @@
 #include <boost/optional.hpp>
 
 namespace model {
+
+	Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
+	Cube::operator Coord() const { return{ *this }; }
+	Cube Cube::abs() const { return{ std::abs(x), std::abs(y), std::abs(z) }; }
+	int Cube::min() const { return std::min(x, std::min(y, z)); }
+	int Cube::max() const { return std::max(x, std::max(y, z)); }
+
+	Coord::Coord(const Cube& cube) : x(cube.x), y(cube.z) {}
+	Coord::operator Cube() const { return{ *this }; }
+	Coord Coord::abs() const { return{ std::abs(x), std::abs(y) }; }
+	int Coord::min() const { return std::min(x, y); }
+	int Coord::max() const { return std::max(x, y); }
+	int Coord::distance() const { return Cube(*this).abs().max(); }
+
+	Coord operator+(const Coord& lhs, const Coord& rhs) { return{ lhs.x + rhs.x, lhs.y + rhs.y }; }
+	Coord operator-(const Coord& lhs, const Coord& rhs) { return{ lhs.x - rhs.x, lhs.y - rhs.y }; }
+	bool operator==(const Coord& lhs, const Coord& rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }
+
+	Position operator+(const Position& lhs, const Position& rhs) { return{ lhs.x + rhs.x, lhs.y + rhs.y }; }
+	Position operator-(const Position& lhs, const Position& rhs) { return{ lhs.x - rhs.x, lhs.y - rhs.y }; }
+	bool operator==(const Position& lhs, const Position& rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }
+
+	std::ostream& operator<<(std::ostream& os, const Position& p) {
+		return os << "(" << p.x << "," << p.y << ")";
+	}
+
+	float Position::distance() const { return x * x + y * y; }
+
+	Position Position::operator-() const { return{ -x, -y }; }
+	Position::operator glm::vec2() const { return{ x, y }; }
+
+	Position Position::abs() const { return{ std::abs(x), std::abs(y) }; }
+	float Position::min() const { return std::min(x, y); }
+	float Position::max() const { return std::max(x, y); }
+
+	Position& Position::operator+=(const Position& p) { x += p.x; y += p.y; return *this; }
+	Position& Position::operator-=(const Position& p) { x -= p.x; y -= p.y; return *this; }
+
+	std::ostream& operator<<(std::ostream& os, const Coord& c) {
+		return os << "(" << c.x << "," << c.y << ")";
+	}
+
+	Position mouse2gl(int x, int y) {
+		// TODO - figure out a place to put this
+		constexpr int SCREEN_WIDTH = 800;
+		constexpr int SCREEN_HEIGHT = 600;
+
+		float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
+		float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
+
+		rel_y = 2 * (1 - rel_y) - 1;
+		rel_x = 2 * rel_x - 1;
+
+		return{ rel_x, rel_y };
+	}
+
+	float rnd(float max) {
+		return (static_cast<float>(rand()) / RAND_MAX) * max;
+	}
+
+	float rnd() {
+		return rnd(1.0f);
+	}
+
+	float clamp(float x) {
+		if (x < 0)
+			return 0;
+		if (x > 1)
+			return 1;
+		return x;
+	}
+
+
+
+
 	Arena::Arena(std::size_t size): size(size), hexes(size), positions(size), paths(size) {
 		gl::Vertex::setup_attributes();
 		shader.set("projection", glm::mat4(1.0f));
@@ -148,4 +223,21 @@ namespace model {
 		//glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 6);
 	}
 
+	Color color_for_type(HexType type) {
+		switch (type) {
+		case HexType::Empty:
+			return{ 0.4f, 0.2f, 0.4f };
+		case HexType::Wall:
+			return{ 0.1f, 0.03f, 0.1f };
+		case HexType::Player:
+			return{ 0.7f, 0.4f, 0.7f };
+		default:
+			throw "invalid hex type";
+		}
+	}
+
+	float rad_for_hex(int i) {
+		float angle_deg = static_cast<float>(60 * i + 30);
+		return static_cast<float>(M_PI) / 180 * angle_deg;
+	}
 }

@@ -5,6 +5,8 @@
 #include <game.hpp>
 
 bool InputManager::handle_events(gl::Camera& camera, model::Arena& arena, model::Mob& player) {
+	using namespace model;
+
 	while (SDL_PollEvent(&windowEvent)) {
 		ImGui_ImplSdlGL3_ProcessEvent(&windowEvent);
 

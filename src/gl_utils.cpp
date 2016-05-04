@@ -4,77 +4,7 @@
 #include <iterator>
 #include <sstream>
 #include <model.hpp>
-
-Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
-Cube::operator Coord() const { return{ *this }; }
-Cube Cube::abs() const { return{ std::abs(x), std::abs(y), std::abs(z) }; }
-int Cube::min() const { return std::min(x, std::min(y, z)); }
-int Cube::max() const { return std::max(x, std::max(y, z)); }
-
-Coord::Coord(const Cube& cube) : x(cube.x), y(cube.z) {}
-Coord::operator Cube() const { return{ *this }; }
-Coord Coord::abs() const { return{ std::abs(x), std::abs(y) }; }
-int Coord::min() const { return std::min(x, y); }
-int Coord::max() const { return std::max(x, y); }
-int Coord::distance() const { return Cube(*this).abs().max(); }
-
-Coord operator+(const Coord& lhs, const Coord& rhs) { return{ lhs.x + rhs.x, lhs.y + rhs.y }; }
-Coord operator-(const Coord& lhs, const Coord& rhs) { return{ lhs.x - rhs.x, lhs.y - rhs.y }; }
-bool operator==(const Coord& lhs, const Coord& rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }
-
-Position operator+(const Position& lhs, const Position& rhs) { return{ lhs.x + rhs.x, lhs.y + rhs.y }; }
-Position operator-(const Position& lhs, const Position& rhs) { return{ lhs.x - rhs.x, lhs.y - rhs.y }; }
-bool operator==(const Position& lhs, const Position& rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }
-
-std::ostream& operator<<(std::ostream& os, const Position& p) {
-	return os << "(" << p.x << "," << p.y << ")";
-}
-
-float Position::distance() const { return x * x + y * y; }
-
-Position Position::operator-() const { return{ -x, -y }; }
-Position::operator glm::vec2() const { return{ x, y }; }
-
-Position Position::abs() const { return{ std::abs(x), std::abs(y) }; }
-float Position::min() const { return std::min(x, y); }
-float Position::max() const { return std::max(x, y); }
-
-Position& Position::operator+=(const Position& p) { x += p.x; y += p.y; return *this; }
-Position& Position::operator-=(const Position& p) { x -= p.x; y -= p.y; return *this; }
-
-std::ostream& operator<<(std::ostream& os, const Coord& c) {
-	return os << "(" << c.x << "," << c.y << ")";
-}
-
-Position mouse2gl(int x, int y) {
-	// TODO - figure out a place to put this
-	constexpr int SCREEN_WIDTH = 800;
-	constexpr int SCREEN_HEIGHT = 600;
-
-	float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
-	float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
-
-	rel_y = 2 * (1 - rel_y) - 1;
-	rel_x = 2 * rel_x - 1;
-
-	return{ rel_x, rel_y };
-}
-
-float rnd(float max) {
-	return (static_cast<float>(rand()) / RAND_MAX) * max;
-}
-
-float rnd() {
-	return rnd(1.0f);
-}
-
-float clamp(float x) {
-	if (x < 0)
-		return 0;
-	if (x > 1)
-		return 1;
-	return x;
-}
+#include <lodepng.h>
 
 GLuint load_and_compile_shader_(const GLchar* path, GLenum shaderType) {
 	using namespace std;
@@ -164,6 +94,43 @@ namespace gl
 		zoom_level_ += 0.07f * direction;
 	}
 
+	Texture2D::Texture2D():
+		width(0), height(0),
+		internal_format(GL_RGB), image_format(GL_RGB),
+		wrap_s(GL_REPEAT), wrap_t(GL_REPEAT),
+		filter_min(GL_LINEAR), filter_mag(GL_LINEAR) {
+		glGenTextures(1, &id);
+	}
+
+	Texture2D::~Texture2D() {
+		glDeleteTextures(1, &id);
+	}
+
+	void Texture2D::load_png(const std::string& filename) {
+		std::vector<unsigned char> data;
+		lodepng::decode(data, width, height, filename);
+		load(width, height, data.data());
+	}
+
+	void Texture2D::load(GLuint width, GLuint height, unsigned char* data) {
+		this->width = width;
+		this->height = height;
+
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, image_format, GL_UNSIGNED_BYTE, data);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_min);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_mag);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	void Texture2D::bind() const {
+		glBindTexture(GL_TEXTURE_2D, id);
+	}
+
 	Shader::Shader(std::string name): Shader(name + "vs.glsl", name + "fs.glsl") { }
 
 	Shader::Shader(std::string vertexPath, std::string fragmentPath) {
@@ -223,26 +190,7 @@ namespace gl
 
 	void Shader::use() { glUseProgram(program); }
 
-	void SpriteRenderer::draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size, glm::vec3 color)
-	{
-		shader.use();
-		glm::mat4 model(1.0f);
-
-		model = glm::translate(model, glm::vec3(pos, 0.0f));
-		model = glm::scale(model, glm::vec3(size, 1.0f));
-
-		shader.set("model", model);
-		shader.set("spriteColor", {1,1,1});
-
-		glActiveTexture(GL_TEXTURE0);
-		texture.bind();
-
-		vao.bind();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		vao.unbind();
-	}
-
-	void SpriteRenderer::initialize() {
+	SpriteRenderer::SpriteRenderer(Shader& shader): shader(shader) {
 		GLfloat vertices[] = {
 			0, 1, 0, 1,
 			1, 0, 1, 0,
@@ -264,7 +212,24 @@ namespace gl
 		vao.unbind();
 	}
 
+	void SpriteRenderer::draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size, glm::vec3 color)
+	{
+		shader.use();
+		glm::mat4 model(1.0f);
 
+		model = glm::translate(model, glm::vec3(pos, 0.0f));
+		model = glm::scale(model, glm::vec3(size, 1.0f));
+
+		shader.set("model", model);
+		shader.set("spriteColor", {1,1,1});
+
+		glActiveTexture(GL_TEXTURE0);
+		texture.bind();
+
+		vao.bind();
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		vao.unbind();
+	}
 
 	void Batch::clear() {
 		vertices.clear();
@@ -346,22 +311,56 @@ namespace gl
 			});
 		}
 	}
-}
 
-Color color_for_type(HexType type) {
-	switch (type) {
-	case HexType::Empty:
-		return{ 0.4f, 0.2f, 0.4f };
-	case HexType::Wall:
-		return{ 0.1f, 0.03f, 0.1f };
-	case HexType::Player:
-		return{ 0.7f, 0.4f, 0.7f };
-	default:
-		throw "invalid hex type";
+	void FontAtlas::init() {
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+		FT_Library ft;
+		if (FT_Init_FreeType(&ft)) {
+			fmt::print("ERROR::FREETYPE: Could not init FreeType\n");
+		}
+
+		FT_Face face;
+		if (FT_New_Face(ft, "res/ProggyClean.ttf", 0, &face)) {
+			fmt::print("ERROR::FREETYPE: Failed to load font\n");
+		}
+
+		FT_Set_Pixel_Sizes(face, 0, 48);
+		if (FT_Load_Char(face, 'X', FT_LOAD_RENDER)) {
+			fmt::printf("ERROR::FREETYPE: Failed to load Glyph\n");
+		}
+
+		for (GLubyte c = 0; c < 128; ++c) {
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+				fmt::printf("ERROR::FREETYPE: Failed to load Glyph '%c'\n", c);
+				continue;
+			}
+
+			GLuint texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width,
+			                          face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE,
+			                          face->glyph->bitmap.buffer);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			Character character = {
+				texture,
+				glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+				glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+				static_cast<GLuint>(face->glyph->advance.x)
+			};
+
+			characters.insert({c, character});
+		}
+
+		FT_Done_Face(face);
+		FT_Done_FreeType(ft);
 	}
 }
 
-float rad_for_hex(int i) {
-	float angle_deg = static_cast<float>(60 * i + 30);
-	return static_cast<float>(M_PI) / 180 * angle_deg;
-}

@@ -1,12 +1,8 @@
 #ifndef GL_UTILS_HPP__
 #define GL_UTILS_HPP__
 
-#include <iostream>
-#include <string>
-#include <istream>
 #include <functional>
 #include <tuple>
-#include <utility>
 #include <vector>
 #include <map>
 
@@ -16,156 +12,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <SDL/SDL_hints.h>
-#include <lodepng.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <format.h>
 
-enum class HexType
-{
-	Empty = 0,
-	Wall,
-	Player
-};
-
-struct Coord;
-struct Cube;
-
-struct Cube
-{
-	int x;
-	int y;
-	int z;
-
-	Cube() : x(0), y(0), z(0) {}
-
-	Cube(const Coord& axial);
-
-	Cube(int x, int y, int z) : x(x), y(y), z(z) {}
-
-	operator Coord() const;
-	Cube abs() const;
-	int min() const;
-	int max() const;
-};
-
-struct Coord
-{
-	int x;
-	int y;
-
-	Coord() : x(0), y(0) {}
-
-	Coord(const Cube& cube);
-
-	Coord(int x, int y) : x(x), y(y) {}
-
-	operator Cube() const;
-	Coord abs() const;
-	int min() const;
-	int max() const;
-
-	int distance() const;
-};
-
-Coord operator+(const Coord& lhs, const Coord& rhs);
-Coord operator-(const Coord& lhs, const Coord& rhs);
-bool operator==(const Coord& lhs, const Coord& rhs);
-
-inline bool operator!=(const Coord& lhs, const Coord& rhs)
-{
-	return !(lhs == rhs);
-}
-
-std::ostream& operator<<(std::ostream& os, const Coord& c);
-
-constexpr int ABILITY_COUNT = 6;
-
-struct Position
-{
-	float x;
-	float y;
-
-	Position() : x(INFINITY), y(INFINITY) {}
-
-	Position(const glm::vec2& v) : x(v.x), y(v.y) {}
-
-	Position(float x, float y) : x(x), y(y) {}
-
-	float distance() const;
-	Position operator-() const;
-	operator glm::vec2() const;
-
-	Position abs() const;
-	float min() const;
-	float max() const;
-	Position& operator+=(const Position& position);
-	Position& operator-=(const Position& position);
-
-	operator glm::vec2()
-	{
-		return {x, y};
-	}
-};
-
-Position operator+(const Position& lhs, const Position& rhs);
-Position operator-(const Position& lhs, const Position& rhs);
-bool operator==(const Position& lhs, const Position& rhs);
-std::ostream& operator<<(std::ostream& os, const Position& p);
-
-Position mouse2gl(int x, int y);
-
-// TODO - update this to a proper container
-template <typename T>
-struct Matrix
-{
-	std::size_t m;
-	std::size_t n;
-	std::vector<T> vs;
-
-	Matrix(std::size_t m, std::size_t n) : m(m), n(n), vs(m * n) {}
-
-	// Create a matrix that can contain data for a hex with radius `size`
-	Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
-
-	T& operator()(std::size_t i, std::size_t j)
-	{
-		return vs[n * i + j];
-	}
-
-	T& operator()(const Coord& c)
-	{
-		return vs[n * c.y + c.x];
-	}
-
-private:
-}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
-
-
-struct Color
-{
-	float r, g, b, a;
-
-	Color() : r(0), g(0), b(0), a(0) {}
-
-	Color(float r, float g, float b) : r(r), g(g), b(b), a(1) {}
-
-	Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
-
-	Color mut(float d) const
-	{
-		return {r + d, g + d, b + d, a};
-	}
-
-	operator glm::vec4() const
-	{
-		return {r, g, b, a};
-	}
-};
-
-
-Color color_for_type(HexType type);
 float rad_for_hex(int i);
 
 namespace gl
@@ -175,8 +26,8 @@ namespace gl
 		glm::mat4 projection_{1};
 		glm::mat4 zoom_{1};
 		glm::mat4 mov_{1};
-		Position current_scroll_{0, 0};
-		Position translate_{0, 0};
+		glm::vec2 current_scroll_{0, 0};
+		glm::vec2 translate_{0, 0};
 		float zoom_level_ = 0.7f;
 
 		const float scroll_offset = 0.05f;
@@ -234,47 +85,17 @@ namespace gl
 
 		bool invalid = false;
 
-		Texture2D():
-			width(0), height(0),
-			internal_format(GL_RGB), image_format(GL_RGB),
-			wrap_s(GL_REPEAT), wrap_t(GL_REPEAT),
-			filter_min(GL_LINEAR), filter_mag(GL_LINEAR) {
-			glGenTextures(1, &id);
-			std::cout << "Texture2D() generated" << std::endl;
-		}
+		Texture2D();
+		~Texture2D();
 
 		Texture2D(const Texture2D&) = delete;
+		Texture2D(Texture2D&&) = delete;
 		Texture2D& operator=(const Texture2D&) = delete;
+		Texture2D& operator=(Texture2D&&) = delete;
 
-		~Texture2D() {
-			glDeleteTextures(1, &id);
-			std::cout << "~Texture2D()" << std::endl;
-		}
-
-		void load_png(const std::string& filename) {
-			std::vector<unsigned char> data;
-			lodepng::decode(data, width, height, filename);
-			load(width, height, data.data());
-		}
-		
-		void load(GLuint width, GLuint height, unsigned char* data) {
-			this->width = width;
-			this->height = height;
-
-			glBindTexture(GL_TEXTURE_2D, id);	
-			glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, image_format, GL_UNSIGNED_BYTE, data);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_min);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_mag);
-			
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-
-		void bind() const {
-			glBindTexture(GL_TEXTURE_2D, id);
-		}
+		void load_png(const std::string& filename);
+		void load(GLuint width, GLuint height, unsigned char* data);
+		void bind() const;
 	};
 
 	class Shader
@@ -305,9 +126,7 @@ namespace gl
 	class SpriteRenderer
 	{
 	public:
-		explicit SpriteRenderer(Shader& shader): shader(shader) {
-			initialize();
-		}
+		explicit SpriteRenderer(Shader& shader);
 
 		SpriteRenderer(const SpriteRenderer& other) = delete;
 		SpriteRenderer(SpriteRenderer&& other) = delete;
@@ -322,7 +141,6 @@ namespace gl
 
 		VAO vao;
 		VBO vbo;
-		void initialize();
 	};
 
 	struct ColorTex
@@ -419,68 +237,8 @@ namespace gl
 	{
 		std::map<GLchar, Character> characters;
 
-		void init()
-		{
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-			FT_Library ft;
-			if (FT_Init_FreeType(&ft)) {
-				fmt::print("ERROR::FREETYPE: Could not init FreeType\n");
-			}
-
-			FT_Face face;
-			if (FT_New_Face(ft, "res/ProggyClean.ttf", 0, &face)) {
-				fmt::print("ERROR::FREETYPE: Failed to load font\n");
-			}
-
-			FT_Set_Pixel_Sizes(face, 0, 48);
-			if (FT_Load_Char(face, 'X', FT_LOAD_RENDER)) {
-				fmt::printf("ERROR::FREETYPE: Failed to load Glyph\n");
-			}
-
-			for (GLubyte c = 0; c < 128; ++c) {
-				if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-					fmt::printf("ERROR::FREETYPE: Failed to load Glyph '%c'\n", c);
-					continue;
-				}
-
-				GLuint texture;
-				glGenTextures(1, &texture);
-				glBindTexture(GL_TEXTURE_2D, texture);
-
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width,
-				                          face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE,
-				                          face->glyph->bitmap.buffer);
-
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-				Character character = {
-					texture,
-					glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-					glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-					face->glyph->advance.x
-				};
-
-				characters.insert({c, character});
-			}
-
-			FT_Done_Face(face);
-			FT_Done_FreeType(ft);
-		}
+		void init();
 	};
-
-
-
-	//class Scene
-	//{
-	//public:
-	//	Batch batch(GLenum mode) {
-	//		
-	//	}
-	//};
 }
 
 
