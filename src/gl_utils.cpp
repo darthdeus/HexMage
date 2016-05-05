@@ -131,7 +131,7 @@ namespace gl
 		glBindTexture(GL_TEXTURE_2D, id);
 	}
 
-	Shader::Shader(std::string name): Shader(name + "vs.glsl", name + "fs.glsl") { }
+	Shader::Shader(std::string name): Shader(name + ".vs.glsl", name + ".fs.glsl") { }
 
 	Shader::Shader(std::string vertexPath, std::string fragmentPath) {
 		using namespace std;
@@ -313,7 +313,14 @@ namespace gl
 	}
 
 	void FontAtlas::init() {
+		vao.bind();
+		vbo.bind();
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		vao.unbind();
 
 		FT_Library ft;
 		if (FT_Init_FreeType(&ft)) {
@@ -361,6 +368,48 @@ namespace gl
 
 		FT_Done_Face(face);
 		FT_Done_FreeType(ft);
+	}
+
+	void FontAtlas::render_text(Shader& s, std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)
+	{
+		using namespace glm;
+		s.use();
+		s.set("textColor", color);
+
+		glActiveTexture(GL_TEXTURE0);
+		vao.bind();
+
+		for (auto c : text) {
+			Character ch = characters[c];
+
+			GLfloat xpos = x + ch.bearing.x * scale;
+			GLfloat ypos = y - (ch.size.y - ch.bearing.y) * scale;
+
+			GLfloat w = ch.size.x * scale;
+			GLfloat h = ch.size.y * scale;
+
+			GLfloat vertices[6][4] = {
+				{ xpos, ypos + h, 0.0f, 0.0f },
+				{ xpos, ypos, 0.0f, 1.0f },
+				{ xpos + w, ypos, 1.0f, 1.0f },
+
+				{ xpos, ypos + h, 0.0f, 0.0f },
+				{ xpos + w, ypos, 1.0f, 1.0f },
+				{ xpos + w, ypos + h, 1.0f, 0.0f }
+			};
+
+			glBindTexture(GL_TEXTURE_2D, ch.tex);
+			vbo.bind();
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+			vbo.unbind();
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			x += (ch.advance >> 6) * scale;
+		}
+
+		vao.unbind();
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 	}
 }
 

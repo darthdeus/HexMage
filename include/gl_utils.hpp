@@ -236,8 +236,12 @@ namespace gl
 	class FontAtlas
 	{
 		std::map<GLchar, Character> characters;
+		VAO vao;
+		VBO vbo;
 
+	public:
 		void init();
+		void render_text(Shader& s, std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color);
 	};
 }
 

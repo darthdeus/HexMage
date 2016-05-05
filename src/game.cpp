@@ -159,10 +159,24 @@ namespace game
 		t.internal_format = GL_RGBA;
 		t.load_png("res/chicken.png");
 
-		gl::Shader spriteShader("res/sprite.vs.glsl", "res/sprite.fs.glsl");
-		auto projection = glm::ortho(0.f, (float)game::SCREEN_WIDTH, (float)game::SCREEN_HEIGHT, 0.f, -1.f, 1.f);
+		float WIDTH = (float)game::SCREEN_WIDTH;
+		float HEIGHT = (float)game::SCREEN_HEIGHT;
 
-		gl::SpriteRenderer sprites{ spriteShader };
+		gl::Shader sprite_shader("res/sprite");
+		auto projection = ortho(0.f, WIDTH, HEIGHT, 0.f, -1.f, 1.f);
+
+		gl::SpriteRenderer sprites{ sprite_shader };
+
+		gl::FontAtlas atlas;
+		atlas.init();
+
+		gl::Shader font_shader("res/font");
+		font_shader.set("trans", mat4(1.0f));
+
+		// TODO - figure out which one is the right one?
+		auto font_ortho = ortho(0.f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
+
+		font_shader.set("projection", font_ortho);
 
 		InputManager input_manager;
 		while (true) {
@@ -176,6 +190,8 @@ namespace game
 				break;
 			}
 			camera.update_camera();
+
+			atlas.render_text(font_shader, "hello atlas", 10, 10, 1, vec3(1.0f));
 
 			//arena.shader.use();
 			//arena.shader.set("projection", projection);
