@@ -1,4 +1,4 @@
-#version 440 core
+#version 330 core
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec4 color;
@@ -9,8 +9,8 @@ out vec4 Color;
 out vec2 Texcoord;
 out float UseTexture;
 
-layout (location = 0) uniform mat4 trans;
-layout (location = 1) uniform mat4 projection;
+uniform mat4 trans;
+uniform mat4 projection;
 
 void main()
 {	

@@ -312,6 +312,20 @@ namespace gl
 		}
 	}
 
+  // Color color_for_type(model::HexType type) {
+  //   switch (type) {
+  //     case HexType::Empty:
+  //       return{ 0.4f, 0.2f, 0.4f };
+  //     case HexType::Wall:
+  //       return{ 0.1f, 0.03f, 0.1f };
+  //     case HexType::Player:
+  //       return{ 0.7f, 0.4f, 0.7f };
+  //     default:
+  //       return {1.0f, 1.0f, 1.0f};
+  //       // throw "invalid hex type";
+  //   }
+  // }
+
 	void FontAtlas::init(int size) {
 		if (initialized_) return;
 
@@ -372,6 +386,7 @@ namespace gl
 		FT_Done_FreeType(ft);
 
 		initialized_ = true;
+
 	}
 
 	void FontAtlas::render_text(Shader& s, std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)

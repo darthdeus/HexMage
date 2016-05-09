@@ -1,4 +1,4 @@
-#version 440 core
+#version 330 core
 
 in vec4 Color;
 in vec2 Texcoord;
@@ -14,6 +14,4 @@ void main()
 	 } else {
 	 	color = Color;
 	 }
-
-	 //color = vec4(1, 0, 0, 1);
 }

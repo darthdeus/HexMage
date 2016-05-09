@@ -106,6 +106,9 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 	//glEnd();
 }
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 using namespace model;
 using namespace glm;
 
@@ -149,7 +152,18 @@ namespace game
 		Mob& player = info.add_mob(generator::random_mob());
 		player.c = {0, 0};
 
+
 		gl::Camera camera;
+
+    FT_Library ft;
+    if (FT_Init_FreeType(&ft)) {
+      std::cout << "FREETPYE FAILED" << std::endl;
+    }
+
+    FT_Face face;
+    if (FT_New_Face(ft, "res/ProggyClean.ttf", 0, &face)) {
+      std::cout << "Proggy.ttf not found in res/" << std::endl;
+    }
 
 		SDL_GL_SetSwapInterval(1);
 		my_stbtt_initfont();

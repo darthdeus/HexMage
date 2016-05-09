@@ -2,9 +2,9 @@ APPNAME   := bin/main
 SOURCES		:= $(wildcard src/*.cpp src/*.c)
 OBJECTS 	:= $(patsubst src%, obj%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
 
-INCLUDE   := -I./include -I/usr/local/include
+INCLUDE   := -I./include -I/usr/local/include -I/usr/local/include/freetype2
 LIBPATH		:= -L/usr/local/lib
-LIBS			:= -lsdl2
+LIBS			:= -lsdl2 -lfreetype
 
 FLAGS			:= -O0 -g -fno-strict-aliasing
 CCFLAGS 	:= $(FLAGS)
