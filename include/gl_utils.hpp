@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 #include <glad/glad.h>
 
@@ -238,10 +239,30 @@ namespace gl
 		std::map<GLchar, Character> characters;
 		VAO vao;
 		VBO vbo;
+		bool initialized_ = false;
 
 	public:
-		void init();
+		void init(int size);
 		void render_text(Shader& s, std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color);
+	};
+
+	class FontRenderer
+	{
+		Shader shader;
+		std::unordered_map<int, FontAtlas> atlases_;
+	public:
+		FontRenderer(): shader("res/font") { shader.set("trans", glm::mat4(1.0f)); }
+
+		void set_projection(const glm::mat4& mat) { shader.set("projection", mat); }
+
+		void render_text(const std::string& text, GLfloat x, GLfloat y, int size)
+		{
+			assert(size > 0);
+			auto& atlas = atlases_[size];
+			atlas.init(size);
+			atlas.render_text(shader, text, x, y, 1.0f, glm::vec3(1.0f));
+		}
+		
 	};
 }
 

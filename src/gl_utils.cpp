@@ -312,7 +312,9 @@ namespace gl
 		}
 	}
 
-	void FontAtlas::init() {
+	void FontAtlas::init(int size) {
+		if (initialized_) return;
+
 		vao.bind();
 		vbo.bind();
 		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
@@ -332,7 +334,7 @@ namespace gl
 			fmt::print("ERROR::FREETYPE: Failed to load font\n");
 		}
 
-		FT_Set_Pixel_Sizes(face, 0, 48);
+		FT_Set_Pixel_Sizes(face, 0, size);
 		if (FT_Load_Char(face, 'X', FT_LOAD_RENDER)) {
 			fmt::printf("ERROR::FREETYPE: Failed to load Glyph\n");
 		}
@@ -368,6 +370,8 @@ namespace gl
 
 		FT_Done_Face(face);
 		FT_Done_FreeType(ft);
+
+		initialized_ = true;
 	}
 
 	void FontAtlas::render_text(Shader& s, std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec3 color)

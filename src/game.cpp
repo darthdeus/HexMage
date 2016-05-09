@@ -37,8 +37,8 @@ GLuint ftex;
 void my_stbtt_initfont(void)
 {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	fread(ttf_buffer, 1, 1 << 20, fopen("c:/windows/fonts/times.ttf", "rb"));
-	//fread(ttf_buffer, 1, 1 << 20, fopen("res/ProggyClean.ttf", "rb"));
+	//fread(ttf_buffer, 1, 1 << 20, fopen("c:/windows/fonts/times.ttf", "rb"));
+	fread(ttf_buffer, 1, 1 << 20, fopen("res/ProggyClean.ttf", "rb"));
 	stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
 
 	//lodepng::encode("foo.png", temp_bitmap, 512, 512, LCT_GREY);
@@ -79,13 +79,13 @@ void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
 			//b.push_back({{q.x1, q.y1, z},  {1, 0}});
 			//b.push_back({{q.x0, q.y1, z},  {0, 0}});
 
-			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t1}});
-			b.push_back({{q.x1, q.y0, z}, {q.s1, q.t1}});
-			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
+			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t0}});
+			b.push_back({{q.x1, q.y0, z}, {q.s1, q.t0}});
+			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t1}});
 
-			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t1}});
-			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t0}});
-			b.push_back({{q.x0, q.y1, z},  {q.s0, q.t0}});
+			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t0}});
+			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t1}});
+			b.push_back({{q.x0, q.y1, z},  {q.s0, q.t1}});
 		}
 		++text;
 	}
@@ -163,20 +163,24 @@ namespace game
 		float HEIGHT = (float)game::SCREEN_HEIGHT;
 
 		gl::Shader sprite_shader("res/sprite");
-		auto projection = ortho(0.f, WIDTH, HEIGHT, 0.f, -1.f, 1.f);
+		//auto projection = ortho(0.f, WIDTH, HEIGHT, 0.f, -1.f, 1.f);
+		auto projection = ortho(0.f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
 
 		gl::SpriteRenderer sprites{ sprite_shader };
 
-		gl::FontAtlas atlas;
-		atlas.init();
+		//gl::FontAtlas atlas;
+		//atlas.init(12);
 
-		gl::Shader font_shader("res/font");
-		font_shader.set("trans", mat4(1.0f));
+		//gl::Shader font_shader("res/font");
+		//font_shader.set("trans", mat4(1.0f));
 
 		// TODO - figure out which one is the right one?
 		auto font_ortho = ortho(0.f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
 
-		font_shader.set("projection", font_ortho);
+		gl::FontRenderer fonts;
+		fonts.set_projection(font_ortho);
+
+		//font_shader.set("projection", font_ortho);
 
 		InputManager input_manager;
 		while (true) {
@@ -191,7 +195,9 @@ namespace game
 			}
 			camera.update_camera();
 
-			atlas.render_text(font_shader, "hello atlas", 10, 10, 1, vec3(1.0f));
+			fonts.render_text("HexMage", 10, 10, 12);
+			fonts.render_text("HexMage", 10, 25, 22);
+			fonts.render_text("HexMage", 10, 50, 32);
 
 			//arena.shader.use();
 			//arena.shader.set("projection", projection);
@@ -200,8 +206,13 @@ namespace game
 			arena.vao.bind();
 			arena.vbo.bind();
 			//arena.shader.set("projection", glm::translate(glm::scale(projection, glm::vec3(10, 10, 1)), glm::vec3(20, 10, 0)));
-			projection = glm::ortho(0.f, 800.f, 0.f, 600.f);
-			arena.shader.set("projection", translate(projection, vec3(20, 20, 0)));
+
+			projection = ortho(0.0f, WIDTH, HEIGHT, 0.0f);
+			//projection = ortho(0.0f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
+			//projection = ortho(0.0f, WIDTH, HEIGHT, 0.0f, -1.f, 1.f);
+			//projection = translate(projection, vec3(20, 20, 0));
+
+			arena.shader.set("projection", projection);
 			my_stbtt_print(50, 50, "hello world", projection);
 			arena.shader.set("projection", glm::mat4(1.0f));
 
