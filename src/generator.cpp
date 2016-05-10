@@ -4,7 +4,7 @@
 
 namespace generator
 {
-	model::Mob random_mob() {
+	model::Mob random_mob(model::Team& team) {
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_int_distribution<int> dis(-10, 10);
@@ -15,6 +15,6 @@ namespace generator
 			abilities.emplace_back(dis(gen), dis(gen), cost_dis(gen));
 		}
 
-		return model::Mob{ 10, 10, abilities };
+		return model::Mob{ 10, 10, abilities, team};
 	}
 }

@@ -20,6 +20,8 @@ namespace model
 
 	struct Coord;
 	struct Cube;
+	class Team;
+	class Mob;
 
 	struct Cube
 	{
@@ -205,8 +207,9 @@ namespace model
 
 		abilities_t abilities;
 		Coord c;
+		Team& team;
 
-		Mob(int max_hp, int max_ap, abilities_t abilities);
+		Mob(int max_hp, int max_ap, abilities_t abilities, Team& team);
 		bool use_ability(int index, Target target);
 		void move(Arena& arena, Coord d);
 	};
@@ -217,18 +220,6 @@ namespace model
 		HexType type;
 	};
 
-	class PlayerInfo
-	{
-	public:
-		std::vector<Mob> mobs;
-		std::size_t size;
-
-		PlayerInfo(std::size_t size);
-
-		Mob& add_mob(Mob mob);
-		Mob& mob_at(Coord c);
-	};
-
 	class Player
 	{
 	public:
@@ -237,7 +228,7 @@ namespace model
 
 	class Team
 	{
-		int number;
+		int number = -1;
 		Player& player_;
 		std::vector<Mob*> mobs_;
 	public:
@@ -246,6 +237,21 @@ namespace model
 			  player_(player) {}
 
 		void add_mob(Mob& mob) { mobs_.push_back(&mob); }
+	};
+
+	class PlayerInfo
+	{
+	public:
+		std::vector<Mob> mobs;
+		std::vector<Team> teams;
+		std::size_t size;
+
+		PlayerInfo(std::size_t size);
+
+		Mob& add_mob(Mob mob);
+		Mob& mob_at(Coord c);
+		Team& register_team(Player& player);
+		Team& team_id(int id);
 	};
 
 	class UserPlayer : public Player

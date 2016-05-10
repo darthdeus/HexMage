@@ -7,7 +7,7 @@
 
 namespace generator
 {
-	model::Mob random_mob();
+	model::Mob random_mob(model::Team& team);
 }
 
 #endif

@@ -281,11 +281,12 @@ namespace model {
 		b.draw_arrays();
 	}
 
-	Mob::Mob(int max_hp, int max_ap, abilities_t abilities): max_hp(max_hp),
-	                                                         max_ap(max_ap),
-	                                                         hp(max_hp),
-	                                                         ap(max_ap),
-	                                                         abilities(abilities)
+	Mob::Mob(int max_hp, int max_ap, abilities_t abilities, Team& team) : max_hp(max_hp),
+		max_ap(max_ap),
+		hp(max_hp),
+		ap(max_ap),
+		abilities(abilities),
+					team(team)
 	{
 		assert(abilities.size() == ABILITY_COUNT);
 	}
@@ -297,7 +298,8 @@ namespace model {
 		auto& ability = abilities[index];
 		if (ap >= ability.cost) {
 			return true;
-		} else {
+		}
+		else {
 			return false;
 		}
 	}
@@ -310,7 +312,7 @@ namespace model {
 		}
 	}
 
-	PlayerInfo::PlayerInfo(std::size_t size): size(size) {}
+	PlayerInfo::PlayerInfo(std::size_t size) : size(size) {}
 
 	Mob& PlayerInfo::add_mob(Mob mob)
 	{
@@ -328,6 +330,16 @@ namespace model {
 
 		std::cerr << "Mob not found at " << c << std::endl;
 		throw "Mob not found";
+	}
+
+	Team& PlayerInfo::register_team(Player& player) {
+		teams.emplace_back(teams.size(), player);
+		return teams.back();
+	}
+
+	Team& PlayerInfo::team_id(int id) {
+		assert(id < teams.size());
+		return teams[id];
 	}
 
 	Turn GameInstance::start_turn()

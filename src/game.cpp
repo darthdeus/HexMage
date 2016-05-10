@@ -58,14 +58,18 @@ namespace game
 		PlayerInfo& info = game.info;
 
 		UserPlayer user_player;
-		Team t1(1, user_player);
-
 		AIPlayer ai_player;
-		Team t2(2, ai_player);
+
+		Team& t1 = info.register_team(user_player);
+		Team& t2 = info.register_team(ai_player);
 
 		arena.regenerate_geometry();
 
-		Mob& player = info.add_mob(generator::random_mob());
+		for (int i = 0; i < 10; i++) {
+			Team& t = i < 5 ? t1 : t2;
+			Mob& mob = info.add_mob(generator::random_mob(t));
+		}
+		Mob& player = info.add_mob(generator::random_mob(t1));
 		player.c = {0, 0};
 
 		gl::Camera camera;

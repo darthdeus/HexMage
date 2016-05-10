@@ -11,16 +11,16 @@ namespace simulation
 		profiling_results.clear();
 
 		GameInstance g(30);
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
-		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
+//		g.info.add_mob(generator::random_mob());
 
 		Stopwatch ss;
 
@@ -74,8 +74,6 @@ namespace simulation
 
 		Arena& arena = game.arena;
 		PlayerInfo& info = game.info;
-
-		info.add_mob(generator::random_mob());
 
 		constexpr int SIM_TIME = 10000000;
 
