@@ -1,0 +1,7 @@
+[requires]
+sdl2/2.0.4@lasote/stable
+freetype/2.6.3@lasote/ci
+
+[generators]
+txt
+cmake
