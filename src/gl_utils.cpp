@@ -190,7 +190,9 @@ namespace gl
 
 	void Shader::use() { glUseProgram(program); }
 
-	SpriteRenderer::SpriteRenderer(Shader& shader): shader(shader) {
+	SpriteRenderer::SpriteRenderer(): SpriteRenderer("res/sprite") {}
+
+	SpriteRenderer::SpriteRenderer(std::string shader_path): shader(shader_path) {
 		GLfloat vertices[] = {
 			0, 1, 0, 1,
 			1, 0, 1, 0,
@@ -214,6 +216,7 @@ namespace gl
 
 	void SpriteRenderer::draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size, glm::vec3 color)
 	{
+		texture.bind();
 		shader.use();
 		glm::mat4 model(1.0f);
 
@@ -229,6 +232,11 @@ namespace gl
 		vao.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		vao.unbind();
+	}
+
+	void SpriteRenderer::set_projection(const glm::mat4& projection)
+	{
+		shader.set("projection", projection);
 	}
 
 	void Batch::clear() {
@@ -345,6 +353,7 @@ namespace gl
 
 		FT_Face face;
 		if (FT_New_Face(ft, "res/ProggyClean.ttf", 0, &face)) {
+		//if (FT_New_Face(ft, "c:/windows/fonts/times.ttf", 0, &face)) {
 			fmt::print("ERROR::FREETYPE: Failed to load font\n");
 		}
 

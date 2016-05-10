@@ -42,6 +42,8 @@ int main(int, char**) {
 		return 1;
 	}
 
+	SDL_GL_SetSwapInterval(1);
+
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
 
 	game::game_loop(window);

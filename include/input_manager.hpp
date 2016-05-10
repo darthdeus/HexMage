@@ -7,13 +7,14 @@
 
 class InputManager
 {
+	void hover(const SDL_MouseMotionEvent& motion);
 public:
 	SDL_Event windowEvent;
 	model::Coord highlight_hex;
 	model::Coord mouse_hex;
 	std::vector<model::Coord> highlight_path;
 
-	bool handle_events(::gl::Camera& camera, model::Arena& arena, model::Mob& player);
+	bool handle_events(::gl::Camera& camera, model::Arena& arena, model::Mob& player, model::PlayerInfo& info);
 };
 
 #endif

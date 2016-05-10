@@ -26,100 +26,12 @@
 #include <game.hpp>
 #include <glm/glm.hpp>
 
-#define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
-#include "stb_truetype.h"
-
-unsigned char ttf_buffer[1 << 20];
-unsigned char temp_bitmap[512 * 512];
-
-stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
-GLuint ftex;
-void my_stbtt_initfont(void)
-{
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	//fread(ttf_buffer, 1, 1 << 20, fopen("c:/windows/fonts/times.ttf", "rb"));
-	fread(ttf_buffer, 1, 1 << 20, fopen("res/ProggyClean.ttf", "rb"));
-	stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
-
-	//lodepng::encode("foo.png", temp_bitmap, 512, 512, LCT_GREY);
-	// can free ttf_buffer at this point
-	glGenTextures(1, &ftex);
-	glBindTexture(GL_TEXTURE_2D, ftex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
-	// can free temp_bitmap at this point
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-}
-
-
-void my_stbtt_print(float x, float y, char* text, glm::mat4 proj)
-{
-	gl::Batch b;
-	// assume orthographic projection with units = screen pixels, origin at top left
-	//glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, ftex);
-
-	while (*text) {
-		if (*text >= 32 && *text < 128) {
-			stbtt_aligned_quad q;
-			stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
-
-			//fmt::printf("%f,%f\t%f,%f\n", q.x0, q.y0, q.s0, q.t1);
-			float z = -0.5f;
-
-			//fmt::printf("%f %f %f %f\t%f %f %f %f\n", q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
-			auto v = proj * glm::vec4(q.x0, q.y0, 0, 1);
-			auto v2 = proj * glm::vec4(q.x1, q.y1, 0, 1);
-			//fmt::printf("\t%f %f %f %f\n", v.x, v.y, v2.x, v2.y);
-
-			//b.push_back({{q.x0, -q.y0, z}, {0, 1} });
-			//b.push_back({{q.x1, -q.y0, z}, {1, 1,}});
-			//b.push_back({{q.x1, q.y1, z},  {1, 0}});
-
-			//b.push_back({{q.x0, -q.y0, z}, {0, 1}});
-			//b.push_back({{q.x1, q.y1, z},  {1, 0}});
-			//b.push_back({{q.x0, q.y1, z},  {0, 0}});
-
-			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t0}});
-			b.push_back({{q.x1, q.y0, z}, {q.s1, q.t0}});
-			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t1}});
-
-			b.push_back({{q.x0, q.y0, z}, {q.s0, q.t0}});
-			b.push_back({{q.x1, q.y1, z},  {q.s1, q.t1}});
-			b.push_back({{q.x0, q.y1, z},  {q.s0, q.t1}});
-		}
-		++text;
-	}
-
-	b.draw_arrays();
-	//glBegin(GL_QUADS);
-	//while (*text) {
-	//	if (*text >= 32 && *text < 128) {
-	//		stbtt_aligned_quad q;
-	//		stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);//1=opengl & d3d10+,0=d3d9
-	//		glTexCoord2f(q.s0, q.t1); glVertex2f(q.x0, q.y0);
-	//		glTexCoord2f(q.s1, q.t1); glVertex2f(q.x1, q.y0);
-	//		glTexCoord2f(q.s1, q.t0); glVertex2f(q.x1, q.y1);
-	//		glTexCoord2f(q.s0, q.t0); glVertex2f(q.x0, q.y1);
-	//	}
-	//	++text;
-	//}
-	//glEnd();
-}
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
 using namespace model;
 using namespace glm;
 
 namespace game
 {
-	void paint_at(Position pos, float radius, Color color)
-	{
-		gl::Batch b;
-		b.push_hex(pos, color, radius);
-		b.draw_arrays();
-	}
+	void draw_imgui();
 
 	Coord hex_at_mouse(const mat4& proj, Arena& arena, int x, int y)
 	{
@@ -145,28 +57,18 @@ namespace game
 		Arena& arena = game.arena;
 		PlayerInfo& info = game.info;
 
-		st.start();
+		UserPlayer user_player;
+		Team t1(1, user_player);
+
+		AIPlayer ai_player;
+		Team t2(2, ai_player);
+
 		arena.regenerate_geometry();
-		st.print("Arena vertices");
 
 		Mob& player = info.add_mob(generator::random_mob());
 		player.c = {0, 0};
 
-
 		gl::Camera camera;
-
-    FT_Library ft;
-    if (FT_Init_FreeType(&ft)) {
-      std::cout << "FREETPYE FAILED" << std::endl;
-    }
-
-    FT_Face face;
-    if (FT_New_Face(ft, "res/ProggyClean.ttf", 0, &face)) {
-      std::cout << "Proggy.ttf not found in res/" << std::endl;
-    }
-
-		SDL_GL_SetSwapInterval(1);
-		my_stbtt_initfont();
 
 		gl::Texture2D t;
 		t.image_format = GL_RGBA;
@@ -176,25 +78,12 @@ namespace game
 		float WIDTH = (float)game::SCREEN_WIDTH;
 		float HEIGHT = (float)game::SCREEN_HEIGHT;
 
-		gl::Shader sprite_shader("res/sprite");
-		//auto projection = ortho(0.f, WIDTH, HEIGHT, 0.f, -1.f, 1.f);
-		auto projection = ortho(0.f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
-
-		gl::SpriteRenderer sprites{ sprite_shader };
-
-		//gl::FontAtlas atlas;
-		//atlas.init(12);
-
-		//gl::Shader font_shader("res/font");
-		//font_shader.set("trans", mat4(1.0f));
-
-		// TODO - figure out which one is the right one?
-		auto font_ortho = ortho(0.f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
+		gl::SpriteRenderer sprites;
 
 		gl::FontRenderer fonts;
-		fonts.set_projection(font_ortho);
+		fonts.set_projection(ortho(0.f, WIDTH, 0.0f, HEIGHT));
 
-		//font_shader.set("projection", font_ortho);
+		auto projection = ortho(0.f, WIDTH, HEIGHT, 0.0f);
 
 		InputManager input_manager;
 		while (true) {
@@ -203,86 +92,67 @@ namespace game
 
 			ImGui_ImplSdlGL3_NewFrame(window);
 
-			bool keep_running = input_manager.handle_events(camera, arena, player);
+			bool keep_running = input_manager.handle_events(camera, arena, player, info);
 			if (!keep_running) {
 				break;
 			}
 			camera.update_camera();
 
+			// jenom pro demo
 			fonts.render_text("HexMage", 10, 10, 12);
-			fonts.render_text("HexMage", 10, 25, 22);
-			fonts.render_text("HexMage", 10, 50, 32);
+			fonts.render_text("HexMage", 10, 40, 52);
 
-			//arena.shader.use();
-			//arena.shader.set("projection", projection);
-			//my_stbtt_print(0, 0, "hell ole", projection);
-			//arena.shader.set("projection", glm::mat4(1.0f));
-			arena.vao.bind();
-			arena.vbo.bind();
-			//arena.shader.set("projection", glm::translate(glm::scale(projection, glm::vec3(10, 10, 1)), glm::vec3(20, 10, 0)));
+			sprites.set_projection(camera.projection() * projection);
+			sprites.draw_sprite(t, {0, 0}, {32, 32});
+			sprites.draw_sprite(t, {32, 32}, {32, 32});
 
-			projection = ortho(0.0f, WIDTH, HEIGHT, 0.0f);
-			//projection = ortho(0.0f, WIDTH, 0.0f, HEIGHT, -1.f, 1.f);
-			//projection = ortho(0.0f, WIDTH, HEIGHT, 0.0f, -1.f, 1.f);
-			//projection = translate(projection, vec3(20, 20, 0));
+			arena.set_projection(camera.projection());
+			arena.draw_vertices();
 
-			arena.shader.set("projection", projection);
-			my_stbtt_print(50, 50, "hello world", projection);
-			arena.shader.set("projection", glm::mat4(1.0f));
+			auto highlight_pos = arena.pos(input_manager.highlight_hex);
+			arena.paint_hex(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
+			Color highlight_color{0.85f, 0.75f, 0.85f};
+			auto mouse_pos = arena.pos(input_manager.mouse_hex);
+			arena.paint_hex(mouse_pos, Arena::radius, highlight_color);
 
-			//fontShader.set("projection", projection);
-
-			//spriteShader.set("projection", camera.projection() * projection);
-			//t.bind();
-			//sprites.draw_sprite(t, {0, 0}, {32, 32});
-			//sprites.draw_sprite(t, {32, 32}, {32, 32});
-
-			//arena.shader.use();
-			//camera.update_and_load_camera();
-			//arena.draw_vertices();
-
-			//auto highlight_pos = arena.pos(input_manager.highlight_hex);
-			//paint_at(highlight_pos, Arena::radius, color_for_type(HexType::Player));
-
-			//Color highlight_color{0.85f, 0.75f, 0.85f};
-			//auto mouse_pos = arena.pos(input_manager.mouse_hex);
-			//paint_at(mouse_pos, Arena::radius, highlight_color);
-
-			//for (Coord c : input_manager.highlight_path) {
-			//	paint_at(arena.pos(c), Arena::radius, highlight_color);
-			//}
-
-			//gl::Batch b;
-
-			//for (auto& mob : info.mobs) {
-			//	auto pos = arena.pos(mob.c);
-			//	paint_at(pos, Arena::radius, color_for_type(HexType::Player));
-
-			//	Healthbar::draw(pos, b, 0.7f, 0.5f);
-			//}
-
-
-			ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
-			ImGui::Begin("Framerate");
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::End();
-
-			ImGui::Begin("Profiling");
-			if (ImGui::Button("Dummy profile")) {
-				simulation::dummy_profiling();
+			for (Coord c : input_manager.highlight_path) {
+				arena.paint_hex(arena.pos(c), Arena::radius, highlight_color);
 			}
 
-			if (simulation::profiling_results.size() > 0) {
-				for (auto& res : simulation::profiling_results) {
-					ImGui::Text(res.c_str());
-				}
+			for (auto& mob : info.mobs) {
+				auto pos = arena.pos(mob.c);
+				arena.paint_hex(pos, Arena::radius, color_for_type(HexType::Player));
+				arena.paint_healthbar(pos, 0.7f, 0.5f);
 			}
 
-			ImGui::End();
-			ImGui::Render();
+			draw_imgui();
 
 			SDL_GL_SwapWindow(window);
 		}
+	}
+
+	void draw_imgui()
+	{
+		ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
+		ImGui::Begin("Framerate");
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+
+		ImGui::Begin("Profiling");
+		if (ImGui::Button("Dummy profile")) {
+			simulation::dummy_profiling();
+		}
+
+		if (simulation::profiling_results.size() > 0) {
+			for (auto& res : simulation::profiling_results) {
+				ImGui::Text(res.c_str());
+			}
+		}
+
+		ImGui::End();
+		ImGui::Render();
+
+
 	}
 }

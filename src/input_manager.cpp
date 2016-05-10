@@ -4,7 +4,7 @@
 #include <imgui_impl_sdl.h>
 #include <game.hpp>
 
-bool InputManager::handle_events(gl::Camera& camera, model::Arena& arena, model::Mob& player) {
+bool InputManager::handle_events(gl::Camera& camera, model::Arena& arena, model::Mob& player, model::PlayerInfo& info) {
 	using namespace model;
 
 	while (SDL_PollEvent(&windowEvent)) {

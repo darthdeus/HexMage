@@ -17,7 +17,6 @@ namespace game
 	constexpr int SCREEN_WIDTH = 800;
 	constexpr int SCREEN_HEIGHT = 600;
 
-	void paint_at(model::Position pos, float radius, model::Color color);
 	model::Coord hex_at_mouse(const glm::mat4& proj, model::Arena& arena, int x, int y);
 	void game_loop(SDL_Window* window);
 

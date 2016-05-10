@@ -127,7 +127,8 @@ namespace gl
 	class SpriteRenderer
 	{
 	public:
-		explicit SpriteRenderer(Shader& shader);
+		SpriteRenderer();
+		explicit SpriteRenderer(std::string shader_path);
 
 		SpriteRenderer(const SpriteRenderer& other) = delete;
 		SpriteRenderer(SpriteRenderer&& other) = delete;
@@ -137,8 +138,9 @@ namespace gl
 		~SpriteRenderer() = default;
 
 		void draw_sprite(Texture2D& texture, glm::vec2 pos, glm::vec2 size = glm::vec2(10, 10), glm::vec3 color = glm::vec3(1.0f));
+		void set_projection(const glm::mat4& projection);
 	private:
-		Shader& shader;
+		Shader shader;
 
 		VAO vao;
 		VBO vbo;

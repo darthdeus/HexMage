@@ -84,10 +84,17 @@ namespace model {
 
 
 
-	Arena::Arena(std::size_t size): size(size), hexes(size), positions(size), paths(size) {
+	Arena::Arena(std::size_t size) : size(size), hexes(size), positions(size), paths(size) {
 		gl::Vertex::setup_attributes();
 		shader.set("projection", glm::mat4(1.0f));
 	}
+
+	bool Arena::is_valid_coord(const Coord& c) const {
+		return static_cast<std::size_t>(c.abs().max()) < size && c.min() >= 0;
+	}
+
+	HexType& Arena::operator()(Coord c) { return hexes(c); }
+	Position& Arena::pos(Coord c) { return positions(c); }
 
 	Coord Arena::hex_near(Position rel_pos) {
 		Coord closest;
@@ -131,13 +138,14 @@ namespace model {
 			for (int j = 0; j < paths.n; ++j) {
 				auto& p = paths(i, j);
 				auto& h = hexes(i, j);
-				
+
 				p.source = boost::none;
 				p.distance = std::numeric_limits<int>::max();
 
 				if (h == HexType::Wall) {
 					p.state = VertexState::Closed;
-				} else {
+				}
+				else {
 					p.state = VertexState::Unvisited;
 				}
 			}
@@ -187,7 +195,7 @@ namespace model {
 		float height_offset = static_cast<float>(radius + sin(30 * M_PI / 180) * radius);
 
 		b.clear();
-		
+
 		int isize = static_cast<int>(size);
 		for (int row = 0; row < isize; ++row) {
 			for (int col = 0; col < isize; ++col) {
@@ -221,6 +229,134 @@ namespace model {
 
 		//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 		//glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()) / 6);
+	}
+
+	void Arena::set_projection(const glm::mat4& projection) {
+		shader.set("projection", projection);
+	}
+
+	void Arena::paint_hex(Position pos, float radius, Color color) {
+		vao.bind();
+		vbo.bind();
+		shader.use();
+		gl::Batch b;
+		b.push_hex(pos, color, radius);
+		b.draw_arrays();
+	}
+
+	void Arena::paint_healthbar(glm::vec2 pos, float hp, float ap)
+	{
+		using namespace glm;
+		using namespace std;
+
+		vao.bind();
+		vbo.bind();
+		shader.use();
+
+		gl::Batch b;
+		float width = Arena::radius / 5 * 2;
+		float height = Arena::radius * 0.7f * 2;
+
+		float hp_max = height * hp;
+		float ap_max = height * ap;
+
+		b.push_quad_bot_left(
+		{ pos.x - width, pos.y - height / 2 },
+			width, height, 0, { 0, 0.5, 0, 1 }
+		);
+		b.push_quad_bot_left(
+		{ pos.x - width, pos.y - height / 2 },
+			width, hp_max, 0, { 0, 1, 0, 1 }
+		);
+
+		b.push_quad_bot_left(
+		{ pos.x, pos.y - height / 2 },
+			width, height, 0, { 0.5, 0.5, 0, 1 }
+		);
+		b.push_quad_bot_left(
+		{ pos.x, pos.y - height / 2 },
+			width, ap_max, 0, { 1, 1, 0, 1 }
+		);
+
+		b.draw_arrays();
+	}
+
+	Mob::Mob(int max_hp, int max_ap, abilities_t abilities): max_hp(max_hp),
+	                                                         max_ap(max_ap),
+	                                                         hp(max_hp),
+	                                                         ap(max_ap),
+	                                                         abilities(abilities)
+	{
+		assert(abilities.size() == ABILITY_COUNT);
+	}
+
+	bool Mob::use_ability(int index, Target target)
+	{
+		assert(index <= abilities.size());
+
+		auto& ability = abilities[index];
+		if (ap >= ability.cost) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void Mob::move(Arena& arena, Coord d)
+	{
+		if (arena.is_valid_coord(c + d)) {
+			c = c + d;
+			ap -= d.distance(); // TODO - better calculation
+		}
+	}
+
+	PlayerInfo::PlayerInfo(std::size_t size): size(size) {}
+
+	Mob& PlayerInfo::add_mob(Mob mob)
+	{
+		mobs.push_back(mob);
+		return mobs.back();
+	}
+
+	Mob& PlayerInfo::mob_at(Coord c)
+	{
+		for (auto& m : mobs) {
+			if (m.c == c) {
+				return m;
+			}
+		}
+
+		std::cerr << "Mob not found at " << c << std::endl;
+		throw "Mob not found";
+	}
+
+	Turn GameInstance::start_turn()
+	{
+		for (auto& mob : info.mobs) {
+			mob.ap = std::min(mob.ap, mob.ap + mob.max_ap);
+		}
+
+		return Turn(info.mobs);
+	}
+
+	Turn::Turn(std::vector<Mob>& mobs)
+	{
+		for (auto&& mob : mobs) {
+			mobs_.push_back(&mob);
+		}
+
+		std::sort(mobs_.begin(), mobs_.end(),
+			[](auto x, auto y) { return x->ap < y->ap; });
+
+		current_ = mobs_.begin();
+	}
+
+	Mob* Turn::next()
+	{
+		if (current_ != mobs_.end())
+			return *current_++;
+		else
+			return nullptr;
 	}
 
 	Color color_for_type(HexType type) {

@@ -92,10 +92,7 @@ namespace model
 		Position& operator+=(const Position& position);
 		Position& operator-=(const Position& position);
 
-		operator glm::vec2()
-		{
-			return {x, y};
-		}
+		operator glm::vec2() { return {x, y}; }
 	};
 
 	Position operator+(const Position& lhs, const Position& rhs);
@@ -118,15 +115,8 @@ namespace model
 		// Create a matrix that can contain data for a hex with radius `size`
 		Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
 
-		T& operator()(std::size_t i, std::size_t j)
-		{
-			return vs[n * i + j];
-		}
-
-		T& operator()(const Coord& c)
-		{
-			return vs[n * c.y + c.x];
-		}
+		T& operator()(std::size_t i, std::size_t j) { return vs[n * i + j]; }
+		T& operator()(const Coord& c) { return vs[n * c.y + c.x]; }
 
 	private:
 	}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
@@ -175,9 +165,12 @@ namespace model
 	class Arena
 	{
 		gl::Batch b;
-	public:
+
 		gl::VAO vao;
 		gl::VBO vbo;
+
+		gl::Shader shader{ "vertex.glsl", "fragment.glsl" };
+	public:
 
 		static constexpr float radius = 0.1f;
 		std::size_t size;
@@ -185,60 +178,19 @@ namespace model
 		Matrix<Position> positions;
 		Matrix<Path> paths;
 		std::vector<float> vertices;
-		gl::Shader shader{ "vertex.glsl", "fragment.glsl" };
 
 		explicit Arena(std::size_t size);
-
-		bool is_valid_coord(const Coord& c) const {
-			return static_cast<std::size_t>(c.abs().max()) < size && c.min() >= 0;
-		}
-
-		HexType& operator()(Coord c) {
-			return hexes(c);
-		}
-
-		Position& pos(Coord c) {
-			return positions(c);
-		}
-
+		bool is_valid_coord(const Coord& c) const;
+		HexType& operator()(Coord c);
+		Position& pos(Coord c);
 		Coord hex_near(Position pos);
 
 		void dijkstra(Coord start);
 		void regenerate_geometry();
 		void draw_vertices();
-	};
-
-	class Healthbar
-	{
-	public:
-		static void draw(glm::vec2 pos, gl::Batch& b, float hp, float ap) {
-			using namespace glm;
-			using namespace std;
-
-			float width = Arena::radius / 5 * 2;
-			float height = Arena::radius * 0.7f * 2;
-
-			float hp_max = height * hp;
-			float ap_max = height * ap;
-
-			b.push_quad_bot_left(
-				{pos.x - width, pos.y - height / 2},
-				width, height, 0, {0, 0.5, 0, 1}
-			);
-			b.push_quad_bot_left(
-				{pos.x - width, pos.y - height / 2},
-				width, hp_max, 0, {0, 1, 0, 1}
-			);
-
-			b.push_quad_bot_left(
-				{pos.x, pos.y - height / 2},
-				width, height, 0, {0.5, 0.5, 0, 1}
-			);
-			b.push_quad_bot_left(
-				{pos.x, pos.y - height / 2},
-				width, ap_max, 0, {1, 1, 0, 1}
-			);
-		}
+		void set_projection(const glm::mat4& projection);
+		void paint_hex(Position pos, float radius, Color color);
+		void paint_healthbar(glm::vec2 pos, float hp, float ap);
 	};
 
 	class Mob
@@ -252,36 +204,11 @@ namespace model
 		int ap;
 
 		abilities_t abilities;
-
 		Coord c;
 
-		Mob(int max_hp, int max_ap, abilities_t abilities)
-			: max_hp(max_hp),
-			max_ap(max_ap),
-			hp(max_hp),
-			ap(max_ap),
-			abilities(abilities) {
-			assert(abilities.size() == ABILITY_COUNT);
-		}
-
-		bool use_ability(int index, Target target) {
-			assert(index <= abilities.size());
-
-			auto& ability = abilities[index];
-			if (ap >= ability.cost) {
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-
-		void move(Arena& arena, Coord d) {
-			if (arena.is_valid_coord(c + d)) {
-				c = c + d;
-				ap -= d.distance(); // TODO - better calculation
-			}
-		}
+		Mob(int max_hp, int max_ap, abilities_t abilities);
+		bool use_ability(int index, Target target);
+		void move(Arena& arena, Coord d);
 	};
 
 	class Hex
@@ -296,23 +223,50 @@ namespace model
 		std::vector<Mob> mobs;
 		std::size_t size;
 
-		PlayerInfo(std::size_t size) : size(size) {}
+		PlayerInfo(std::size_t size);
 
-		Mob& add_mob(Mob mob) {
-			mobs.push_back(mob);
-			return mobs.back();
-		}
+		Mob& add_mob(Mob mob);
+		Mob& mob_at(Coord c);
+	};
 
-		Mob& mob_at(Coord c) {
-			for (auto& m : mobs) {
-				if (m.c == c) {
-					return m;
-				}
-			}
+	class Player
+	{
+	public:
+		virtual ~Player() = default;
+	};
 
-			std::cerr << "Mob not found at " << c << std::endl;
-			throw "Mob not found";
-		}
+	class Team
+	{
+		int number;
+		Player& player_;
+		std::vector<Mob*> mobs_;
+	public:
+		Team(int number, Player& player)
+			: number(number),
+			  player_(player) {}
+
+		void add_mob(Mob& mob) { mobs_.push_back(&mob); }
+	};
+
+	class UserPlayer : public Player
+	{
+		
+	};
+
+	class AIPlayer : public Player
+	{
+		
+	};
+
+	class Turn
+	{
+		std::vector<Mob*> mobs_;
+		std::vector<Mob*>::iterator current_;
+	public:
+		explicit Turn(std::vector<Mob>& mobs);
+
+		bool is_done() const { return current_ == mobs_.end(); }
+		Mob* next();
 	};
 
 	class GameInstance
@@ -324,19 +278,18 @@ namespace model
 
 		GameInstance(std::size_t size) : arena(size), info(size), size(size) {}
 
-		std::vector<Mob*> start_turn() {
-			std::vector<Mob*> mobs;
-			for (auto& mob : info.mobs) {
-				mob.ap = std::min(mob.ap, mob.ap + mob.max_ap);
-				mobs.push_back(&mob);
-			}
+		Turn start_turn();
+	};
 
-			std::sort(mobs.begin(), mobs.end(), [](Mob* m1, Mob* m2) {
-				return m1->ap < m2->ap;
-			});
+	class TurnManager
+	{
+		PlayerInfo info_;
 
-			return mobs;
-		}
+	public:
+		explicit TurnManager(const PlayerInfo& info)
+			: info_(info) {}
+
+		// TODO 
 	};
 }
 
