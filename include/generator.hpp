@@ -7,7 +7,7 @@
 
 namespace generator
 {
-	model::Mob random_mob(model::Team& team);
+	model::Mob random_mob(int team, std::size_t size);
 }
 
 #endif

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <random>
 #include <gl_utils.hpp>
 #include <boost/optional.hpp>
 
@@ -22,6 +23,9 @@ namespace model
 	struct Cube;
 	class Team;
 	class Mob;
+	class Player;
+	class Arena;
+	class PlayerInfo;
 
 	struct Cube
 	{
@@ -137,6 +141,10 @@ namespace model
 
 	model::Color color_for_type(HexType type);
 
+	inline std::ostream& operator<<(std::ostream& os, const Color& c) {
+		return os << c.r << "," << c.g << "," << c.b << "," << c.a;
+	}
+
 	class Ability
 	{
 	public:
@@ -163,6 +171,22 @@ namespace model
 		VertexState state;
 		int distance;
 	};
+
+	class PlayerInfo
+	{
+	public:
+		std::vector<Mob> mobs;
+		std::vector<Team> teams;
+		std::size_t size;
+
+		PlayerInfo(std::size_t size);
+
+		Mob& add_mob(Mob mob);
+		Mob& mob_at(Coord c);
+		int register_team(Player& player);
+		Team& team_id(int id);
+	};
+
 
 	class Arena
 	{
@@ -193,6 +217,7 @@ namespace model
 		void set_projection(const glm::mat4& projection);
 		void paint_hex(Position pos, float radius, Color color);
 		void paint_healthbar(glm::vec2 pos, float hp, float ap);
+		void paint_mob(PlayerInfo& info, const Mob& mob);
 	};
 
 	class Mob
@@ -207,9 +232,9 @@ namespace model
 
 		abilities_t abilities;
 		Coord c;
-		Team& team;
+		int team;
 
-		Mob(int max_hp, int max_ap, abilities_t abilities, Team& team);
+		Mob(int max_hp, int max_ap, abilities_t abilities, int team);
 		bool use_ability(int index, Target target);
 		void move(Arena& arena, Coord d);
 	};
@@ -232,26 +257,21 @@ namespace model
 		Player& player_;
 		std::vector<Mob*> mobs_;
 	public:
+		glm::vec3 color;
+
 		Team(int number, Player& player)
 			: number(number),
-			  player_(player) {}
+			  player_(player)
+		{
+			using namespace std;
+			random_device rd;
+			mt19937 gen(rd());
+			uniform_real_distribution<float> dis(0.0f, 1.0f);
+
+			color = { dis(gen), dis(gen), dis(gen) };
+		}
 
 		void add_mob(Mob& mob) { mobs_.push_back(&mob); }
-	};
-
-	class PlayerInfo
-	{
-	public:
-		std::vector<Mob> mobs;
-		std::vector<Team> teams;
-		std::size_t size;
-
-		PlayerInfo(std::size_t size);
-
-		Mob& add_mob(Mob mob);
-		Mob& mob_at(Coord c);
-		Team& register_team(Player& player);
-		Team& team_id(int id);
 	};
 
 	class UserPlayer : public Player
@@ -269,6 +289,7 @@ namespace model
 		std::vector<Mob*> mobs_;
 		std::vector<Mob*>::iterator current_;
 	public:
+		Turn() = default;
 		explicit Turn(std::vector<Mob>& mobs);
 
 		bool is_done() const { return current_ == mobs_.end(); }
@@ -289,12 +310,12 @@ namespace model
 
 	class TurnManager
 	{
-		PlayerInfo info_;
-
+		PlayerInfo& info_;
 	public:
-		explicit TurnManager(const PlayerInfo& info)
-			: info_(info) {}
+		Turn current_turn;
 
+		explicit TurnManager(PlayerInfo& info):
+			info_(info) {}
 		// TODO 
 	};
 }

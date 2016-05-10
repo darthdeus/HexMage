@@ -81,9 +81,6 @@ namespace model {
 		return x;
 	}
 
-
-
-
 	Arena::Arena(std::size_t size) : size(size), hexes(size), positions(size), paths(size) {
 		gl::Vertex::setup_attributes();
 		shader.set("projection", glm::mat4(1.0f));
@@ -144,8 +141,7 @@ namespace model {
 
 				if (h == HexType::Wall) {
 					p.state = VertexState::Closed;
-				}
-				else {
+				} else {
 					p.state = VertexState::Unvisited;
 				}
 			}
@@ -281,12 +277,21 @@ namespace model {
 		b.draw_arrays();
 	}
 
-	Mob::Mob(int max_hp, int max_ap, abilities_t abilities, Team& team) : max_hp(max_hp),
+	void Arena::paint_mob(PlayerInfo& info, const Mob& mob)
+	{
+		auto p = pos(mob.c);
+		auto c = info.team_id(mob.team).color;
+		auto col = Color{ c.r, c.g, c.b };
+		paint_hex(p, radius, col);
+		paint_healthbar(p, (float)mob.hp / mob.max_hp, (float)mob.ap / mob.max_ap);
+	}
+
+	Mob::Mob(int max_hp, int max_ap, abilities_t abilities, int team) : max_hp(max_hp),
 		max_ap(max_ap),
 		hp(max_hp),
 		ap(max_ap),
 		abilities(abilities),
-					team(team)
+		team(team)
 	{
 		assert(abilities.size() == ABILITY_COUNT);
 	}
@@ -332,9 +337,10 @@ namespace model {
 		throw "Mob not found";
 	}
 
-	Team& PlayerInfo::register_team(Player& player) {
-		teams.emplace_back(teams.size(), player);
-		return teams.back();
+	int PlayerInfo::register_team(Player& player) {
+		int id = static_cast<int>(teams.size());
+		teams.emplace_back(id, player);
+		return id;
 	}
 
 	Team& PlayerInfo::team_id(int id) {

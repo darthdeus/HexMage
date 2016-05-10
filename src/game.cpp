@@ -51,26 +51,28 @@ namespace game
 
 		ImGui_ImplSdlGL3_Init(window);
 
-		Stopwatch st;
-
-		GameInstance game(30);
+		GameInstance game(20);
 		Arena& arena = game.arena;
 		PlayerInfo& info = game.info;
 
 		UserPlayer user_player;
 		AIPlayer ai_player;
 
-		Team& t1 = info.register_team(user_player);
-		Team& t2 = info.register_team(ai_player);
+		int t1 = info.register_team(user_player);
+		int t2 = info.register_team(ai_player);
 
 		arena.regenerate_geometry();
 
 		for (int i = 0; i < 10; i++) {
-			Team& t = i < 5 ? t1 : t2;
-			Mob& mob = info.add_mob(generator::random_mob(t));
+			int t = i < 5 ? t1 : t2;
+			Mob& mob = info.add_mob(generator::random_mob(t, arena.size));
 		}
-		Mob& player = info.add_mob(generator::random_mob(t1));
+		Mob& player = info.add_mob(generator::random_mob(t1, arena.size));
+
 		player.c = {0, 0};
+
+		TurnManager turn_manager(info);
+		turn_manager.current_turn = game.start_turn();
 
 		gl::Camera camera;
 
@@ -125,9 +127,7 @@ namespace game
 			}
 
 			for (auto& mob : info.mobs) {
-				auto pos = arena.pos(mob.c);
-				arena.paint_hex(pos, Arena::radius, color_for_type(HexType::Player));
-				arena.paint_healthbar(pos, 0.7f, 0.5f);
+				arena.paint_mob(info, mob);
 			}
 
 			draw_imgui();
