@@ -287,8 +287,9 @@ namespace model
 	class Turn
 	{
 		std::vector<Mob*> mobs_;
-		std::vector<Mob*>::iterator current_;
 	public:
+		std::vector<Mob*>::iterator current_;
+
 		Turn() = default;
 		explicit Turn(std::vector<Mob>& mobs);
 
@@ -316,6 +317,7 @@ namespace model
 
 		explicit TurnManager(PlayerInfo& info):
 			info_(info) {}
+
 		// TODO 
 	};
 }

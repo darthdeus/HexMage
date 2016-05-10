@@ -7,14 +7,28 @@
 
 class InputManager
 {
-	void hover(const SDL_MouseMotionEvent& motion);
+	void mousemove(glm::vec2 pos, model::Mob& player);
+	void left_click(glm::vec2 pos, model::Mob& player);
+	void right_click(glm::vec2 pos, model::Mob& player);
+
+	gl::Camera& camera_;
+	model::Arena& arena_;
+	model::PlayerInfo& info_;
+	model::TurnManager& turn_manager_;
 public:
-	SDL_Event windowEvent;
+	SDL_Event event;
 	model::Coord highlight_hex;
 	model::Coord mouse_hex;
 	std::vector<model::Coord> highlight_path;
 
-	bool handle_events(::gl::Camera& camera, model::Arena& arena, model::Mob& player, model::PlayerInfo& info);
+	InputManager(gl::Camera& camera, model::Arena& arena, model::PlayerInfo& info, model::TurnManager& turn_manager)
+		: camera_(camera),
+		  arena_(arena),
+		  info_(info),
+		  turn_manager_(turn_manager) {}
+
+	std::vector<model::Coord> build_highlight_path(const model::Mob& mob);
+	bool handle_events();
 };
 
 #endif

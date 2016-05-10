@@ -91,14 +91,15 @@ namespace game
 
 		auto projection = ortho(0.f, WIDTH, HEIGHT, 0.0f);
 
-		InputManager input_manager;
+		InputManager input_manager(camera, arena, info, turn_manager);
+
 		while (true) {
 			glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			ImGui_ImplSdlGL3_NewFrame(window);
 
-			bool keep_running = input_manager.handle_events(camera, arena, player, info);
+			bool keep_running = input_manager.handle_events();
 			if (!keep_running) {
 				break;
 			}
