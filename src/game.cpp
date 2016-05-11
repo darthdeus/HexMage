@@ -44,12 +44,13 @@ namespace game
 	{
 		if (!turn_manager.current_turn.is_done()) {
 			auto* player = *turn_manager.current_turn.current_;
+			auto target = game.info.can_attack(*player, input_manager.mouse_hex);
+
 			ImGui::Begin("Current player");
 
 			ImGui::Text("HP: %d/%d\nAP: %d/%d", player->hp, player->max_hp, player->ap, player->max_ap);
 
 			for (auto&& ability : player->abilities) {
-				auto target = game.info.can_attack(*player, input_manager.mouse_hex);
 				std::string usable = "";
 				if (target) {
 					if (player->can_use_ability_at(*target, game.info, game.arena, ability)) {
@@ -66,6 +67,15 @@ namespace game
 					ability.range);
 
 				ImGui::Text(str.c_str());
+			}
+
+			ImGui::End();
+
+			ImGui::Begin("Enemy");
+
+			if (target) {
+				auto tm = target->mob;
+				ImGui::Text("HP: %d/%d\nAP: %d/%d", tm.hp, tm.max_hp, tm.ap, tm.max_ap);
 			}
 
 			ImGui::End();
