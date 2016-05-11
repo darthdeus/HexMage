@@ -4,7 +4,7 @@
 
 namespace generator
 {
-	model::Mob random_mob(int team, std::size_t size) {
+	model::Mob random_mob(Index<model::Team> team, std::size_t size) {
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_int_distribution<int> dis(1, 10);

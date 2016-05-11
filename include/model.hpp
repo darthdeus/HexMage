@@ -193,7 +193,7 @@ namespace model
 
 		Mob& add_mob(Mob mob);
 		Mob* mob_at(Coord c);
-		int register_team(Player& player);
+		Index<Team> register_team(Player& player);
 		Team& team_id(int id);
 
 		// Determine if a coord can be attacked, and if so, return the mob standing on it.
@@ -246,9 +246,9 @@ namespace model
 
 		abilities_t abilities;
 		Coord c;
-		int team;
+		Index<Team> team;
 
-		Mob(int max_hp, int max_ap, abilities_t abilities, int team);
+		Mob(int max_hp, int max_ap, abilities_t abilities, Index<Team> team);
 		bool use_ability(int index, Target target);
 		void move(Arena& arena, Coord d);
 
@@ -289,7 +289,16 @@ namespace model
 		}
 
 		void add_mob(Mob& mob) { mobs_.push_back(&mob); }
+		inline int id() const { return number; }
 	};
+
+	inline bool operator==(const Team& lhs, const Team& rhs) {
+		return lhs.id() == rhs.id();
+	}
+
+	inline bool operator!=(const Team& lhs, const Team& rhs) {
+		return lhs.id() != rhs.id();
+	}
 
 	class UserPlayer : public Player
 	{

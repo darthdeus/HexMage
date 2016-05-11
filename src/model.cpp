@@ -308,13 +308,13 @@ namespace model {
 	void Arena::paint_mob(PlayerInfo& info, const Mob& mob)
 	{
 		auto p = pos(mob.c);
-		auto c = info.team_id(mob.team).color;
+		auto c = mob.team->color;
 		auto col = Color{ c.r, c.g, c.b };
 		paint_hex(p, radius, col);
 		paint_healthbar(p, (float)mob.hp / mob.max_hp, (float)mob.ap / mob.max_ap);
 	}
 
-	Mob::Mob(int max_hp, int max_ap, abilities_t abilities, int team) : max_hp(max_hp),
+	Mob::Mob(int max_hp, int max_ap, abilities_t abilities, Index<Team> team) : max_hp(max_hp),
 		max_ap(max_ap),
 		hp(max_hp),
 		ap(max_ap),
@@ -382,10 +382,10 @@ namespace model {
 		return nullptr;
 	}
 
-	int PlayerInfo::register_team(Player& player) {
+	Index<Team> PlayerInfo::register_team(Player& player) {
 		int id = static_cast<int>(teams.size());
 		teams.emplace_back(id, player);
-		return id;
+		return Index<Team>(teams, id);
 	}
 
 	Team& PlayerInfo::team_id(int id) {

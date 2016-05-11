@@ -40,7 +40,9 @@ namespace game
 		return arena.hex_near({view_mouse.x, view_mouse.y});
 	}
 
-	void draw_abilities(const TurnManager& turn_manager, GameInstance& game, InputManager& input_manager)
+	void draw_abilities(const TurnManager& turn_manager,
+						GameInstance& game,
+						InputManager& input_manager)
 	{
 		if (!turn_manager.current_turn.is_done()) {
 			auto* player = *turn_manager.current_turn.current_;
@@ -100,11 +102,11 @@ namespace game
 		UserPlayer user_player;
 		AIPlayer ai_player;
 
-		int t1 = info.register_team(user_player);
-		int t2 = info.register_team(ai_player);
+		auto t1 = info.register_team(user_player);
+		auto t2 = info.register_team(ai_player);
 
 		for (int i = 0; i < 10; i++) {
-			int t = i < 5 ? t1 : t2;
+			auto t = i < 5 ? t1 : t2;
 			Mob& mob = info.add_mob(generator::random_mob(t, arena.size));
 		}
 
