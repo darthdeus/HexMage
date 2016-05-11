@@ -15,34 +15,25 @@ void InputManager::mousemove(glm::vec2 pos, Mob& player)
 	highlight_path = build_highlight_path(player);
 }
 
-void InputManager::left_click(glm::vec2 pos, Mob& player)
+void InputManager::left_click(glm::vec2 pos, Mob& current_mob)
 {
 	auto click_hex = game::hex_at_mouse(camera_.projection(), arena_, event.motion.x, event.motion.y);
+	
+	auto&& player = current_mob.team->player();
 
-	auto path = arena_.paths(click_hex);
-
-	if (auto target = info_.can_attack(player, click_hex)) {
-		auto abilities = player.usable_abilities(*target, info_, arena_);
-
-		if (abilities.size() > 0) {
-			auto ability = abilities.back();
-			fmt::print("Using ability {}\n", ability);
-			
-			player.ap -= ability.cost;
-			target->mob.hp -= ability.d_hp;
-		}
+	if (player.is_ai()) {
+		fmt::print("Forcing AI to take a turn\n");
+		player.any_action(game_, current_mob);
 	} else {
-		if (path.distance <= player.ap) {
-			player.ap -= path.distance;
-			player.c = click_hex;
+		player.action_to(click_hex, game_, current_mob);
 
-			highlight_hex = player.c;
-			highlight_path.clear();
-		}
+		highlight_hex = current_mob.c;
+		highlight_path.clear();
+
 	}
 
-	arena_.dijkstra(player.c);
-	arena_.regenerate_geometry(player.ap);
+	arena_.dijkstra(current_mob.c);
+	arena_.regenerate_geometry(current_mob.ap);
 }
 
 void InputManager::right_click(glm::vec2 pos, Mob& player)
@@ -114,10 +105,6 @@ bool InputManager::handle_events()
 							break;
 					}
 			}
-
-			if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) { }
-
-			if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) { }
 
 			if (event.type == SDL_QUIT ||
 				(event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_ESCAPE))

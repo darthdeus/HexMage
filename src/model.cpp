@@ -425,6 +425,92 @@ namespace model {
 		arena.regenerate_geometry();
 	}
 
+	void UserPlayer::action_to(Coord click_hex, GameInstance& game, Mob& current_mob)
+	{
+		auto path = game.arena.paths(click_hex);
+
+		if (auto target = game.info.can_attack(current_mob, click_hex)) {
+			auto abilities = current_mob.usable_abilities(*target, game.info, game.arena);
+
+			if (abilities.size() > 0) {
+				auto ability = abilities.back();
+				fmt::print("Using ability {}\n", ability);
+
+				current_mob.ap -= ability.cost;
+				target->mob.hp = std::max(0, target->mob.hp - ability.d_hp);
+			}
+		}
+		else {
+			if (path.distance <= current_mob.ap) {
+				current_mob.ap -= path.distance;
+				current_mob.c = click_hex;
+			}
+		}
+	}
+
+	void UserPlayer::any_action(GameInstance& game, Mob& mob)
+	{
+		fmt::printf("TODO - what should this actually do?");
+	}
+
+	void AIPlayer::action_to(Coord c, GameInstance& game, Mob& mob)
+	{
+		// TODO - basic AI		
+	}
+
+	static int hex_distance(Coord c1, Coord c2)
+	{
+		return (c1.x - c2.x)*(c1.x - c2.x) + (c1.y - c2.y)*(c1.y - c2.y);
+	}
+
+	void AIPlayer::any_action(GameInstance& game, Mob& mob)
+	{
+		std::vector<Mob*> enemies;
+		for (auto&& enemy : game.info.mobs) {
+			if (enemy.team != mob.team && enemy.hp > 0) {
+				enemies.push_back(&enemy);
+			}
+		}
+
+		if (enemies.size() > 0) {
+			auto distance_f = [&mob](Mob* a, Mob* b) {
+				return hex_distance(mob.c, a->c) < hex_distance(mob.c, b->c);
+			};
+
+			std::sort(enemies.begin(), enemies.end(), distance_f);
+
+			auto&& enemy = *enemies[0];
+			auto c = enemy.c;
+
+			auto abilities = mob.usable_abilities(
+				Target(c, enemy),
+				game.info,
+				game.arena);
+
+			if (abilities.empty()) {
+				// no ability is in rage, we have to move
+				auto dis = (c - mob.c);
+				auto dx = dis.abs().x;
+				if (!dx) dx = 1;
+
+				auto dy = dis.abs().y;
+				if (!dy) dy = 1;
+
+				Coord off{ dis.x / dx, dis.y / dy };
+				mob.move(game.arena, off);
+
+			} else {
+				// TODO - use a random ability for now
+				UserPlayer{}.action_to(c, game, mob);
+			}
+
+		} else {
+			// TODO - logging
+			fmt::print("INFO - All enemies are dead\n");
+		}
+		
+	}
+
 	Turn::Turn(std::vector<Mob>& mobs)
 	{
 		for (auto&& mob : mobs) {

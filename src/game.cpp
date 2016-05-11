@@ -102,7 +102,8 @@ namespace game
 		UserPlayer user_player;
 		AIPlayer ai_player;
 
-		auto t1 = info.register_team(user_player);
+		auto t1 = info.register_team(ai_player);
+		//auto t1 = info.register_team(user_player);
 		auto t2 = info.register_team(ai_player);
 
 		for (int i = 0; i < 10; i++) {

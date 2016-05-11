@@ -12,12 +12,6 @@
 
 namespace model
 {
-	enum class HexType
-	{
-		Empty = 0,
-		Wall,
-		Player
-	};
 
 	struct Coord;
 	struct Cube;
@@ -26,6 +20,14 @@ namespace model
 	class Player;
 	class Arena;
 	class PlayerInfo;
+	class GameInstance;
+
+	enum class HexType
+	{
+		Empty = 0,
+		Wall,
+		Player
+	};
 
 	struct Cube
 	{
@@ -262,12 +264,6 @@ namespace model
 		HexType type;
 	};
 
-	class Player
-	{
-	public:
-		virtual ~Player() = default;
-	};
-
 	class Team
 	{
 		int number = -1;
@@ -290,6 +286,7 @@ namespace model
 
 		void add_mob(Mob& mob) { mobs_.push_back(&mob); }
 		inline int id() const { return number; }
+		inline Player& player() const { return player_; }
 	};
 
 	inline bool operator==(const Team& lhs, const Team& rhs) {
@@ -300,14 +297,31 @@ namespace model
 		return lhs.id() != rhs.id();
 	}
 
+
+	class Player
+	{
+	public:
+		virtual ~Player() = default;
+
+		virtual bool is_ai() const = 0;
+		virtual void action_to(Coord c, GameInstance& game, Mob& mob) = 0;
+		virtual void any_action(GameInstance& game, Mob& mob) = 0;
+
+	};
+
 	class UserPlayer : public Player
 	{
-		
+	public:
+		bool is_ai() const override { return false; }
+		void action_to(Coord c, GameInstance& game, Mob& mob) override;
+		void any_action(GameInstance& game, Mob& mob) override;
 	};
 
 	class AIPlayer : public Player
 	{
-		
+		bool is_ai() const override { return true; }
+		void action_to(Coord c, GameInstance& game, Mob& mob) override;
+		void any_action(GameInstance& game, Mob& mob) override;
 	};
 
 	class Turn
