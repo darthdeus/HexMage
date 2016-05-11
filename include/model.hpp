@@ -151,6 +151,7 @@ namespace model
 		int d_hp;
 		int d_ap;
 		int cost;
+		int range = 5;
 
 		Ability(int d_hp, int d_ap, int cost) : d_hp(d_hp), d_ap(d_ap), cost(cost) {}
 	};
@@ -158,8 +159,12 @@ namespace model
 	class Target
 	{
 	public:
-		int x;
-		int y;
+		Coord c;
+		Mob& mob;
+
+		Target(const Coord& c, Mob& mob)
+			: c(c),
+			  mob(mob) {}
 	};
 
 	enum class VertexState { Unvisited, Open, Closed };
@@ -182,9 +187,12 @@ namespace model
 		PlayerInfo(std::size_t size);
 
 		Mob& add_mob(Mob mob);
-		Mob& mob_at(Coord c);
+		Mob* mob_at(Coord c);
 		int register_team(Player& player);
 		Team& team_id(int id);
+
+		// Determine if a coord can be attacked, and if so, return the mob standing on it.
+		boost::optional<Target> can_attack(Mob& player, Coord c);
 	};
 
 
@@ -238,6 +246,9 @@ namespace model
 		Mob(int max_hp, int max_ap, abilities_t abilities, int team);
 		bool use_ability(int index, Target target);
 		void move(Arena& arena, Coord d);
+
+		bool can_use_ability_at(Target t, PlayerInfo& info, Arena& arena, Ability ability);
+		abilities_t usable_abilities(Target t, PlayerInfo& info, Arena& arena);
 	};
 
 	class Hex

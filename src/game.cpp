@@ -40,6 +40,38 @@ namespace game
 		return arena.hex_near({view_mouse.x, view_mouse.y});
 	}
 
+	void draw_abilities(const TurnManager& turn_manager, GameInstance& game, InputManager& input_manager)
+	{
+		if (!turn_manager.current_turn.is_done()) {
+			auto* player = *turn_manager.current_turn.current_;
+			ImGui::Begin("Current player");
+
+			ImGui::Text("HP: %d/%d\nAP: %d/%d", player->hp, player->max_hp, player->ap, player->max_ap);
+
+			for (auto&& ability : player->abilities) {
+				auto target = game.info.can_attack(*player, input_manager.mouse_hex);
+				std::string usable = "";
+				if (target) {
+					if (player->can_use_ability_at(*target, game.info, game.arena, ability)) {
+						usable = "* ";
+					}
+				}
+
+				auto str = fmt::sprintf(
+					"%scost: %d, dmg: %d/%d, range: %d",
+					usable,
+					ability.cost,
+					ability.d_hp,
+					ability.d_ap,
+					ability.range);
+
+				ImGui::Text(str.c_str());
+			}
+
+			ImGui::End();
+		}
+	}
+
 	void game_loop(SDL_Window* window)
 	{
 		using namespace model;
@@ -105,9 +137,7 @@ namespace game
 			}
 			camera.update_camera();
 
-			// jenom pro demo
 			fonts.render_text("HexMage", 10, 10, 12);
-			fonts.render_text("HexMage", 10, 40, 52);
 
 			sprites.set_projection(camera.projection() * projection);
 			sprites.draw_sprite(t, {0, 0}, {32, 32});
@@ -119,7 +149,7 @@ namespace game
 			auto highlight_pos = arena.pos(input_manager.highlight_hex);
 			arena.paint_hex(highlight_pos, Arena::radius, color_for_type(HexType::Player));
 
-			Color highlight_color{0.85f, 0.75f, 0.85f};
+			Color highlight_color{0.75f, 0.15f, 0.35f, 0.9f};
 			auto mouse_pos = arena.pos(input_manager.mouse_hex);
 			arena.paint_hex(mouse_pos, Arena::radius, highlight_color);
 
@@ -130,6 +160,8 @@ namespace game
 			for (auto& mob : info.mobs) {
 				arena.paint_mob(info, mob);
 			}
+
+			draw_abilities(turn_manager, game, input_manager);
 
 			draw_imgui();
 

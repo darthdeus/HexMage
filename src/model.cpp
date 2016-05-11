@@ -114,7 +114,8 @@ namespace model {
 	}
 
 	void Arena::dijkstra(Coord start) {
-		fmt::printf("Dijkstra started at %i,%i\n", start.x, start.y);
+		// TODO - proper log levels
+		fmt::printf("DEBUG Dijkstra started at %i,%i\n", start.x, start.y);
 		Stopwatch s;
 
 		std::queue<Coord> queue;
@@ -155,7 +156,7 @@ namespace model {
 			queue.pop();
 
 			if (iterations > 10000 || queue.size() > 1000) {
-				std::cout << "got stuck heh\titerations: " << iterations << ", queue: " << queue.size() << std::endl;
+				std::cout << "dijkstra got stuck\titerations: " << iterations << ", queue: " << queue.size() << std::endl;
 				return;
 			}
 
@@ -228,7 +229,7 @@ namespace model {
 					if (type == HexType::Empty && path.distance > 0) {
 						// distance = 1 -> 0.3
 						// distance = ap -> 0
-						float change = (*current_ap + 1 - path.distance) * 0.10f;
+						float change = (*current_ap + 1 - path.distance) * 0.06f;
 						if (change > 0) {
 							c = c.mut(change);
 						}
@@ -344,6 +345,24 @@ namespace model {
 		}
 	}
 
+	bool Mob::can_use_ability_at(Target t, PlayerInfo& info, Arena& arena, Ability ability)
+	{
+		return ability.cost <= ap && ability.range >= arena.paths(t.c).distance;
+	}
+
+	Mob::abilities_t Mob::usable_abilities(Target t, PlayerInfo& info, Arena& arena)
+	{
+		abilities_t res;
+
+		for (auto&& ability : abilities) {
+			if (can_use_ability_at(t, info, arena, ability)) {
+				res.push_back(ability);
+			}
+		}
+
+		return res;
+	}
+
 	PlayerInfo::PlayerInfo(std::size_t size) : size(size) {}
 
 	Mob& PlayerInfo::add_mob(Mob mob)
@@ -352,16 +371,15 @@ namespace model {
 		return mobs.back();
 	}
 
-	Mob& PlayerInfo::mob_at(Coord c)
+	Mob* PlayerInfo::mob_at(Coord c)
 	{
 		for (auto& m : mobs) {
 			if (m.c == c) {
-				return m;
+				return &m;
 			}
 		}
 
-		std::cerr << "Mob not found at " << c << std::endl;
-		throw "Mob not found";
+		return nullptr;
 	}
 
 	int PlayerInfo::register_team(Player& player) {
@@ -373,6 +391,19 @@ namespace model {
 	Team& PlayerInfo::team_id(int id) {
 		assert(id < teams.size());
 		return teams[id];
+	}
+
+	boost::optional<Target> PlayerInfo::can_attack(Mob& player, Coord c)
+	{
+		if (Mob* mob = mob_at(c)) {
+			if (player.team != mob->team) {
+				return Target(c, *mob);
+			} else {
+				return boost::none;
+			}
+		} else {
+			return boost::none;
+		}
 	}
 
 	Turn GameInstance::start_turn()

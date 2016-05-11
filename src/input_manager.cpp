@@ -20,14 +20,24 @@ void InputManager::left_click(glm::vec2 pos, Mob& player)
 	auto click_hex = game::hex_at_mouse(camera_.projection(), arena_, event.motion.x, event.motion.y);
 
 	auto path = arena_.paths(click_hex);
-	if (path.distance <= player.ap) {
-		player.ap -= path.distance;
-		player.c = click_hex;
-		highlight_hex = player.c;
-		arena_.dijkstra(player.c);
-		arena_.regenerate_geometry(player.ap);
-		highlight_path.clear();
+
+	if (auto target = info_.can_attack(player, click_hex)) {
+		if (player.ap >= 5) {
+			target->mob.hp -= 5;
+			player.ap -= 5;
+		}
+	} else {
+		if (path.distance <= player.ap) {
+			player.ap -= path.distance;
+			player.c = click_hex;
+
+			highlight_hex = player.c;
+			highlight_path.clear();
+		}
 	}
+
+	arena_.dijkstra(player.c);
+	arena_.regenerate_geometry(player.ap);
 }
 
 void InputManager::right_click(glm::vec2 pos, Mob& player)
