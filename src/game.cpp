@@ -133,7 +133,7 @@ namespace game
 
 		auto projection = ortho(0.f, WIDTH, HEIGHT, 0.0f);
 
-		InputManager input_manager(camera, arena, info, turn_manager);
+		InputManager input_manager(camera, game, arena, info, turn_manager);
 
 		while (true) {
 			glClearColor(0.3f, 0.2f, 0.3f, 1.0f);
@@ -147,11 +147,13 @@ namespace game
 			}
 			camera.update_camera();
 
+			fonts.render_text("HexMage", 10, 37, 42);
+			fonts.render_text("HexMage", 10, 20, 22);
 			fonts.render_text("HexMage", 10, 10, 12);
 
 			sprites.set_projection(camera.projection() * projection);
 			sprites.draw_sprite(t, {0, 0}, {32, 32});
-			sprites.draw_sprite(t, {32, 32}, {32, 32});
+			sprites.draw_sprite(t, {32, 32}, {64, 64});
 
 			arena.set_projection(camera.projection());
 			arena.draw_vertices();

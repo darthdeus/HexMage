@@ -408,8 +408,8 @@ namespace model {
 
 	Turn GameInstance::start_turn()
 	{
-		for (auto& mob : info.mobs) {
-			mob.ap = std::min(mob.ap, mob.ap + mob.max_ap);
+		for (auto&& mob : info.mobs) {
+			mob.ap = std::min(mob.max_ap, mob.ap + mob.max_ap);
 		}
 
 		return Turn(info.mobs);
@@ -439,10 +439,16 @@ namespace model {
 
 	Mob* Turn::next()
 	{
-		if (current_ != mobs_.end())
-			return *++current_;
-		else
-			return nullptr;
+		if (current_ == mobs_.end()) return nullptr;
+
+		while (true) {
+			++current_;
+			if (current_ == mobs_.end()) {
+				return nullptr;
+			}
+
+			if ((**current_).hp > 0) return *current_;
+		}
 	}
 
 	Color color_for_type(HexType type) {

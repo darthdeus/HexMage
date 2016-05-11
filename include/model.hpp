@@ -156,6 +156,11 @@ namespace model
 		Ability(int d_hp, int d_ap, int cost) : d_hp(d_hp), d_ap(d_ap), cost(cost) {}
 	};
 
+	inline std::ostream& operator<<(std::ostream& os, const Ability& ability) {
+		return os << "cost: " << ability.cost << ", dmg: " << ability.d_hp
+			<< "/" << ability.d_ap << ", range: " << ability.range;
+	}
+
 	class Target
 	{
 	public:

@@ -22,9 +22,14 @@ void InputManager::left_click(glm::vec2 pos, Mob& player)
 	auto path = arena_.paths(click_hex);
 
 	if (auto target = info_.can_attack(player, click_hex)) {
-		if (player.ap >= 5) {
-			target->mob.hp -= 5;
-			player.ap -= 5;
+		auto abilities = player.usable_abilities(*target, info_, arena_);
+
+		if (abilities.size() > 0) {
+			auto ability = abilities.back();
+			fmt::print("Using ability {}\n", ability);
+			
+			player.ap -= ability.cost;
+			target->mob.hp -= ability.d_hp;
 		}
 	} else {
 		if (path.distance <= player.ap) {
@@ -129,6 +134,12 @@ bool InputManager::handle_events()
 				if (next_player) {
 					arena_.dijkstra(next_player->c);
 					arena_.regenerate_geometry(next_player->ap);
+				}
+
+				if (turn_manager_.current_turn.is_done()) {
+					// TODO - use proper logging
+					fmt::print("DEBUG - starting new turn\n");
+					turn_manager_.current_turn = game_.start_turn();
 				}
 			} else {
 				camera_.keyup(event.key.keysym.sym);

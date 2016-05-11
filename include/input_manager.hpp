@@ -12,6 +12,7 @@ class InputManager
 	void right_click(glm::vec2 pos, model::Mob& player);
 
 	gl::Camera& camera_;
+	model::GameInstance& game_;
 	model::Arena& arena_;
 	model::PlayerInfo& info_;
 	model::TurnManager& turn_manager_;
@@ -21,8 +22,9 @@ public:
 	model::Coord mouse_hex;
 	std::vector<model::Coord> highlight_path;
 
-	InputManager(gl::Camera& camera, model::Arena& arena, model::PlayerInfo& info, model::TurnManager& turn_manager)
+	InputManager(gl::Camera& camera, model::GameInstance& game, model::Arena& arena, model::PlayerInfo& info, model::TurnManager& turn_manager)
 		: camera_(camera),
+		  game_(game),
 		  arena_(arena),
 		  info_(info),
 		  turn_manager_(turn_manager) {}
