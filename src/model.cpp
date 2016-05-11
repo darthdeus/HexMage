@@ -188,7 +188,7 @@ namespace model {
 		}
 	}
 
-	void Arena::regenerate_geometry() {
+	void Arena::regenerate_geometry(boost::optional<int> current_ap) {
 		float start_x = -0.5f;
 		float start_y = -0.5f;
 
@@ -224,13 +224,14 @@ namespace model {
 					}
 				}
 
-
-				if (type == HexType::Empty && path.distance > 0) {
-					// distance = 1 -> 0.3
-					// distance = 10 -> 0
-					float change = (10 - path.distance) * 0.10f;
-					if (change > 0) {
-						c = c.mut(change);
+				if (current_ap) {
+					if (type == HexType::Empty && path.distance > 0) {
+						// distance = 1 -> 0.3
+						// distance = ap -> 0
+						float change = (*current_ap + 1 - path.distance) * 0.10f;
+						if (change > 0) {
+							c = c.mut(change);
+						}
 					}
 				}
 
@@ -408,7 +409,7 @@ namespace model {
 	Mob* Turn::next()
 	{
 		if (current_ != mobs_.end())
-			return *current_++;
+			return *++current_;
 		else
 			return nullptr;
 	}

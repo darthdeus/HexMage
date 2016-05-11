@@ -212,7 +212,7 @@ namespace model
 		Coord hex_near(Position pos);
 
 		void dijkstra(Coord start);
-		void regenerate_geometry();
+		void regenerate_geometry(boost::optional<int> current_ap = boost::none);
 		void draw_vertices();
 
 		void set_projection(const glm::mat4& projection);

@@ -70,8 +70,9 @@ namespace game
 		turn_manager.current_turn = game.start_turn();
 		turn_manager.update_arena(arena);
 
-		arena.dijkstra((*turn_manager.current_turn.current_)->c);
-		arena.regenerate_geometry();
+		Mob* current_player = *turn_manager.current_turn.current_;
+		arena.dijkstra(current_player->c);
+		arena.regenerate_geometry(current_player->ap);
 
 		gl::Camera camera;
 

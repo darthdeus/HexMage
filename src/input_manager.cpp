@@ -25,7 +25,7 @@ void InputManager::left_click(glm::vec2 pos, Mob& player)
 		player.c = click_hex;
 		highlight_hex = player.c;
 		arena_.dijkstra(player.c);
-		arena_.regenerate_geometry();
+		arena_.regenerate_geometry(player.ap);
 		highlight_path.clear();
 	}
 }
@@ -118,7 +118,7 @@ bool InputManager::handle_events()
 				auto* next_player = turn_manager_.current_turn.next();
 				if (next_player) {
 					arena_.dijkstra(next_player->c);
-					arena_.regenerate_geometry();
+					arena_.regenerate_geometry(next_player->ap);
 				}
 			} else {
 				camera_.keyup(event.key.keysym.sym);
