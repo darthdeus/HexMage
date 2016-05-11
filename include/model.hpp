@@ -214,6 +214,7 @@ namespace model
 		void dijkstra(Coord start);
 		void regenerate_geometry();
 		void draw_vertices();
+
 		void set_projection(const glm::mat4& projection);
 		void paint_hex(Position pos, float radius, Color color);
 		void paint_healthbar(glm::vec2 pos, float hp, float ap);
@@ -318,6 +319,7 @@ namespace model
 		explicit TurnManager(PlayerInfo& info):
 			info_(info) {}
 
+		void update_arena(Arena& arena);
 		// TODO 
 	};
 }

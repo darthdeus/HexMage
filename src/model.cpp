@@ -114,6 +114,7 @@ namespace model {
 	}
 
 	void Arena::dijkstra(Coord start) {
+		fmt::printf("Dijkstra started at %i,%i\n", start.x, start.y);
 		Stopwatch s;
 
 		std::queue<Coord> queue;
@@ -147,6 +148,8 @@ namespace model {
 			}
 		}
 
+		paths(start).distance = 0;
+
 		while (!queue.empty()) {
 			Coord current = queue.front();
 			queue.pop();
@@ -172,6 +175,8 @@ namespace model {
 					if (n.state != VertexState::Closed) {
 						if (n.distance > p.distance + 1) {
 							n.distance = p.distance + 1;
+							assert(n.distance > 0);
+
 							n.source = current;
 						}
 
@@ -206,7 +211,28 @@ namespace model {
 
 				pos({ col, row }) = { draw_x, draw_y };
 
-				Color c = color_for_type((*this)({ col, row }));
+				auto type = (*this)({ col, row });
+				Color c = color_for_type(type);
+				auto path = paths({ col, row });
+
+				if (path.distance < 0) {
+					if (path.source) {
+						fmt::printf("Distance negative %i at %i,%i, source %i,%i\n", path.distance, row, col, path.source->x, path.source->y);
+					} else {
+						
+						fmt::printf("Distance negative %i at %i,%i, no source\n", path.distance, row, col);
+					}
+				}
+
+
+				if (type == HexType::Empty && path.distance > 0) {
+					// distance = 1 -> 0.3
+					// distance = 10 -> 0
+					float change = (10 - path.distance) * 0.10f;
+					if (change > 0) {
+						c = c.mut(change);
+					}
+				}
 
 				auto pos = this->pos({ col, row });
 				b.push_hex({ pos.x, pos.y, 0 }, c, radius);
@@ -313,7 +339,7 @@ namespace model {
 	{
 		if (arena.is_valid_coord(c + d)) {
 			c = c + d;
-			ap -= d.distance(); // TODO - better calculation
+			ap -= arena.paths(c).distance; // TODO - better calculation
 		}
 	}
 
@@ -355,6 +381,16 @@ namespace model {
 		}
 
 		return Turn(info.mobs);
+	}
+
+	void TurnManager::update_arena(Arena& arena)
+	{
+		assert(!current_turn.is_done());
+		auto& player = **current_turn.current_;
+
+		// TODO - update this
+		arena.dijkstra(player.c);
+		arena.regenerate_geometry();
 	}
 
 	Turn::Turn(std::vector<Mob>& mobs)

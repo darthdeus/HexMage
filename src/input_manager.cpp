@@ -19,11 +19,13 @@ void InputManager::left_click(glm::vec2 pos, Mob& player)
 {
 	auto click_hex = game::hex_at_mouse(camera_.projection(), arena_, event.motion.x, event.motion.y);
 
-	if (click_hex.distance() <= player.ap) {
-		player.ap -= click_hex.distance();
+	auto path = arena_.paths(click_hex);
+	if (path.distance <= player.ap) {
+		player.ap -= path.distance;
 		player.c = click_hex;
 		highlight_hex = player.c;
 		arena_.dijkstra(player.c);
+		arena_.regenerate_geometry();
 		highlight_path.clear();
 	}
 }
@@ -37,8 +39,8 @@ void InputManager::right_click(glm::vec2 pos, Mob& player)
 	} else {
 		arena_(click_hex) = HexType::Empty;
 	}
-	arena_.regenerate_geometry();
 	arena_.dijkstra(player.c);
+	arena_.regenerate_geometry();
 }
 
 std::vector<model::Coord>
@@ -116,6 +118,7 @@ bool InputManager::handle_events()
 				auto* next_player = turn_manager_.current_turn.next();
 				if (next_player) {
 					arena_.dijkstra(next_player->c);
+					arena_.regenerate_geometry();
 				}
 			} else {
 				camera_.keyup(event.key.keysym.sym);

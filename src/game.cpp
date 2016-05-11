@@ -61,18 +61,17 @@ namespace game
 		int t1 = info.register_team(user_player);
 		int t2 = info.register_team(ai_player);
 
-		arena.regenerate_geometry();
-
 		for (int i = 0; i < 10; i++) {
 			int t = i < 5 ? t1 : t2;
 			Mob& mob = info.add_mob(generator::random_mob(t, arena.size));
 		}
-		Mob& player = info.add_mob(generator::random_mob(t1, arena.size));
-
-		player.c = {0, 0};
 
 		TurnManager turn_manager(info);
 		turn_manager.current_turn = game.start_turn();
+		turn_manager.update_arena(arena);
+
+		arena.dijkstra((*turn_manager.current_turn.current_)->c);
+		arena.regenerate_geometry();
 
 		gl::Camera camera;
 
