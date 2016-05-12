@@ -7,7 +7,6 @@
 #define _USE_MATH_DEFINES
 
 #include <algorithm>
-#include <string>
 #include <iostream>
 #include <math.h>
 
@@ -29,7 +28,7 @@ int main(int, char**) {
 
 	SDL_Window* window = SDL_CreateWindow(
 		"HexMage", 300, 300, // TODO - better default screen position
-		game::SCREEN_WIDTH, game::SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+		model::SCREEN_WIDTH, model::SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
 	if (window == nullptr) {
 		std::cerr << "Unable to initialize SDL_Window, exiting." << SDL_GetError() << std::endl;

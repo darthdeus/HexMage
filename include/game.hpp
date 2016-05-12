@@ -14,12 +14,6 @@
 
 namespace game
 {
-	//constexpr int SCREEN_WIDTH = 1280;
-	//constexpr int SCREEN_HEIGHT = 1024;
-
-	constexpr int SCREEN_WIDTH = 800;
-	constexpr int SCREEN_HEIGHT = 600;
-
 	model::Coord hex_at_mouse(const glm::mat4& proj, model::Arena& arena, int x, int y);
 	void game_loop(SDL_Window* window);
 

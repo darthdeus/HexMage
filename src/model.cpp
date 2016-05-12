@@ -9,6 +9,11 @@
 #include <boost/optional.hpp>
 
 namespace model {
+	int hex_distance(Coord c1, Coord c2) {
+		// TODO - this is wrong
+		int square = (c1.x - c2.x)*(c1.x - c2.x) + (c1.y - c2.y)*(c1.y - c2.y);
+		return static_cast<int>(sqrt(square));
+	}
 
 	Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
 	Cube::operator Coord() const { return{ *this }; }
@@ -52,10 +57,6 @@ namespace model {
 	}
 
 	Position mouse2gl(int x, int y) {
-		// TODO - figure out a place to put this
-		constexpr int SCREEN_WIDTH = 800;
-		constexpr int SCREEN_HEIGHT = 600;
-
 		float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
 		float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
 
@@ -113,7 +114,7 @@ namespace model {
 		return closest;
 	}
 
-	void Arena::dijkstra(Coord start) {
+	void Arena::dijkstra(Coord start, PlayerInfo& info) {
 		// TODO - proper log levels
 		fmt::printf("DEBUG Dijkstra started at %i,%i\n", start.x, start.y);
 		Stopwatch s;
@@ -141,7 +142,7 @@ namespace model {
 				p.source = boost::none;
 				p.distance = std::numeric_limits<int>::max();
 
-				if (h == HexType::Wall) {
+				if (h == HexType::Wall || info.mob_at({j, i})) {
 					p.state = VertexState::Closed;
 				} else {
 					p.state = VertexState::Unvisited;
@@ -150,6 +151,7 @@ namespace model {
 		}
 
 		paths(start).distance = 0;
+		paths(start).state = VertexState::Open;
 
 		while (!queue.empty()) {
 			Coord current = queue.front();
@@ -329,25 +331,31 @@ namespace model {
 		assert(index <= abilities.size());
 
 		auto& ability = abilities[index];
-		if (ap >= ability.cost) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return ap >= ability.cost;
 	}
 
-	void Mob::move(Arena& arena, Coord d)
+	void Mob::move(GameInstance& game, Coord d)
 	{
-		if (arena.is_valid_coord(c + d)) {
-			c = c + d;
-			ap -= arena.paths(c).distance; // TODO - better calculation
+		auto& arena = game.arena;
+		auto new_coord = c + d;
+		if (arena.is_valid_coord(new_coord) && !game.info.mob_at(new_coord)) {
+			int cost = arena.paths(c).distance + 1;
+
+			if (cost <= ap) {
+				fmt::printf("Moving for %d AP\n", cost);
+				c = c + d;
+				ap -= cost; // TODO - better calculation
+			}
 		}
 	}
 
 	bool Mob::can_use_ability_at(Target t, PlayerInfo& info, Arena& arena, Ability ability)
 	{
-		return ability.cost <= ap && ability.range >= arena.paths(t.c).distance;
+		bool within_range = ability.range >= arena.paths(t.c).distance;
+		int distance = hex_distance(t.c, c);
+		within_range = distance <= ability.range;
+
+		return ability.cost <= ap && within_range;
 	}
 
 	Mob::abilities_t Mob::usable_abilities(Target t, PlayerInfo& info, Arena& arena)
@@ -421,7 +429,7 @@ namespace model {
 		auto& player = **current_turn.current_;
 
 		// TODO - update this
-		arena.dijkstra(player.c);
+		arena.dijkstra(player.c, info_);
 		arena.regenerate_geometry();
 	}
 
@@ -458,11 +466,6 @@ namespace model {
 		// TODO - basic AI		
 	}
 
-	static int hex_distance(Coord c1, Coord c2)
-	{
-		return (c1.x - c2.x)*(c1.x - c2.x) + (c1.y - c2.y)*(c1.y - c2.y);
-	}
-
 	void AIPlayer::any_action(GameInstance& game, Mob& mob)
 	{
 		std::vector<Mob*> enemies;
@@ -488,6 +491,7 @@ namespace model {
 				game.arena);
 
 			if (abilities.empty()) {
+				fmt::print("DEBUG - no abilities available, moving instead\n");
 				// no ability is in rage, we have to move
 				auto dis = (c - mob.c);
 				auto dx = dis.abs().x;
@@ -496,8 +500,10 @@ namespace model {
 				auto dy = dis.abs().y;
 				if (!dy) dy = 1;
 
+				// TODO - the offset is wrong when going bottom-left
 				Coord off{ dis.x / dx, dis.y / dy };
-				mob.move(game.arena, off);
+
+				mob.move(game, off);
 
 			} else {
 				// TODO - use a random ability for now

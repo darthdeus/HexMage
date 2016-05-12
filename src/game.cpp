@@ -89,7 +89,7 @@ namespace game
 		using namespace model;
 		using namespace glm;
 
-		glViewport(0, 0, game::SCREEN_WIDTH, game::SCREEN_HEIGHT);
+		glViewport(0, 0, model::SCREEN_WIDTH, model::SCREEN_HEIGHT);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -116,7 +116,7 @@ namespace game
 		turn_manager.update_arena(arena);
 
 		Mob* current_player = *turn_manager.current_turn.current_;
-		arena.dijkstra(current_player->c);
+		arena.dijkstra(current_player->c, info);
 		arena.regenerate_geometry(current_player->ap);
 
 		gl::Camera camera;
@@ -126,8 +126,8 @@ namespace game
 		t.internal_format = GL_RGBA;
 		t.load_png("res/chicken.png");
 
-		float WIDTH = (float)game::SCREEN_WIDTH;
-		float HEIGHT = (float)game::SCREEN_HEIGHT;
+		float WIDTH = (float)model::SCREEN_WIDTH;
+		float HEIGHT = (float)model::SCREEN_HEIGHT;
 
 		gl::SpriteRenderer sprites;
 

@@ -9,7 +9,7 @@ namespace generator
 		std::mt19937 gen(rd());
 		std::uniform_int_distribution<int> dis(1, 10);
 		std::uniform_int_distribution<int> cost_dis(3, 7);
-		std::uniform_int_distribution<int> pos_dis(0, (int)size);
+		std::uniform_int_distribution<int> pos_dis(0, (int)size - 1);
 
 		model::Mob::abilities_t abilities;
 		for (int i = 0; i < simulation::ABILITY_COUNT; ++i) {

@@ -32,7 +32,7 @@ void InputManager::left_click(glm::vec2 pos, Mob& current_mob)
 
 	}
 
-	arena_.dijkstra(current_mob.c);
+	arena_.dijkstra(current_mob.c, info_);
 	arena_.regenerate_geometry(current_mob.ap);
 }
 
@@ -45,7 +45,7 @@ void InputManager::right_click(glm::vec2 pos, Mob& player)
 	} else {
 		arena_(click_hex) = HexType::Empty;
 	}
-	arena_.dijkstra(player.c);
+	arena_.dijkstra(player.c, info_);
 	arena_.regenerate_geometry();
 }
 
@@ -64,7 +64,7 @@ InputManager::build_highlight_path(const model::Mob& player)
 
 			if (auto source = arena_.paths(highlight_hex).source) {
 				highlight_hex = *source;
-				if (highlight_hex != player.c) {
+				if (arena_(highlight_hex) == HexType::Empty) {
 					path.push_back(highlight_hex);
 				}
 			} else {
@@ -119,7 +119,7 @@ bool InputManager::handle_events()
 				// TODO - dijkstra for current player
 				auto* next_player = turn_manager_.current_turn.next();
 				if (next_player) {
-					arena_.dijkstra(next_player->c);
+					arena_.dijkstra(next_player->c, info_);
 					arena_.regenerate_geometry(next_player->ap);
 				}
 

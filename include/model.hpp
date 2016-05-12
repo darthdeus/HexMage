@@ -12,6 +12,12 @@
 
 namespace model
 {
+	// TODO - move this to some sort of config
+	constexpr int SCREEN_WIDTH = 1280;
+	constexpr int SCREEN_HEIGHT = 1024;
+
+	//constexpr int SCREEN_WIDTH = 800;
+	//constexpr int SCREEN_HEIGHT = 600;
 
 	struct Coord;
 	struct Cube;
@@ -21,6 +27,8 @@ namespace model
 	class Arena;
 	class PlayerInfo;
 	class GameInstance;
+
+	int hex_distance(Coord c1, Coord c2);
 
 	enum class HexType
 	{
@@ -226,7 +234,7 @@ namespace model
 		Position& pos(Coord c);
 		Coord hex_near(Position pos);
 
-		void dijkstra(Coord start);
+		void dijkstra(Coord start, PlayerInfo& info);
 		void regenerate_geometry(boost::optional<int> current_ap = boost::none);
 		void draw_vertices();
 
@@ -252,7 +260,7 @@ namespace model
 
 		Mob(int max_hp, int max_ap, abilities_t abilities, Index<Team> team);
 		bool use_ability(int index, Target target);
-		void move(Arena& arena, Coord d);
+		void move(GameInstance& arena, Coord d);
 
 		bool can_use_ability_at(Target t, PlayerInfo& info, Arena& arena, Ability ability);
 		abilities_t usable_abilities(Target t, PlayerInfo& info, Arena& arena);
