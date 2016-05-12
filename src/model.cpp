@@ -9,10 +9,11 @@
 #include <boost/optional.hpp>
 
 namespace model {
-	int hex_distance(Coord c1, Coord c2) {
-		// TODO - this is wrong
-		int square = (c1.x - c2.x)*(c1.x - c2.x) + (c1.y - c2.y)*(c1.y - c2.y);
-		return static_cast<int>(sqrt(square));
+	int hex_distance(Coord a, Coord b) {
+		using std::abs;
+		return (abs(a.x - b.x)
+			+ abs(a.x + a.y - b.x - b.y)
+			+ abs(a.y - b.y)) / 2;
 	}
 
 	Cube::Cube(const Coord& axial) : x(axial.x), y(-axial.x - axial.y), z(axial.y) {}
@@ -307,10 +308,13 @@ namespace model {
 		b.draw_arrays();
 	}
 
-	void Arena::paint_mob(PlayerInfo& info, const Mob& mob)
+	void Arena::paint_mob(TurnManager& turn_manager, PlayerInfo& info, const Mob& mob)
 	{
 		auto p = pos(mob.c);
 		auto c = mob.team->color;
+		if (&mob == turn_manager.current_mob()) {
+			c += glm::vec3(0.3f);
+		}
 		auto col = Color{ c.r, c.g, c.b };
 		paint_hex(p, radius, col);
 		paint_healthbar(p, (float)mob.hp / mob.max_hp, (float)mob.ap / mob.max_ap);
@@ -431,6 +435,14 @@ namespace model {
 		// TODO - update this
 		arena.dijkstra(player.c, info_);
 		arena.regenerate_geometry();
+	}
+
+	Mob* TurnManager::current_mob() const
+	{
+		if (current_turn.is_done())
+			return nullptr;
+		else
+			return *current_turn.current_;
 	}
 
 	void UserPlayer::action_to(Coord click_hex, GameInstance& game, Mob& current_mob)

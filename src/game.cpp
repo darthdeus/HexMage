@@ -168,12 +168,13 @@ namespace game
 			auto mouse_pos = arena.pos(input_manager.mouse_hex);
 			arena.paint_hex(mouse_pos, Arena::radius, highlight_color);
 
-			for (Coord c : input_manager.highlight_path) {
-				arena.paint_hex(arena.pos(c), Arena::radius, highlight_color);
-			}
+			// TODO - only show highlight_path if there's a player controlled team
+			//for (Coord c : input_manager.highlight_path) {
+			//	arena.paint_hex(arena.pos(c), Arena::radius, highlight_color);
+			//}
 
 			for (auto& mob : info.mobs) {
-				arena.paint_mob(info, mob);
+				arena.paint_mob(turn_manager, info, mob);
 			}
 
 			draw_abilities(turn_manager, game, input_manager);

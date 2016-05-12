@@ -13,8 +13,8 @@
 namespace model
 {
 	// TODO - move this to some sort of config
-	constexpr int SCREEN_WIDTH = 1280;
-	constexpr int SCREEN_HEIGHT = 1024;
+	constexpr int SCREEN_WIDTH = 1024;
+	constexpr int SCREEN_HEIGHT = 768;
 
 	//constexpr int SCREEN_WIDTH = 800;
 	//constexpr int SCREEN_HEIGHT = 600;
@@ -27,6 +27,7 @@ namespace model
 	class Arena;
 	class PlayerInfo;
 	class GameInstance;
+	class TurnManager;
 
 	int hex_distance(Coord c1, Coord c2);
 
@@ -241,7 +242,7 @@ namespace model
 		void set_projection(const glm::mat4& projection);
 		void paint_hex(Position pos, float radius, Color color);
 		void paint_healthbar(glm::vec2 pos, float hp, float ap);
-		void paint_mob(PlayerInfo& info, const Mob& mob);
+		void paint_mob(TurnManager& turn_manager, PlayerInfo& info, const Mob& mob);
 	};
 
 	class Mob
@@ -367,6 +368,7 @@ namespace model
 			info_(info) {}
 
 		void update_arena(Arena& arena);
+		Mob* current_mob() const;
 		// TODO 
 	};
 }
