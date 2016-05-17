@@ -61,11 +61,10 @@ namespace game
 				}
 
 				auto str = fmt::sprintf(
-					"%scost: %d, dmg: %d/%d, range: %d",
+					"%scost: %d, dmg: %d, range: %d",
 					usable,
 					ability.cost,
 					ability.d_hp,
-					ability.d_ap,
 					ability.range);
 
 				ImGui::Text(str.c_str());
