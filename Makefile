@@ -1,12 +1,12 @@
 APPNAME   := bin/main
 SOURCES		:= $(wildcard src/*.cpp src/*.c)
-OBJECTS 	:= $(patsubst src%, obj%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
+OBJECTS 	:= $(patsubst src%, out%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
 
 INCLUDE   := -I./include -I/usr/local/include -I/usr/local/include/freetype2
 LIBPATH		:= -L/usr/local/lib
-LIBS			:= -lsdl2 -lfreetype
+LIBS			:= -lSDL2 -lfreetype -ldl
 
-FLAGS			:= -O0 -g -fno-strict-aliasing
+FLAGS			:= -O2 -g -fno-strict-aliasing
 CCFLAGS 	:= $(FLAGS)
 CXXFLAGS  := $(FLAGS) -std=c++14
 
@@ -17,14 +17,14 @@ all: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(OBJECTS) -o $(APPNAME) $(LIBPATH) $(LIBS)
 	./bin/main
 
-obj/%.o: src/%.c
+out/%.o: src/%.c
 	$(CC) $(CCFLAGS) $(INCLUDE) -c $< -o $@
 
-obj/%.o: src/%.cpp
+out/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	rm -rf obj/*
+	rm -rf out/*
 	rm -f $(APPNAME)
 
 # SRC=main.cpp glad.c model.cpp gl_utils.cpp src/*.cpp src/**/*.cpp
