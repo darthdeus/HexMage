@@ -219,7 +219,7 @@ namespace model
 		gl::VAO vao;
 		gl::VBO vbo;
 
-		gl::Shader shader{ "vertex.glsl", "fragment.glsl" };
+		gl::Shader shader{ "res/vertex.glsl", "res/fragment.glsl" };
 	public:
 
 		static constexpr float radius = 0.1f;

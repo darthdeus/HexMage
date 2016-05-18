@@ -1,6 +1,6 @@
 #include <sim.hpp>
 
-Team::Team(int number)
+sim::Team::Team(int number)
   : number(number)
 {
   using namespace std;

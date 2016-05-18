@@ -1,4 +1,5 @@
 #include <sim.hpp>
+#include "gtest/gtest.h"
 
 namespace sim {
 

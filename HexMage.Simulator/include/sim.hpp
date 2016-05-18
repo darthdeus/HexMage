@@ -6,7 +6,7 @@
 #include <random>
 
 #include <format.h>
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 
 // TODO - extract this into a separate header
 template <typename T>
