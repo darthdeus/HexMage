@@ -1,1 +1,1 @@
-set wildignore+=include,bin,*.vcxproj*,*filters,*.sln
+set wildignore+=bin,*.vcxproj*,*filters,*.sln
