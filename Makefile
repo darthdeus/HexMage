@@ -2,7 +2,7 @@ APPNAME   := bin/main
 SOURCES		:= $(wildcard src/*.cpp src/*.c)
 OBJECTS 	:= $(patsubst src%, out%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
 
-INCLUDE   := -I./include -I/usr/local/include -I/usr/local/include/freetype2
+INCLUDE   := -I./include -I/usr/local/include -I/usr/local/include/freetype2 -isystem ./vendor
 LIBPATH		:= -L/usr/local/lib
 LIBS			:= -lSDL2 -lfreetype -ldl
 

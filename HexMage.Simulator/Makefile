@@ -2,7 +2,7 @@ APPNAME   := bin/main
 SOURCES		:= $(wildcard src/*.cpp src/*.c)
 OBJECTS 	:= $(patsubst src%, out%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
 
-INCLUDE   := -I./include -I/usr/local/include -I../vendor/googletest/googletest/include -I../vendor/glm
+INCLUDE   := -I./include -I/usr/local/include -I../vendor/googletest/googletest/include -I../vendor
 LIBPATH		:= -L/usr/local/lib
 LIBS			:= 
 
