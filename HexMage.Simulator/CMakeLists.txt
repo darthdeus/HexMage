@@ -3,7 +3,9 @@ project(HexMage.Simulator)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
-include_directories(include ../vendor ../vendor/googletest/googletest/include)
+# include_directories(include ../vendor ../vendor/googletest/googletest/include)
+include_directories(include ../vendor)
+
 file(GLOB SOURCE_FILES src/*.cpp src/*.c)
 
 # include(build/conanbuildinfo.cmake)

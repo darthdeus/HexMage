@@ -1,56 +1,4 @@
 #include <sim.hpp>
-#include "gtest/gtest.h"
-
-namespace sim {
-
-class Target {
- public:
-  Target(Mob&);
-};
-
-class Path {};
-
-class Map {};
-class Players {};
-
-class Pathfinder {
-  Path path_to(Target target);
-};
-
-class TurnManager {};
-
-class UsableAbility {
- public:
-  void use();
-};
-
-class Game {
- public:
-  Players& players();
-  Pathfinder& pathfinder();
-  TurnManager& turn_manager();
-
-  Mob& add_mob(Mob mob);
-
-  bool is_finished() const;
-
-  // 1. jake schopnoasti muzu pouzit - sebe
-  // 1b. jake schopnoasti muzu pouzit na policko - sebe, hrace, cesty
-  std::vector<Ability> usable_abilities(Mob&);
-  std::vector<UsableAbility> usable_abilities(Mob&, Target, Players&,
-                                              Pathfinder&);
-
-  // 2. na koho muzu utocit - sebe, hrace, cesty
-  std::vector<Target> possible_targets(Mob&, Players&, Pathfinder&);
-
-  //
-  // 3. kdo je na tahu - tahovatko
-
-  //
-  // 4. kdo updatuje stav - hrace, sebe, mapu
-  // 5. kdo resi cesty - hrace, sebe, mapu
-};
-}
 
 namespace gen {
 sim::Mob random_mob();
@@ -80,9 +28,9 @@ void mcts() {
   Game g;
 
   while (!g.is_finished()) {
-    auto manager = g.turn_manager;
+    auto manager = g.turn_manager();
 
-    if (manager.turn_is_done()) {
+    if (manager.is_turn_done()) {
       manager.start_next_turn();
     } else {
       auto mob = manager.current_mob();
@@ -109,18 +57,18 @@ void mcts() {
   }
 }
 
-void gui() {
-  Game g;
-
-  while (!quit) {
-    auto input = process_input();
-
-    if (g.user_playing()) {
-      g.user_turn(input);
-    } else {
-      g.ai_turn();
-    }
-  }
-}
+// void gui() {
+//  Game g;
+//
+//  while (!quit) {
+//    auto input = process_input();
+//
+//    if (g.user_playing()) {
+//      g.user_turn(input);
+//    } else {
+//      g.ai_turn();
+//    }
+//  }
+//}
 
 int main() {}

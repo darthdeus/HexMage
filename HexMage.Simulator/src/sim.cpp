@@ -1,5 +1,7 @@
 #include <sim.hpp>
 
+sim::Target::Target(Mob& mob): mob_(mob) {}
+
 sim::Team::Team(int number)
   : number(number)
 {
