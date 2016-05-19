@@ -13,6 +13,9 @@ CXXFLAGS  := $(FLAGS) -std=c++14
 CC        := clang
 CXX       := clang++
 
+cmake:
+	cmake --build build
+
 all: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(OBJECTS) -o $(APPNAME) $(LIBPATH) $(LIBS)
 	./bin/main

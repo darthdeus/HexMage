@@ -1,16 +1,16 @@
 #include <sim.hpp>
-
-namespace gen {
-sim::Mob random_mob();
-};
+#include <generator.hpp>
 
 using namespace sim;
 
 void testy() {
   Game g;
 
-  auto m1 = g.add_mob(gen::random_mob());
-  auto m2 = g.add_mob(gen::random_mob());
+  auto t1 = g.add_team();
+  auto t2 = g.add_team();
+
+  auto m1 = g.add_mob(gen::random_mob(t1, g.size()));
+  auto m2 = g.add_mob(gen::random_mob(t2, g.size()));
 
   auto abilities =
       g.usable_abilities(m1, Target(m2), g.players(), g.pathfinder());
@@ -50,7 +50,7 @@ void mcts() {
 
           auto path = pathfinder.path_to(target);
 
-          move_as_far_as_possible(mob, path);
+          pathfinder.move_as_far_as_possible(mob, path);
         }
       }
     }

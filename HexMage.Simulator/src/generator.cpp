@@ -1,0 +1,26 @@
+#include <random>
+
+#include <generator.hpp>
+#include <utils.hpp>
+
+
+namespace gen {
+  sim::Mob random_mob(Index<sim::Team> team, std::size_t size) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dis(1, 10);
+    std::uniform_int_distribution<int> cost_dis(3, 7);
+    std::uniform_int_distribution<int> pos_dis(0, (int)size - 1);
+
+    sim::Mob::abilities_t abilities;
+    for (int i = 0; i < sim::ABILITY_COUNT; ++i) {
+      abilities.emplace_back(dis(gen), dis(gen), cost_dis(gen));
+    }
+
+    auto mob = sim::Mob{10, 10, abilities, team};
+    mob.c = {pos_dis(gen), pos_dis(gen)};
+    return mob;
+  }
+}
+
+

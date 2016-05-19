@@ -10,6 +10,7 @@
 #include "glm/glm.hpp"
 
 namespace sim {
+  constexpr int ABILITY_COUNT = 6;
 
 	class Mob;
 	class Ability;
@@ -58,7 +59,7 @@ namespace sim {
 		TurnManager(Players &);
 		bool is_turn_done() const;
 		void start_next_turn();
-		Mob &current_mob();
+		Mob &current_mob() const;
 	};
 
 	class UsableAbility {
@@ -67,6 +68,10 @@ namespace sim {
 	};
 
 	class Game {
+    Players players_;
+    Pathfinder pathfinder_;
+    TurnManager turn_manager_;
+
 	public:
 		Players &players();
 		Pathfinder &pathfinder();
@@ -75,6 +80,9 @@ namespace sim {
 		Mob &add_mob(Mob mob);
 
 		bool is_finished() const;
+
+    std::size_t size() const;
+    Index<Team> add_team();
 
 		// 1. jake schopnoasti muzu pouzit - sebe
 		// 1b. jake schopnoasti muzu pouzit na policko - sebe, hrace, cesty
