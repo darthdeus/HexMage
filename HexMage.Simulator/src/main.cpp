@@ -4,7 +4,7 @@
 using namespace sim;
 
 void testy() {
-  Game g;
+  Game g(30);
 
   auto t1 = g.add_team();
   auto t2 = g.add_team();
@@ -20,12 +20,12 @@ void testy() {
 
     ability.use();
 
-    assert(m2.hp < m2.max_hp);
+    assert(m2->hp < m2->max_hp);
   }
 }
 
 void mcts() {
-  Game g;
+  Game g(30);
 
   while (!g.is_finished()) {
     auto manager = g.turn_manager();
