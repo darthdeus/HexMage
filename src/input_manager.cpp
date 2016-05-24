@@ -7,9 +7,9 @@
 using namespace sim;
 using namespace glm;
 
-void InputManager::mousemove(glm::vec2, sim::Mob& player) {
-  highlight_hex = game::hex_at_mouse(camera_.projection(), geom_,
-                                     event.motion.x, event.motion.y);
+void InputManager::mousemove(glm::vec2 pos, sim::Mob& player) {
+  highlight_hex = game::hex_at_mouse(camera_.projection(), geom_, pos);
+
   mouse_hex = highlight_hex;
 
   auto&& pathfinder = game_.pathfinder();
@@ -19,8 +19,7 @@ void InputManager::mousemove(glm::vec2, sim::Mob& player) {
 }
 
 void InputManager::left_click(glm::vec2 pos, sim::Mob& current_mob) {
-  auto click_hex = game::hex_at_mouse(camera_.projection(), geom_,
-                                      event.motion.x, event.motion.y);
+  auto click_hex = game::hex_at_mouse(camera_.projection(), geom_, pos);
 
   // auto&& player = current_mob.team->player();
   //
@@ -41,8 +40,7 @@ void InputManager::left_click(glm::vec2 pos, sim::Mob& current_mob) {
 }
 
 void InputManager::right_click(glm::vec2 pos, Mob& player) {
-  auto click_hex = game::hex_at_mouse(camera_.projection(), geom_,
-                                      event.motion.x, event.motion.y);
+  auto click_hex = game::hex_at_mouse(camera_.projection(), geom_, pos);
   auto&& map = game_.map();
 
   if (map(click_hex) == HexType::Empty) {

@@ -15,7 +15,7 @@
 
 namespace game
 {
-	sim::Coord hex_at_mouse(const glm::mat4& proj, MapGeometry& game, int x, int y);
+	sim::Coord hex_at_mouse(const glm::mat4& proj, MapGeometry& game, glm::ivec2 pos);
 	void game_loop(SDL_Window* window);
 
 }

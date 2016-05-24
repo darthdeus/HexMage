@@ -39,9 +39,9 @@ namespace game
 {
 	void draw_imgui();
 
-  glm::vec2 mouse2gl(int x, int y) {
-		float rel_x = static_cast<float>(x) / SCREEN_WIDTH;
-		float rel_y = static_cast<float>(y) / SCREEN_HEIGHT;
+  glm::vec2 mouse2gl(glm::ivec2 pos) {
+		float rel_x = static_cast<float>(pos.x) / SCREEN_WIDTH;
+		float rel_y = static_cast<float>(pos.y) / SCREEN_HEIGHT;
 
 		rel_y = 2 * (1 - rel_y) - 1;
 		rel_x = 2 * rel_x - 1;
@@ -50,10 +50,12 @@ namespace game
 	}
 
 
-  sim::Coord hex_at_mouse(const mat4& proj, MapGeometry& geom, int x, int y)
+  sim::Coord hex_at_mouse(const mat4& proj, MapGeometry& geom, glm::ivec2 pos)
 	{
-		auto rel_mouse = mouse2gl(x, y);
-		auto view_mouse = inverse(proj) * vec4(rel_mouse.x, rel_mouse.y, 0.0f, 1.0f);
+		auto rel_mouse = mouse2gl(pos);
+		auto view_mouse = inverse(proj) * vec4(rel_mouse, 0.0f, 1.0f);
+
+		fmt::printf("Highlight %d,%d\t%f,%f\n", pos.x, pos.y, rel_mouse.x, rel_mouse.y);
 		return geom.hex_near({view_mouse.x, view_mouse.y});
 	}
 

@@ -13,7 +13,6 @@ glm::vec4 color_for_type(sim::HexType type) {
   }
 }
 
-
 MapGeometry::MapGeometry(sim::Game& game)
     : game_(game), positions(game.size(), game.size()) {
   gl::Vertex::setup_attributes();
