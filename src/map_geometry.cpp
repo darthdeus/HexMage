@@ -3,11 +3,11 @@
 glm::vec4 color_for_type(sim::HexType type) {
   switch (type) {
     case sim::HexType::Empty:
-      return{ 0.4f, 0.2f, 0.4f, 1.0f };
+      return {0.4f, 0.2f, 0.4f, 1.0f};
     case sim::HexType::Wall:
-      return{ 0.1f, 0.03f, 0.1f, 1.0f };
+      return {0.1f, 0.03f, 0.1f, 1.0f};
     case sim::HexType::Player:
-      return{ 0.7f, 0.4f, 0.7f, 1.0f };
+      return {0.7f, 0.4f, 0.7f, 1.0f};
     default:
       throw "invalid hex type";
   }
@@ -41,7 +41,6 @@ sim::Coord MapGeometry::hex_near(Position pos) {
 
   return closest;
 }
-
 
 void MapGeometry::regenerate_geometry(boost::optional<int> current_ap) {
   float start_x = -0.5f;
@@ -169,4 +168,3 @@ void MapGeometry::paint_mob(sim::Mob& mob) {
   paint_hex(p, radius, glm::vec4(c, 1.0f));
   paint_healthbar(p, (float)mob.hp / mob.max_hp, (float)mob.ap / mob.max_ap);
 }
-

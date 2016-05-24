@@ -191,9 +191,9 @@ namespace game
 			geom.paint_hex(mouse_pos, MapGeometry::radius, highlight_color);
 
 			// TODO - only show highlight_path if there's a player controlled team
-			//for (Coord c : input_manager.highlight_path) {
-			//	geom.paint_hex(geom.pos(c), geom::radius, highlight_color);
-			//}
+			for (Coord c : input_manager.highlight_path) {
+				geom.paint_hex(geom.pos(c), MapGeometry::radius, highlight_color);
+			}
 
 			for (auto&& mob : game.mob_manager().mobs()) {
 				geom.paint_mob(mob);

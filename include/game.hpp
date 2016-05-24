@@ -13,11 +13,10 @@
 #include <map_geometry.hpp>
 #include <gl_utils.hpp>
 
-namespace game
-{
-	sim::Coord hex_at_mouse(const glm::mat4& proj, MapGeometry& game, glm::ivec2 pos);
-	void game_loop(SDL_Window* window);
-
+namespace game {
+sim::Coord hex_at_mouse(const glm::mat4 &proj, MapGeometry &game,
+                        glm::ivec2 pos);
+void game_loop(SDL_Window *window);
 }
 
 #endif
