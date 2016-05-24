@@ -27,6 +27,9 @@ clean:
 	rm -rf out/*
 	rm -f $(APPNAME)
 
+osx_conan:
+	conan install .. -s compiler=apple-clang -s compiler.version=7.3 -s compiler.libcxx=libstdc++ --build freetype --build sdl
+
 # SRC=main.cpp glad.c model.cpp gl_utils.cpp src/*.cpp src/**/*.cpp
 #
 # CC=clang++

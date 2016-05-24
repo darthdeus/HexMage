@@ -1,6 +1,6 @@
 [requires]
-sdl2/2.0.4@lasote/stable
-freetype/2.6.3@lasote/ci
+sdl/2.0.4@chaosteil/stable
+freetype/2.6.2@Kaosumaru/stable
 
 [generators]
 txt
