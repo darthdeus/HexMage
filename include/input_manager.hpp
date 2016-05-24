@@ -2,34 +2,34 @@
 #define EVENT_MANAGER_HPP
 
 #pragma once
+#include <SDL/SDL.h>
+
+#include "map_geometry.hpp"
 #include "gl_utils.hpp"
-#include "model.hpp"
+#include "sim.hpp"
 
 class InputManager
 {
-	void mousemove(glm::vec2 pos, model::Mob& player);
-	void left_click(glm::vec2 pos, model::Mob& player);
-	void right_click(glm::vec2 pos, model::Mob& player);
+	void mousemove(glm::vec2 pos, sim::Mob& player);
+	void left_click(glm::vec2 pos, sim::Mob& player);
+	void right_click(glm::vec2 pos, sim::Mob& player);
 
 	gl::Camera& camera_;
-	model::GameInstance& game_;
-	model::Arena& arena_;
-	model::PlayerInfo& info_;
-	model::TurnManager& turn_manager_;
+	sim::Game& game_;
+  MapGeometry& geom_;
 public:
 	SDL_Event event;
-	model::Coord highlight_hex;
-	model::Coord mouse_hex;
-	std::vector<model::Coord> highlight_path;
+	sim::Coord highlight_hex;
+	sim::Coord mouse_hex;
+	std::vector<sim::Coord> highlight_path;
 
-	InputManager(gl::Camera& camera, model::GameInstance& game, model::Arena& arena, model::PlayerInfo& info, model::TurnManager& turn_manager)
+	InputManager(gl::Camera& camera, sim::Game& game, MapGeometry& geom)
 		: camera_(camera),
 		  game_(game),
-		  arena_(arena),
-		  info_(info),
-		  turn_manager_(turn_manager) {}
+      geom_(geom) {}
 
-	std::vector<model::Coord> build_highlight_path(const model::Mob& mob);
+
+	std::vector<sim::Coord> build_highlight_path(const sim::Mob& mob);
 	bool handle_events();
 };
 

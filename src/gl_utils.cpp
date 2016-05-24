@@ -1,8 +1,13 @@
+#include <glad/glad.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include <iostream>
+
+#include <gl_utils.hpp>
+
 #include <model.hpp>
 #include <lodepng.h>
 

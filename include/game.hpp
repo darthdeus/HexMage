@@ -8,13 +8,14 @@
 // with the std::min/max functions.
 #define NOMINMAX
 
-#include <model.hpp>
-#include <gl_utils.hpp>
 #include <SDL/SDL.h>
+
+#include <map_geometry.hpp>
+#include <gl_utils.hpp>
 
 namespace game
 {
-	model::Coord hex_at_mouse(const glm::mat4& proj, model::Arena& arena, int x, int y);
+	sim::Coord hex_at_mouse(const glm::mat4& proj, MapGeometry& game, int x, int y);
 	void game_loop(SDL_Window* window);
 
 }

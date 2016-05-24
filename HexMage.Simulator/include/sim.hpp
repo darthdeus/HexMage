@@ -12,6 +12,9 @@
 
 namespace sim
 {
+  std::size_t hex_distance(glm::vec2 a);
+  std::size_t hex_distance(glm::vec2 a, glm::vec2 b);
+
   using Coord = glm::ivec2;
 
 	constexpr int ABILITY_COUNT = 6;
@@ -27,6 +30,14 @@ namespace sim
 	class UsableAbility;
 	class Game;
 	class Team;
+
+	enum class HexType
+	{
+		Empty = 0,
+		Wall,
+    Player
+	};
+
 
 	// TODO - update this to a proper container
 	template <typename T>
@@ -69,12 +80,13 @@ namespace sim
 
 	class Map
 	{
-		Matrix<glm::vec2> hexes_;
+		Matrix<HexType> hexes_;
 		std::size_t size_;
 	public:
 		explicit Map(std::size_t size);
 
-		Matrix<glm::vec2> hexes();
+		Matrix<HexType> hexes();
+    HexType& operator()(glm::ivec2 c);
 	};
 
 	class MobManager
@@ -88,6 +100,7 @@ namespace sim
 		std::vector<Team>& teams();
 
     bool move_mob(Mob& mob, glm::vec2 to);
+    boost::optional<Mob&> operator()(glm::ivec2);
 	};
 
 	enum class VertexState { Open, Closed, Unvisited };
@@ -112,12 +125,13 @@ namespace sim
 
 		Matrix<Path>& paths();
 
-    std::vector<glm::vec2> path_to(Target target);
-    void move_as_far_as_possible(MobManager&, Mob&, std::vector<glm::vec2>&);
-		std::size_t hex_distance(glm::vec2 a, glm::vec2 b);
+    std::vector<Coord> path_to(glm::vec2 target);
+    void move_as_far_as_possible(MobManager&, Mob&, std::vector<Coord>&);
 		std::size_t distance(glm::vec2 c);
 		void pathfind_from(glm::vec2 start, Map& map, MobManager& mob_manager);
     bool is_valid_coord(glm::vec2 c);
+
+    Path& operator()(glm::vec2 c);
 	};
 
 	class TurnManager
@@ -127,6 +141,7 @@ namespace sim
 		std::size_t current_ = 0;
 	public:
 		explicit TurnManager(MobManager&);
+
 		bool is_turn_done() const;
 		void start_next_turn();
 		Mob& current_mob() const;
@@ -155,6 +170,7 @@ namespace sim
 	public:
 		explicit Game(std::size_t s);
 
+    Map& map();
 		MobManager& mob_manager();
 		Pathfinder& pathfinder();
 		TurnManager& turn_manager();
@@ -164,6 +180,8 @@ namespace sim
 
 		std::size_t size() const;
 		Index<Team> add_team();
+
+    void refresh();
 
 		// 1. jake schopnoasti muzu pouzit - sebe
 		// 1b. jake schopnoasti muzu pouzit na policko - sebe, hrace, cesty
@@ -184,6 +202,8 @@ namespace sim
 
 	class Mob
 	{
+    static int last_id_;
+    int id_;
 	public:
 		using abilities_t = std::vector<Ability>;
 		const int max_hp;
@@ -197,6 +217,9 @@ namespace sim
 		Index<Team> team;
 
 		Mob(int max_hp, int max_ap, abilities_t abilities, Index<Team> team);
+
+    bool operator==(const Mob& rhs) const;
+    bool operator!=(const Mob& rhs) const;
 	};
 
 	class Team

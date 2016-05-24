@@ -48,7 +48,7 @@ void mcts() {
         } else {
           auto pathfinder = g.pathfinder();
 
-          auto path = pathfinder.path_to(target);
+          auto path = pathfinder.path_to(target.mob().c);
 
           pathfinder.move_as_far_as_possible(g.mob_manager(), mob, path);
         }

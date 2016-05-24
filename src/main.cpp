@@ -3,17 +3,17 @@
 // with the std::min/max functions.
 #define NOMINMAX
 
-// Enable math constants
-#define _USE_MATH_DEFINES
-
 #include <algorithm>
 #include <iostream>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include <glad/glad.h>
 #include <SDL/SDL.h>
 
-#include <game.hpp>
+#include "game.hpp"
+#include "config.hpp"
+#include "sim.hpp"
 
 
 int main(int, char**) {
@@ -28,7 +28,7 @@ int main(int, char**) {
 
 	SDL_Window* window = SDL_CreateWindow(
 		"HexMage", 300, 300, // TODO - better default screen position
-		model::SCREEN_WIDTH, model::SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+		SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
 	if (window == nullptr) {
 		std::cerr << "Unable to initialize SDL_Window, exiting." << SDL_GetError() << std::endl;
