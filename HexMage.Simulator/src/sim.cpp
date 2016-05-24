@@ -201,7 +201,7 @@ namespace sim
 	TurnManager::TurnManager(MobManager& mob_manager): mob_manager_(mob_manager) {}
 
 	bool TurnManager::is_turn_done() const {
-		return current_ < turn_order_.size();
+		return current_ >= turn_order_.size();
 	}
 
 	void TurnManager::start_next_turn() {
@@ -342,8 +342,10 @@ namespace sim
 
 	Mob::Mob(int max_hp, int max_ap, abilities_t abilities, Index<Team> team)
 		: id_(last_id_++),
-    max_hp(max_hp),
+      max_hp(max_hp),
 		  max_ap(max_ap),
+      hp(max_hp),
+      ap(max_ap),
 		  abilities(std::move(abilities)),
 		  team(std::move(team)) {}
 

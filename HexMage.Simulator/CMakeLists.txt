@@ -2,7 +2,7 @@ project(HexMage.Simulator)
 
 cmake_minimum_required(VERSION 2.8.12)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g")
 
 # include_directories(include ../vendor ../vendor/googletest/googletest/include)
 include_directories(include ../vendor/include)
