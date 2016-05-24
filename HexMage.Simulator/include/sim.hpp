@@ -12,6 +12,8 @@
 
 namespace sim
 {
+  using Coord = glm::ivec2;
+
 	constexpr int ABILITY_COUNT = 6;
 
 	class Mob;
@@ -61,6 +63,8 @@ namespace sim
 		Mob& mob_;
 	public:
 		Target(Mob&);
+
+    Mob& mob();
 	};
 
 	class Map
@@ -82,6 +86,8 @@ namespace sim
 		Index<Team> add_team();
 		std::vector<Mob>& mobs();
 		std::vector<Team>& teams();
+
+    bool move_mob(Mob& mob, glm::vec2 to);
 	};
 
 	enum class VertexState { Open, Closed, Unvisited };
@@ -92,21 +98,26 @@ namespace sim
 		boost::optional<glm::vec2> source;
 		VertexState state;
 		int distance;
+    bool reachable = false;
 	};
 
 	class Pathfinder
 	{
 		Matrix<Path> paths_;
+    std::size_t size_;
 	public:
+    using path_t = std::vector<glm::vec2>;
+
 		explicit Pathfinder(std::size_t size);
 
 		Matrix<Path>& paths();
 
-		Path path_to(Target target);
-		void move_as_far_as_possible(Mob&, Path&);
-		void pathfind_from(glm::vec2 source);
-		std::size_t distance(glm::vec2 t1, glm::vec2 t2);
-		void update(glm::vec2 start, Map& map, MobManager& mob_manager);
+    std::vector<glm::vec2> path_to(Target target);
+    void move_as_far_as_possible(MobManager&, Mob&, std::vector<glm::vec2>&);
+		std::size_t hex_distance(glm::vec2 a, glm::vec2 b);
+		std::size_t distance(glm::vec2 c);
+		void pathfind_from(glm::vec2 start, Map& map, MobManager& mob_manager);
+    bool is_valid_coord(glm::vec2 c);
 	};
 
 	class TurnManager
@@ -124,7 +135,12 @@ namespace sim
 
 	class UsableAbility
 	{
+    Mob& from_;
+    Mob& to_;
+    Ability& ability_;
 	public:
+    UsableAbility(Mob& from, Mob& to, Ability& ability):
+      from_(from), to_(to), ability_(ability) {}
 		void use();
 	};
 
@@ -139,7 +155,7 @@ namespace sim
 	public:
 		explicit Game(std::size_t s);
 
-		MobManager& players();
+		MobManager& mob_manager();
 		Pathfinder& pathfinder();
 		TurnManager& turn_manager();
 

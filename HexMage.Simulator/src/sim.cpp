@@ -5,11 +5,16 @@
 
 #include <sim.hpp>
 
+template <typename T>
+class TD;
+
 namespace sim
 {
 	Ability::Ability(int d_hp, int d_ap, int cost): d_hp(d_hp), d_ap(d_ap), cost(cost) {}
 
 	Target::Target(Mob& mob) : mob_(mob) {}
+
+	Mob& Target::mob() { return mob_; }
 
 	Map::Map(std::size_t size): size_(size), hexes_(size, size) {}
 
@@ -33,27 +38,65 @@ namespace sim
 		return teams_;
 	}
 
-	Pathfinder::Pathfinder(std::size_t size): paths_(size, size) {}
+  bool MobManager::move_mob(Mob& mob, glm::vec2 to) {
+    // TODO-  check that the move is only to a neighbour block
+    if (mob.ap > 0) {
+      mob.c = to;
+      --mob.ap;
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+	Pathfinder::Pathfinder(std::size_t size): paths_(size, size), size_(size) {}
 
 	Matrix<Path>& Pathfinder::paths() { return paths_; }
 
-	Path Pathfinder::path_to(Target target) {
-		
+  std::vector<glm::vec2> Pathfinder::path_to(Target target) {
+    std::vector<glm::vec2> result;
+
+    glm::vec2 current = target.mob().c;
+    result.push_back(current);
+
+    Path path = paths_(current);
+
+    while (path.distance > 0) {
+      if (path.source) {
+        auto c = *path.source;
+
+        result.push_back(c);
+        path = paths_(c);
+      } else {
+        result.clear();
+        break;
+      }
+    }
+
+    return result;
 	}
 
-	void Pathfinder::move_as_far_as_possible(Mob& mob, Path& path) {
-		
+	void Pathfinder::move_as_far_as_possible(MobManager& mob_manager, Mob& mob, std::vector<glm::vec2>& path) {
+    int i = path.size() - 1;
+
+    while (mob.ap > 0 && i > 0) {
+      mob_manager.move_mob(mob, path[i]);
+    }		
 	}
 
-	void Pathfinder::pathfind_from(glm::vec2 source) {
-		
+	std::size_t Pathfinder::hex_distance(glm::vec2 a, glm::vec2 b) {
+    using std::abs;
+    return (abs(a.x - b.x)
+        + abs(a.x + a.y - b.x - b.y)
+        + abs(a.y - b.y)) / 2;
 	}
 
-	std::size_t Pathfinder::distance(glm::vec2 t1, glm::vec2 t2) {
+	std::size_t Pathfinder::distance(glm::vec2 c) {
+    return paths_(c).distance;
+  }
 
-	}
-
-	void Pathfinder::update(glm::vec2 start, Map& map, MobManager& mob_manager) {
+	void Pathfinder::pathfind_from(glm::vec2 start, Map& map, MobManager& mob_manager) {
 		std::queue<glm::vec2> queue;
 		queue.push(start);
 
@@ -72,10 +115,63 @@ namespace sim
 				
 				p.source = boost::none;
 				p.distance = std::numeric_limits<int>::max();
+        p.reachable = false;
 
 			}
 		}
+
+    paths_(start).distance = 0;
+    paths_(start).state = VertexState::Open;
+    paths_(start).reachable = true;
+
+    int iterations = 0;
+
+    while (!queue.empty()) {
+      auto current = queue.front();
+      queue.pop();
+
+      if (iterations > 10000 || queue.size() > 1000) {
+        fmt::printf("ERROR: Pathfinding stuck at %d iterations with queue size %lu\n", iterations, queue.size());
+      }
+
+      iterations++;
+
+      Path& p = paths_(current);
+
+      if (p.state == VertexState::Closed) continue;
+
+      p.state = VertexState::Closed;
+
+      // TODO - check for walls
+      for (auto diff : diffs) {
+        auto neighbour = current + diff;
+        if (is_valid_coord(neighbour)) {
+          Path& n = paths_(neighbour);
+
+          if (n.state != VertexState::Closed) {
+            if (n.distance > p.distance + 1) {
+              n.distance = p.distance + 1;
+              assert(n.distance > 0);
+
+              n.source = current;
+              n.reachable = true;
+            }
+
+            n.state = VertexState::Open;
+            queue.push(neighbour);
+          }
+        }
+      }
+    }
 	}
+
+  bool Pathfinder::is_valid_coord(glm::vec2 c) {
+    std::size_t x = std::abs(c.x);
+    std::size_t y = std::abs(c.y);
+
+    return std::max(x, y) < size_ && std::min(c.x, c.y) >= 0;
+  }
+
 
 	TurnManager::TurnManager(MobManager& mob_manager): mob_manager_(mob_manager) {}
 
@@ -113,13 +209,17 @@ namespace sim
 		return is_turn_done();
 	}
 
-	void UsableAbility::use() {}
+	void UsableAbility::use() {
+    to_.hp -= ability_.d_hp;
+    from_.ap -= ability_.cost;
+
+  }
 
 	Game::Game(std::size_t size) : map_(size),
 	                            mob_manager_{}, pathfinder_(size),
 	                            turn_manager_(mob_manager_), size_(size) {}
 
-	MobManager& Game::players() {
+	MobManager& Game::mob_manager() {
 		return mob_manager_;
 	}
 
@@ -171,7 +271,19 @@ namespace sim
 		return result;
 	}
 
-	std::vector<UsableAbility> Game::usable_abilities(Mob&, Target, MobManager&, Pathfinder&) { }
+	std::vector<UsableAbility> Game::usable_abilities(Mob& mob, Target target, MobManager& mob_manager, Pathfinder& pathfinder) {
+    std::vector<UsableAbility> result;
+
+    auto distance = pathfinder.distance(target.mob().c);
+
+    for (auto&& ability : mob.abilities) {
+      if (ability.range >= distance && mob.ap >= ability.cost) {
+        result.emplace_back(mob, target.mob(), ability);
+      }
+    }
+
+    return result;
+  }
 
 	std::vector<Target> Game::possible_targets(Mob& mob, MobManager& mob_manager, Pathfinder& pathfinder) {
 		auto&& abilities = mob.abilities;
@@ -182,7 +294,9 @@ namespace sim
 		std::vector<Target> result;
 
 		for (auto&& enemy : mob_manager.mobs()) {
-			if (pathfinder.distance(mob.c, enemy.c) <= max) {
+			// if (pathfinder.distance(mob.c, enemy.c) <= max) {
+      // TODO - fix this to use the actual distance
+			if (pathfinder.hex_distance(mob.c, enemy.c) <= max) {
 				result.emplace_back(enemy);
 			}
 		}

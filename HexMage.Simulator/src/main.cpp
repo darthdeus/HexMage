@@ -13,7 +13,7 @@ void testy() {
   auto m2 = g.add_mob(gen::random_mob(t2, g.size()));
 
   auto abilities =
-      g.usable_abilities(m1, Target(m2), g.players(), g.pathfinder());
+      g.usable_abilities(m1, Target(m2), g.mob_manager(), g.pathfinder());
 
   if (abilities.size() > 0) {
     auto ability = abilities[0];
@@ -35,13 +35,13 @@ void mcts() {
     } else {
       auto mob = manager.current_mob();
 
-      auto targets = g.possible_targets(mob, g.players(), g.pathfinder());
+      auto targets = g.possible_targets(mob, g.mob_manager(), g.pathfinder());
 
       if (targets.size() > 0) {
         auto target = targets[0];
 
         auto abilities =
-            g.usable_abilities(mob, target, g.players(), g.pathfinder());
+            g.usable_abilities(mob, target, g.mob_manager(), g.pathfinder());
 
         if (abilities.size() > 0) {
           abilities[0].use();
@@ -50,7 +50,7 @@ void mcts() {
 
           auto path = pathfinder.path_to(target);
 
-          pathfinder.move_as_far_as_possible(mob, path);
+          pathfinder.move_as_far_as_possible(g.mob_manager(), mob, path);
         }
       }
     }
