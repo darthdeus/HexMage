@@ -10,11 +10,11 @@ class TD;
 
 namespace sim
 {
-	std::size_t hex_distance(glm::vec2 a) {
+	std::size_t hex_distance(Coord a) {
     return hex_distance({0, 0}, a);
 	}
 
-	std::size_t hex_distance(glm::vec2 a, glm::vec2 b) {
+	std::size_t hex_distance(Coord a, Coord b) {
     using std::abs;
     return (abs(a.x - b.x)
         + abs(a.x + a.y - b.x - b.y)
@@ -54,7 +54,7 @@ namespace sim
 		return teams_;
 	}
 
-  bool MobManager::move_mob(Mob& mob, glm::vec2 to) {
+  bool MobManager::move_mob(Mob& mob, Coord to) {
     // TODO-  check that the move is only to a neighbour block
     if (mob.ap > 0) {
       mob.c = to;
@@ -66,7 +66,7 @@ namespace sim
     }
   }
 
-  boost::optional<Mob&> MobManager::operator()(glm::ivec2 c) {
+  boost::optional<Mob&> MobManager::operator()(Coord c) {
     boost::optional<Mob&> result;
 
     for (auto&& mob : mobs_) {
@@ -83,10 +83,10 @@ namespace sim
 
 	Matrix<Path>& Pathfinder::paths() { return paths_; }
 
-  std::vector<Coord> Pathfinder::path_to(glm::vec2 target) {
+  std::vector<Coord> Pathfinder::path_to(Coord target) {
     std::vector<Coord> result;
 
-    glm::vec2 current = target;
+    Coord current = target;
     result.push_back(current);
 
     Path path = paths_(current);
@@ -114,15 +114,15 @@ namespace sim
     }		
 	}
 
-	std::size_t Pathfinder::distance(glm::vec2 c) {
+	std::size_t Pathfinder::distance(Coord c) {
     return paths_(c).distance;
   }
 
-	void Pathfinder::pathfind_from(glm::vec2 start, Map& map, MobManager& mob_manager) {
-		std::queue<glm::vec2> queue;
+	void Pathfinder::pathfind_from(Coord start, Map& map, MobManager& mob_manager) {
+		std::queue<Coord> queue;
 		queue.push(start);
 
-		std::vector<glm::vec2> diffs = {
+		std::vector<Coord> diffs = {
 			{ -1, 0 },
 			{ 1, 0 },
 			{ 0, -1 },
@@ -187,14 +187,14 @@ namespace sim
     }
 	}
 
-  bool Pathfinder::is_valid_coord(glm::vec2 c) {
+  bool Pathfinder::is_valid_coord(Coord c) {
     std::size_t x = std::abs(c.x);
     std::size_t y = std::abs(c.y);
 
     return std::max(x, y) < size_ && std::min(c.x, c.y) >= 0;
   }
 
-  Path& Pathfinder::operator()(glm::vec2 c) {
+  Path& Pathfinder::operator()(Coord c) {
     return paths_(c);
   }
 

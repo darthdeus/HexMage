@@ -5,11 +5,10 @@
 #include <iterator>
 #include <sstream>
 #include <iostream>
+#include <lodepng.h>
 
 #include <gl_utils.hpp>
 
-#include <model.hpp>
-#include <lodepng.h>
 
 GLuint load_and_compile_shader_(const GLchar* path, GLenum shaderType) {
 	using namespace std;

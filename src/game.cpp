@@ -55,7 +55,7 @@ namespace game
 		auto rel_mouse = mouse2gl(pos);
 		auto view_mouse = inverse(proj) * vec4(rel_mouse, 0.0f, 1.0f);
 
-		fmt::printf("Highlight %d,%d\t%f,%f\n", pos.x, pos.y, rel_mouse.x, rel_mouse.y);
+		fmt::printf("Highlight %d,%d\t%f,%f\n", pos.x, pos.y, view_mouse.x, view_mouse.y);
 		return geom.hex_near({view_mouse.x, view_mouse.y});
 	}
 

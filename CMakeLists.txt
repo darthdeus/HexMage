@@ -14,7 +14,7 @@ endif (MSVC)
 
 if (UNIX)
 	set(LIBS SDL2 freetype)
-	set(CUSTOM_FLAGS -std=c++14 -g)
+	set(CUSTOM_FLAGS "-std=c++14 -g")
 endif (UNIX)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CUSTOM_FLAGS}")

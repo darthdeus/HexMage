@@ -21,18 +21,19 @@ MapGeometry::MapGeometry(sim::Game& game)
 
 Position& MapGeometry::pos(sim::Coord c) { return positions(c); }
 
-sim::Coord MapGeometry::hex_near(Position rel_pos) {
+sim::Coord MapGeometry::hex_near(Position pos) {
   sim::Coord closest;
   float min = INFINITY;
 
   for (std::size_t i = 0; i < positions.m; ++i) {
     for (std::size_t j = 0; j < positions.n; ++j) {
-      auto pos = positions(i, j);
+      auto hex_pos = positions(i, j);
 
-      float distance = sim::hex_distance(pos - rel_pos);
+      auto diff = pos - hex_pos;
+      float distance = diff.x * diff.x + diff.y * diff.y;
 
       if (distance < min) {
-        closest = {static_cast<int>(j), static_cast<int>(i)};
+        closest = glm::ivec2{static_cast<int>(j), static_cast<int>(i)};
         min = distance;
       }
     }
@@ -127,7 +128,7 @@ void MapGeometry::paint_hex(Position pos, float radius, glm::vec4 color) {
   b.draw_arrays();
 }
 
-void MapGeometry::paint_healthbar(glm::vec2 pos, float hp, float ap) {
+void MapGeometry::paint_healthbar(Position pos, float hp, float ap) {
   using namespace glm;
   using namespace std;
 

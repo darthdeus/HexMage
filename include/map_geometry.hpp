@@ -35,7 +35,7 @@ class MapGeometry {
 
   void set_projection(const glm::mat4& projection);
   void paint_hex(Position pos, float radius, glm::vec4 color);
-  void paint_healthbar(glm::vec2 pos, float hp, float ap);
+  void paint_healthbar(Position pos, float hp, float ap);
   void paint_mob(sim::Mob& mob);
 };
 

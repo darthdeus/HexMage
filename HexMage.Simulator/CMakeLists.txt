@@ -3,11 +3,11 @@ project(HexMage.Simulator)
 cmake_minimum_required(VERSION 2.8.12)
 
 if (MSVC)
-
+  set(CUSTOM_FLAGS )
 endif (MSVC)
 
 if (UNIX)
-	set(CUSTOM_FLAGS -std=c++14 -g)
+	set(CUSTOM_FLAGS "-std=c++14 -g")
 endif (UNIX)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CUSTOM_FLAGS}")
