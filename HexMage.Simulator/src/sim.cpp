@@ -5,8 +5,7 @@
 
 #include <sim.hpp>
 
-template <typename T>
-class TD;
+template <typename T> class TD;
 
 namespace sim {
 std::size_t hex_distance(Coord a) { return hex_distance({0, 0}, a); }
@@ -19,9 +18,9 @@ std::size_t hex_distance(Coord a, Coord b) {
 Ability::Ability(int d_hp, int d_ap, int cost)
     : d_hp(d_hp), d_ap(d_ap), cost(cost) {}
 
-Target::Target(Mob& mob) : mob_(mob) {}
+Target::Target(Mob& mob) : mob_(&mob) {}
 
-Mob& Target::mob() { return mob_; }
+Mob& Target::mob() { return *mob_; }
 
 Map::Map(std::size_t size) : size_(size), hexes_(size, size) {}
 
@@ -34,8 +33,8 @@ Index<Mob> MobManager::add_mob(Mob mob) {
   return Index<Mob>{mobs_, mobs_.size() - 1};
 }
 
-Index<Team> MobManager::add_team() {
-  teams_.emplace_back(teams_.size() + 1);
+Index<Team> MobManager::add_team(Player& player) {
+  teams_.emplace_back(teams_.size() + 1, player);
   return Index<Team>{teams_, teams_.size() - 1};
 }
 
@@ -143,17 +142,21 @@ void Pathfinder::pathfind_from(Coord start, Map& map, MobManager& mob_manager) {
 
     Path& p = paths_(current);
 
-    if (p.state == VertexState::Closed) continue;
+    if (p.state == VertexState::Closed)
+      continue;
 
     p.state = VertexState::Closed;
 
-    // TODO - check for walls
     for (auto diff : diffs) {
       auto neighbour = current + diff;
       if (is_valid_coord(neighbour)) {
         Path& n = paths_(neighbour);
 
-        if (n.state != VertexState::Closed) {
+        bool not_closed = n.state != VertexState::Closed;
+        bool no_wall = map(neighbour) != HexType::Wall;
+        bool no_mob = !mob_manager(neighbour);
+
+        if (not_closed && no_wall && no_mob) {
           if (n.distance > p.distance + 1) {
             n.distance = p.distance + 1;
             assert(n.distance > 0);
@@ -219,11 +222,8 @@ void UsableAbility::use() {
 }
 
 Game::Game(std::size_t size)
-    : map_(size),
-      mob_manager_{},
-      pathfinder_(size),
-      turn_manager_(mob_manager_),
-      size_(size) {}
+    : map_(size), mob_manager_{}, pathfinder_(size),
+      turn_manager_(mob_manager_), size_(size) {}
 
 Map& Game::map() { return map_; }
 
@@ -243,15 +243,14 @@ bool Game::is_finished() {
     auto&& mobs = team.mobs();
     bool none_alive = std::none_of(mobs.begin(), mobs.end(), mob_alive);
 
-    if (none_alive) return true;
+    if (none_alive)
+      return true;
   }
 
   return false;
 }
 
 std::size_t Game::size() const { return size_; }
-
-Index<Team> Game::add_team() { return mob_manager_.add_team(); }
 
 void Game::refresh() {
   auto&& current_mob = turn_manager_.current_mob();
@@ -309,18 +308,85 @@ std::vector<Target> Game::possible_targets(Mob& mob, MobManager& mob_manager,
 int Mob::last_id_ = 0;
 
 Mob::Mob(int max_hp, int max_ap, abilities_t abilities, Index<Team> team)
-    : id_(last_id_++),
-      max_hp(max_hp),
-      max_ap(max_ap),
-      hp(max_hp),
-      ap(max_ap),
-      abilities(std::move(abilities)),
-      team(std::move(team)) {}
+    : id_(last_id_++), max_hp(max_hp), max_ap(max_ap), hp(max_hp), ap(max_ap),
+      abilities(std::move(abilities)), team(std::move(team)) {}
 
 bool Mob::operator==(const Mob& rhs) const { return id_ == rhs.id_; }
 bool Mob::operator!=(const Mob& rhs) const { return id_ == rhs.id_; }
 
-Team::Team(int number) : number(number) {
+void UserPlayer::action_to(Coord click_hex, Game& game, Mob& current_mob) {
+  auto&& mob_manager = game.mob_manager();
+  auto&& pathfinder = game.pathfinder();
+
+  if (auto mob = mob_manager(click_hex)) {
+    auto&& abilities = game.usable_abilities(current_mob, Target{*mob},
+                                             mob_manager, pathfinder);
+
+    if (abilities.size() > 0) {
+      abilities.back().use();
+    } else {
+      fmt::printf("No ability available\n");
+    }
+  } else {
+    auto&& path = pathfinder.path_to(click_hex);
+    pathfinder.move_as_far_as_possible(mob_manager, current_mob, path);
+  }
+}
+
+void UserPlayer::any_action(Game& game, Mob& mob) {
+  fmt::printf("TODO - what should this actually do?");
+}
+
+void AIPlayer::action_to(Coord c, Game& game, Mob& mob) {
+  // TODO - basic AI
+}
+
+void AIPlayer::any_action(Game& game, Mob& mob) {
+  auto&& targets =
+      game.possible_targets(mob, game.mob_manager(), game.pathfinder());
+
+  if (targets.size() > 0) {
+
+    auto distance_f = [&mob](Target a, Target b) {
+      return hex_distance(mob.c, a.mob().c) < hex_distance(mob.c, b.mob().c);
+    };
+
+    std::sort(targets.begin(), targets.end(), distance_f);
+
+    auto c = targets[0].mob().c;
+
+    auto&& abilities = game.usable_abilities(
+        mob, targets[0], game.mob_manager(), game.pathfinder());
+
+    if (abilities.empty()) {
+      fmt::print("DEBUG - no abilities available, moving instead\n");
+      // no ability is in rage, we have to move
+      auto dis = (c - mob.c);
+      auto dx = std::abs(dis.x);
+      if (!dx)
+        dx = 1;
+
+      auto dy = std::abs(dis.y);
+      if (!dy)
+        dy = 1;
+
+      // TODO - the offset is wrong when going bottom-left
+      Coord off{dis.x / dx, dis.y / dy};
+
+      game.mob_manager().move_mob(mob, off);
+
+    } else {
+      // TODO - use a random ability for now
+      UserPlayer{}.action_to(c, game, mob);
+    }
+
+  } else {
+    // TODO - logging
+    fmt::print("INFO - All enemies are dead\n");
+  }
+}
+
+Team::Team(int number, Player& player) : number(number), player_(player) {
   using namespace std;
   random_device rd;
   mt19937 gen(rd());

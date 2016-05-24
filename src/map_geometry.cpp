@@ -159,8 +159,7 @@ void MapGeometry::paint_mob(sim::Mob& mob) {
   auto turn_manager = game_.turn_manager();
 
   auto p = pos(mob.c);
-  // auto c = mob.team->color;
-  auto c = glm::vec3(0.3, 0.7, 0.3);
+  auto c = mob.team->color();
 
   if (mob == turn_manager.current_mob()) {
     c += glm::vec3(0.3f);

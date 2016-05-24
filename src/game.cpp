@@ -55,7 +55,6 @@ namespace game
 		auto rel_mouse = mouse2gl(pos);
 		auto view_mouse = inverse(proj) * vec4(rel_mouse, 0.0f, 1.0f);
 
-		fmt::printf("Highlight %d,%d\t%f,%f\n", pos.x, pos.y, view_mouse.x, view_mouse.y);
 		return geom.hex_near({view_mouse.x, view_mouse.y});
 	}
 
@@ -119,9 +118,11 @@ namespace game
 
     sim::Game game(20);
 
+    sim::UserPlayer user_player;
+    sim::AIPlayer ai_player;
     // TODO - User vs AI player?
-		auto t1 = game.add_team();
-		auto t2 = game.add_team();
+		auto t1 = game.mob_manager().add_team(user_player);
+		auto t2 = game.mob_manager().add_team(ai_player);
 
 		for (int i = 0; i < 10; i++) {
 			auto t = i < 5 ? t1 : t2;

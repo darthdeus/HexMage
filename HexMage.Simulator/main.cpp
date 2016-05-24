@@ -6,8 +6,10 @@ using namespace sim;
 void testy() {
   Game g(30);
 
-  auto t1 = g.add_team();
-  auto t2 = g.add_team();
+  AIPlayer player;
+
+  auto t1 = g.mob_manager().add_team(player);
+  auto t2 = g.mob_manager().add_team(player);
 
   auto m1 = g.add_mob(gen::random_mob(t1, g.size()));
   auto m2 = g.add_mob(gen::random_mob(t2, g.size()));
