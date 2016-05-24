@@ -129,9 +129,6 @@ namespace game
     auto&& turn_manager = game.turn_manager();
     turn_manager.start_next_turn();
 
-		// turn_manager.current_turn = game.start_turn();
-		// turn_manager.update_arena(arena);
-
     assert(!turn_manager.is_turn_done());
 
     auto&& mob = turn_manager.current_mob();
@@ -139,9 +136,8 @@ namespace game
     auto&& pathfinder = game.pathfinder();
     pathfinder.pathfind_from(mob.c, game.map(), game.mob_manager());
 
-		// Mob* current_player = *turn_manager.current_turn.current_;
-		// arena.dijkstra(current_player->c, info);
-		// arena.regenerate_geometry(current_player->ap);
+    MapGeometry geom(game);
+    geom.regenerate_geometry(mob.ap);
 
 		gl::Camera camera;
 
@@ -156,11 +152,9 @@ namespace game
 		gl::SpriteRenderer sprites;
 
 		gl::FontRenderer fonts;
-		fonts.set_projection(ortho(0.f, WIDTH, 0.0f, HEIGHT));
+		fonts.set_projection(glm::ortho(0.f, WIDTH, 0.0f, HEIGHT));
 
 		auto projection = ortho(0.f, WIDTH, HEIGHT, 0.0f);
-
-    MapGeometry geom(game);
 
 		InputManager input_manager(camera, game, geom);
 

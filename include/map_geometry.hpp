@@ -20,7 +20,6 @@ class MapGeometry {
 
  public:
   static constexpr float radius = 0.1f;
-  std::size_t size;
 
   sim::Matrix<Position> positions;
 

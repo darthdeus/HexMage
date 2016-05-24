@@ -55,7 +55,9 @@ void MapGeometry::regenerate_geometry(boost::optional<int> current_ap) {
 
   auto&& pathfinder = game_.pathfinder();
 
-  int isize = static_cast<int>(size);
+  int isize = static_cast<int>(game_.size());
+  fmt::printf("Generating %d x %d\n", isize, isize);
+
   for (int row = 0; row < isize; ++row) {
     for (int col = 0; col < isize; ++col) {
       float draw_x = start_x;
