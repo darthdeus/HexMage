@@ -5,9 +5,9 @@ cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 # include_directories(include ../vendor ../vendor/googletest/googletest/include)
-include_directories(include ../vendor)
+include_directories(include ../vendor/include)
 
-file(GLOB SOURCE_FILES src/*.cpp src/*.c)
+file(GLOB SOURCE_FILES src/*.cpp src/*.c vendor/src/*.cpp vendor/src/*.c)
 
 # include(build/conanbuildinfo.cmake)
 # conan_basic_setup()

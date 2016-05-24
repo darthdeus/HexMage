@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.8.12)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
-include_directories(include vendor HexMage.Simulator/include)
-file(GLOB SOURCE_FILES src/*.cpp src/*.c)
+include_directories(include vendor/include HexMage.Simulator/include)
+file(GLOB SOURCE_FILES src/*.cpp src/*.c vendor/src/*.c vendor/src/*.cpp)
 
 # include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 # conan_basic_setup()
