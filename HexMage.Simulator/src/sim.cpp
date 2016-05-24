@@ -17,6 +17,7 @@ namespace sim
 
 	Index<Mob> MobManager::add_mob(Mob mob) {
 		mobs_.push_back(std::move(mob));
+    return Index<Mob>{mobs_, mobs_.size() - 1};
 	}
 
 	Index<Team> MobManager::add_team() {
@@ -49,7 +50,7 @@ namespace sim
 	}
 
 	std::size_t Pathfinder::distance(glm::vec2 t1, glm::vec2 t2) {
-		
+
 	}
 
 	void Pathfinder::update(glm::vec2 start, Map& map, MobManager& mob_manager) {
@@ -136,7 +137,7 @@ namespace sim
 
 	bool Game::is_finished() {
 		auto mob_alive = [](auto mob) {
-			return mob.hp > 0;
+			return mob->hp > 0;
 		};
 
 		// TODO - introduce a faster check than manually iterate everything
@@ -175,14 +176,14 @@ namespace sim
 	std::vector<Target> Game::possible_targets(Mob& mob, MobManager& mob_manager, Pathfinder& pathfinder) {
 		auto&& abilities = mob.abilities;
 
-		auto f_max = [](auto acc, auto&& ability) { return std::max(acc, ability.range)};
+		auto f_max = [](auto acc, auto&& ability) { return std::max(acc, ability.range); };
 		auto max = std::accumulate(abilities.begin(), abilities.end(), 0, f_max);
 
 		std::vector<Target> result;
 
 		for (auto&& enemy : mob_manager.mobs()) {
 			if (pathfinder.distance(mob.c, enemy.c) <= max) {
-				result.emplace_back(enemy.c);
+				result.emplace_back(enemy);
 			}
 		}
 

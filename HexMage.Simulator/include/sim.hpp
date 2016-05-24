@@ -40,7 +40,7 @@ namespace sim
 		Matrix(std::size_t size) : Matrix(size * 2 + 1, size * 2 + 1) {}
 
 		T& operator()(std::size_t i, std::size_t j) { return vs[n * i + j]; }
-		T& operator()(const Coord& c) { return vs[n * c.y + c.x]; }
+		T& operator()(const glm::vec2& c) { return vs[n * c.y + c.x]; }
 
 	private:
 	}; /* column-major/opengl: vs[i + m * j], row-major/c++: vs[n * i + j] */
