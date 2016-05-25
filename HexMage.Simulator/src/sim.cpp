@@ -100,17 +100,19 @@ void Pathfinder::move_as_far_as_possible(MobManager& mob_manager, Mob& mob,
 
   while (mob.ap > 0 && i > 0) {
     mob_manager.move_mob(mob, path[i]);
+	i--;
   }
 }
 
 std::size_t Pathfinder::distance(Coord c) { return paths_(c).distance; }
 
 void Pathfinder::pathfind_from(Coord start, Map& map, MobManager& mob_manager) {
+	fmt::printf("Starting at %d,%d\n", start.x, start.y);
   std::queue<Coord> queue;
-  queue.push(start);
 
   std::vector<Coord> diffs = {
-      {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {1, -1}, {-1, 1}};
+      {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {1, -1}, {-1, 1}
+  };
 
   for (std::size_t i = 0; i < paths_.m; ++i) {
     for (std::size_t j = 0; j < paths_.n; ++j) {
@@ -119,6 +121,7 @@ void Pathfinder::pathfind_from(Coord start, Map& map, MobManager& mob_manager) {
       p.source = boost::none;
       p.distance = std::numeric_limits<int>::max();
       p.reachable = false;
+	  p.state = VertexState::Unvisited;
     }
   }
 
@@ -126,25 +129,26 @@ void Pathfinder::pathfind_from(Coord start, Map& map, MobManager& mob_manager) {
   paths_(start).state = VertexState::Open;
   paths_(start).reachable = true;
 
+  queue.push(start);
+
   int iterations = 0;
 
   while (!queue.empty()) {
     auto current = queue.front();
     queue.pop();
 
+    iterations++;
     if (iterations > 10000 || queue.size() > 1000) {
       fmt::printf(
           "ERROR: Pathfinding stuck at %d iterations with queue size %lu\n",
           iterations, queue.size());
     }
 
-    iterations++;
-
     Path& p = paths_(current);
 
-    if (p.state == VertexState::Closed)
-      continue;
+    if (p.state == VertexState::Closed) continue;
 
+	p.reachable = true;
     p.state = VertexState::Closed;
 
     for (auto diff : diffs) {
@@ -156,8 +160,8 @@ void Pathfinder::pathfind_from(Coord start, Map& map, MobManager& mob_manager) {
         bool no_wall = map(neighbour) != HexType::Wall;
         bool no_mob = !mob_manager(neighbour);
 
-        if (not_closed && no_wall && no_mob) {
-          if (n.distance > p.distance + 1) {
+        if (not_closed) {
+          if (n.state == VertexState::Unvisited || n.distance > p.distance + 1) {
             n.distance = p.distance + 1;
             assert(n.distance > 0);
 
@@ -199,6 +203,8 @@ void TurnManager::start_next_turn() {
     }
   }
 
+  current_ = 0;
+
   auto ap_compare = [](auto m1, auto m2) -> bool { return m1->ap < m2->ap; };
   std::sort(turn_order_.begin(), turn_order_.end(), ap_compare);
 }
@@ -213,11 +219,11 @@ bool TurnManager::move_next() {
     ++current_;
   }
 
-  return is_turn_done();
+  return !is_turn_done();
 }
 
 void UsableAbility::use() {
-  to_.hp -= ability_.d_hp;
+  to_.hp = std::max(0, to_.hp - ability_.d_hp);
   from_.ap -= ability_.cost;
 }
 
@@ -273,7 +279,7 @@ std::vector<UsableAbility> Game::usable_abilities(Mob& mob, Target target,
                                                   Pathfinder& pathfinder) {
   std::vector<UsableAbility> result;
 
-  auto distance = pathfinder.distance(target.mob().c);
+  int distance = pathfinder.distance(target.mob().c);
 
   for (auto&& ability : mob.abilities) {
     if (ability.range >= distance && mob.ap >= ability.cost) {
@@ -290,7 +296,7 @@ std::vector<Target> Game::possible_targets(Mob& mob, MobManager& mob_manager,
 
   auto f_max =
       [](auto acc, auto&& ability) { return std::max(acc, ability.range); };
-  auto max = std::accumulate(abilities.begin(), abilities.end(), 0, f_max);
+  std::size_t max = std::accumulate(abilities.begin(), abilities.end(), 0, f_max);
 
   std::vector<Target> result;
 

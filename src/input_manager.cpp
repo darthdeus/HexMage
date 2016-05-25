@@ -15,27 +15,26 @@ void InputManager::mousemove(glm::vec2 pos, sim::Mob& player) {
   auto&& pathfinder = game_.pathfinder();
   auto&& mob_manager = game_.mob_manager();
   highlight_path = pathfinder.path_to(highlight_hex);
+  //game_.refresh();
+  //geom_.regenerate_geometry(player.ap);
   // highlight_path = build_highlight_path(player);
 }
 
 void InputManager::left_click(glm::vec2 pos, sim::Mob& current_mob) {
   auto click_hex = game::hex_at_mouse(camera_.projection(), geom_, pos);
 
-  // auto&& player = current_mob.team->player();
-  //
-  // if (player.is_ai()) {
-  // 	fmt::print("Forcing AI to take a turn\n");
-  // 	player.any_action(game_, current_mob);
-  // } else {
-  // player.action_to(click_hex, game_, current_mob);
+  auto&& player = current_mob.team->player();
 
-  // highlight_hex = current_mob.c;
-  // highlight_path.clear();
+  if (player.is_ai()) {
+	  fmt::printf("DEBUG - Forcing AI to take a step\n");
+	  player.any_action(game_, current_mob);
+  } else {
+	  player.action_to(click_hex, game_, current_mob);
+  }
 
-  // }
-
-  auto&& pathfinder = game_.pathfinder();
-  pathfinder.pathfind_from(current_mob.c, game_.map(), game_.mob_manager());
+  //auto&& pathfinder = game_.pathfinder();
+  //pathfinder.pathfind_from(current_mob.c, game_.map(), game_.mob_manager());
+  game_.refresh();
   geom_.regenerate_geometry(current_mob.ap);
 }
 
@@ -49,10 +48,11 @@ void InputManager::right_click(glm::vec2 pos, Mob& player) {
     map(click_hex) = HexType::Empty;
   }
 
-  auto&& pathfinder = game_.pathfinder();
-  auto&& current_mob = game_.turn_manager().current_mob();
-  pathfinder.pathfind_from(current_mob.c, game_.map(), game_.mob_manager());
-  geom_.regenerate_geometry();
+  //auto&& pathfinder = game_.pathfinder();
+  //auto&& current_mob = game_.turn_manager().current_mob();
+  //pathfinder.pathfind_from(current_mob.c, game_.map(), game_.mob_manager());
+  game_.refresh();
+  geom_.regenerate_geometry(game_.turn_manager().current_mob().ap);
 }
 
 // std::vector<sim::Coord> InputManager::build_highlight_path(const sim::Mob& player) {
@@ -119,16 +119,15 @@ bool InputManager::handle_events() {
     if (event.type == SDL_KEYDOWN) camera_.keydown(event.key.keysym.sym);
     if (event.type == SDL_KEYUP)
       if (event.key.keysym.sym == SDLK_SPACE) {
-        auto&& turn_manager = game_.turn_manager();
-
-        if (turn_manager.move_next()) {
-          fmt::printf("DEBUG - moving to next player\n");
-          game_.refresh();
-          geom_.regenerate_geometry(turn_manager.current_mob().ap);
-        } else {
+        if (!turn_manager.move_next()) {
           fmt::print("DEBUG - starting new turn\n");
           turn_manager.start_next_turn();
         }
+
+          game_.refresh();
+		  auto ap = turn_manager.current_mob().ap;
+          fmt::printf("DEBUG - moving to next player, with ap = %d\n", ap);
+          geom_.regenerate_geometry(ap);
 
         // // TODO - dijkstra for current player
         // auto* next_player = turn_manager_.current_turn.next();

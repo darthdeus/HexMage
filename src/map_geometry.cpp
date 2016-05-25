@@ -55,7 +55,11 @@ void MapGeometry::regenerate_geometry(boost::optional<int> current_ap) {
   auto&& pathfinder = game_.pathfinder();
 
   int isize = static_cast<int>(game_.size());
-  fmt::printf("Generating %d x %d\n", isize, isize);
+  if (current_ap) {
+    fmt::printf("Generating %d x %d, AP = %d\n", isize, isize, *current_ap);
+  } else {
+    fmt::printf("Generating %d x %d\n", isize, isize);
+  }
 
   for (int row = 0; row < isize; ++row) {
     for (int col = 0; col < isize; ++col) {
@@ -88,9 +92,19 @@ void MapGeometry::regenerate_geometry(boost::optional<int> current_ap) {
         if (type == sim::HexType::Empty && path.distance > 0) {
           // distance = 1 -> 0.3
           // distance = ap -> 0
+
+			//if (!path.reachable) {
+			if (path.state == sim::VertexState::Unvisited) {
+				c = glm::vec4(0.1f);
+			}
+
           float change = (*current_ap + 1 - path.distance) * 0.06f;
           if (change > 0) {
             c += glm::vec4(change);
+          } else {
+			  if (change < -100) {
+				  //fmt::printf("Change is %f, distance = %d\n", change, path.distance);
+			  }
           }
         }
       }
