@@ -303,7 +303,8 @@ std::vector<Target> Game::possible_targets(Mob& mob, MobManager& mob_manager,
   for (auto&& enemy : mob_manager.mobs()) {
     // if (pathfinder.distance(mob.c, enemy.c) <= max) {
     // TODO - fix this to use the actual distance
-    if (hex_distance(mob.c, enemy.c) <= max) {
+	  // TODO - fix this so the mob doesn't target itself
+    if (mob != enemy && hex_distance(mob.c, enemy.c) <= max) {
       result.emplace_back(enemy);
     }
   }
